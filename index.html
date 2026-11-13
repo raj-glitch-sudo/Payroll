@@ -110,6 +110,24 @@ details>summary{cursor:pointer;font-weight:700}
 .kbd{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;background:var(--line2);border-radius:4px;padding:0 4px}
 @media(max-width:900px){#toasts{left:12px;right:12px}.side{position:fixed;left:-250px;z-index:90;transition:left .2s}.side.open{left:0;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}#view{padding:14px}body.navc .side{width:236px;flex-basis:236px}body.navc .brand>div:last-child,body.navc .nav a span{display:initial}body.navc .nav a{justify-content:flex-start;padding:8px 10px}body.navc .nav .sec{font-size:.68rem;padding:14px 10px 4px;border:0;margin:0}}
 @media print{body{display:block}.side,.top{display:none}}
+
+[hidden]{display:none!important}
+/* view switch, copy box, checks */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}.seg button{border:0;background:none;padding:7px 14px;font:inherit;font-size:.86rem;font-weight:600;color:var(--muted);cursor:pointer}.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--brand2);color:var(--ink)}
+.copybox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0 12px;background:#fafcfb}
+label.ck{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;font-size:.9rem;font-weight:400}label.ck input{margin-top:3px}
+.checks{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px}.ckr{border:1px solid var(--line);border-left:4px solid #9fb3ad;border-radius:8px;padding:8px 10px;font-size:.88rem}.ckr.warn{border-left-color:#e0a02a}.ckr.bad{border-left-color:var(--danger)}.ckr .nl{color:var(--muted);margin-top:3px;font-size:.82rem}
+/* time sheet */
+.grid.tg th small{display:block;font-weight:500;color:var(--muted);font-size:.68rem;margin-top:2px}
+.grid.tg input{width:64px}.grid.tg input.na{background:transparent;border-color:transparent;text-align:center;color:#a9b5b1}.grid.tg input.bad{background:#fdecea;border-color:#e7a19a}
+.grid.tg td.hc{white-space:nowrap}.grid.tg td.hc select{width:118px;padding:4px;font-size:.8rem}.grid.tg td.hc input{width:52px;margin-left:3px}.grid.tg th.hcol{min-width:180px}
+/* searchable picker */
+.cb{position:relative;min-width:220px}.cb>input{width:100%}.cb-sel{position:absolute!important;left:0;top:0;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
+.cb-list{position:absolute;left:0;right:0;top:calc(100% + 2px);max-height:280px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 26px rgba(0,0,0,.14);z-index:250;padding:4px}
+.cb-list>div{padding:6px 10px;border-radius:6px;cursor:pointer;font-size:.9rem}.cb-list>div.on{background:var(--brand2)}.cb-list>div:hover{background:#f1f6f4}.cb-list .none{color:var(--muted);cursor:default}
+/* employees selection */
+.selbar{margin:0 0 8px;min-height:32px}.t th.cbc,.t td.cbc{width:34px;text-align:center}.t tr.sel td{background:#f2faf7}
+.kvt{width:100%}.kvt td{vertical-align:middle;white-space:normal!important}.kvt td small{display:block;color:var(--muted);font-weight:400;margin-top:2px}.kvt td:last-child{white-space:nowrap;width:1%}.kvt input{width:130px}.kvt #fpSil{width:70px}
 </style>
 </head>
 <body>
@@ -217,6 +235,11 @@ const rowCmp=(a,b)=>cmp(a.business,b.business)||cmp(a.name,b.name);
 const bizList=()=>[...new Set(DB.biz.map(b=>b.name).concat(DB.employees.map(e=>e.business)).filter(Boolean))].sort(cmp);
 const bizInfo=n=>DB.biz.find(b=>b.name===n)||{name:n};
 const dailyOf=e=>e.basis==='monthly'?Math.round((e.monthly||0)*12/(+e.factor||261)):(e.rate||0);
+// pay rates in effect on a date: the employee record holds the latest rates; each dated change keeps the rates before it
+function rateAt(e,d){const H=(e.hist||[]).filter(h=>h.eff>d).sort((a,b)=>cmp(a.eff,b.eff)),f=H[0]&&H[0].from;
+ return f?{rate:f.rate||0,monthly:f.monthly||0,allowance:f.allowance||0}:{rate:e.rate||0,monthly:e.monthly||0,allowance:e.allowance||0}}
+const dailyAt=(e,d)=>dailyOf(Object.assign({},e,rateAt(e,d)));
+const prevRun=run=>{const k=pkey(run.year,run.month,run.q);return DB.runs.filter(x=>pkey(x.year,x.month,x.q)<k).sort((a,b)=>pkey(b.year,b.month,b.q)-pkey(a.year,a.month,a.q))[0]||null};
 const runOf=(y,m,q)=>DB.runs.find(r=>r.year===y&&r.month===m&&r.q===q);
 const itemsE=()=>DB.items.filter(i=>i.kind!=='D'&&i.active!==false),itemsD=()=>DB.items.filter(i=>i.kind==='D'&&i.active!==false);
 const isMwe=(e,r)=>!!(e&&e.mwe)||(S().mweRate>0&&(r?r.daily:dailyOf(e||{}))>0&&(r?r.daily:dailyOf(e||{}))<=S().mweRate);
@@ -303,7 +326,7 @@ function taxCalc(run,r){
  const reg=r.basic+r.hol+r.ot+(cfg.mealNT?0:r.allow),mweEx=mwe?r.basic+r.hol+r.ot:0,contr=r.sss+r.ph+r.pg;
  const taxable=mwe?pos(reg-mweEx+E.xT+benEx):pos(reg+E.xT+benEx-contr);
  let tax=wtaxSemi(taxable),annual=false;
- if(cfg.annualize&&run.month===12&&run.q===2){tax=taxYear(ytd(run,r.empId,'taxable')+taxable)-ytd(run,r.empId,'tax');annual=true}
+ if((cfg.annualize&&run.month===12&&run.q===2)||r.sepAnn){tax=taxYear(ytd(run,r.empId,'taxable')+taxable)-ytd(run,r.empId,'tax');annual=true}
  return{tax,taxable,ben,benEx,dmIn:dm.inn,mweEx,nItems:E.xN,mealNT:cfg.mealNT?r.allow:0,annual};
 }
 // recompute one row from its time sheet; manual amounts (r.man) are kept
@@ -336,7 +359,8 @@ function ledgerSuggest(empId,type,run){
  return Math.min(s,pos(ledgerBal(empId,type,run)));
 }
 function rowFromEmp(e,run){
- const r={empId:e.id,name:fullName(e),business:e.business||'',position:e.position||'',status:e.status||'',basis:e.basis||'daily',rate:e.rate||0,monthly:e.monthly||0,factor:+e.factor||261,daily:dailyOf(e),allowance:e.allowance||0,
+ const R=rateAt(e,cutoff(run.year,run.month,run.q)[0]),E2=Object.assign({},e,R);
+ const r={empId:e.id,name:fullName(e),business:e.business||'',position:e.position||'',status:e.status||'',basis:e.basis||'daily',rate:R.rate,monthly:R.monthly,factor:+e.factor||261,daily:dailyOf(E2),allowance:R.allowance,
   tm:e.basis==='monthly'?{abs:0}:{days:0},items:{},ded:{},man:{},basic:0,allow:0,hol:0,ot:0,sss:0,ph:0,pg:0,tax:0};
  DB.dtypes.forEach(d=>{const v=ledgerSuggest(e.id,d.id,run);if(v)r.ded[d.id]=v});
  (e.recur||[]).forEach(x=>{if(x.amt&&DB.items.some(i=>i.id===x.item))r.items[x.item]=(r.items[x.item]||0)+x.amt});
@@ -399,7 +423,8 @@ function printHtml(inner,land,title){
  const f=document.createElement('iframe');f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
  const w=f.contentWindow,d=w.document;d.open();d.write(docHtml(inner,land,title));d.close();
  setTimeout(()=>{try{w.focus();w.print()}catch(e){toast('Printing is blocked here. Open the file in Chrome or Edge.','bad')}},300);setTimeout(()=>f.remove(),120000)}
-const coName=b=>b&&b!=='ALL'?b:(DB.company.name||bizList()[0]||'');
+// heading for a printout: the business, or for all businesses the group name from Settings › Company (never just one of the businesses)
+const coName=(b,list)=>{if(b&&b!=='ALL')return b;if(DB.company.name)return DB.company.name;const L=(list||bizList()).filter(Boolean);return L.length===1?L[0]:L.length&&L.length<=3?L.join(' · '):'All businesses'};
 const hd=(co,title,sub)=>'<div class="hd"><div class="co">'+esc(co)+'</div><div class="tt">'+esc(title)+'</div>'+(sub?'<div class="sb">'+esc(sub)+'</div>':'')+'</div>';
 
 // ---------------------------------------------------------------- generic report table: screen, print and CSV from one definition
@@ -461,7 +486,12 @@ function initNav(){
  window.addEventListener('hashchange',onRoute);
 }
 function brand(){$('#brandSub').textContent=DB.company.name||'Offline payroll'}
-function backup(){DB.meta.lastBackup=new Date().toISOString();DB.meta.backupRev=DB.meta.rev||0;save(true,true);dl('AJ-Payroll-backup_'+slug(DB.company.name||'payroll')+'_'+stampNow()+'.json',JSON.stringify(DB),'application/json');hideAutoCard();bkStatus();toast('Backup downloaded. Keep it somewhere safe (a USB drive or Google Drive).','ok')}
+function markBackedUp(){DB.meta.lastBackup=new Date().toISOString();DB.meta.backupRev=DB.meta.rev||0;save(true,true);hideAutoCard();bkStatus()}
+const bkName=auto=>'AJ-Payroll-'+(auto?'auto':'backup')+'_'+slug(DB.company.name||'payroll')+'_'+stampNow()+'.json';
+// Backup button: into the backup folder when one is connected, otherwise (or with download=true) a downloaded file
+async function backup(download){
+ if(!download&&FB.h){if(!FB.ok)await fbAsk();if(FB.ok&&await fbWrite(bkName(false),JSON.stringify(DB))){markBackedUp();toast('Backup saved in the folder “'+FB.name+'”.','ok');return}}
+ const name=bkName(false);markBackedUp();dl(name,JSON.stringify(DB),'application/json');toast('Backup downloaded ('+name+'). Keep it somewhere safe, such as a USB drive or Google Drive.','ok',5000)}
 function backupAge(){const b=DB.meta.lastBackup;return b?Math.floor((Date.now()-new Date(b).getTime())/864e5):null}
 
 // =====================================================================================
@@ -495,19 +525,24 @@ function openLedgerTotal(){let t=0;const seen=new Set();DB.ledger.forEach(l=>{co
 // =====================================================================================
 // Employees
 // =====================================================================================
-let empF={q:'',biz:'ALL',show:'active'};
+let empF={q:'',biz:'ALL',show:'active'};const empSel=new Set();
 PAGES.emp={title:'Employees',render(v){
  v.innerHTML='<div class="card"><div class="row"><div class="fg sp"><label>Search</label><input id="eQ" placeholder="Name, position, TIN, SSS no." value="'+esc(empF.q)+'"></div>'
   +fg('Business','<select id="eBiz">'+opt([['ALL','All businesses']].concat(bizList()),empF.biz)+'</select>')
   +fg('Show','<select id="eShow">'+opt([['active','Active'],['inactive','Inactive / separated'],['all','All']],empF.show)+'</select>')
-  +'<button class="btn o" id="eImp">Import from spreadsheet</button><button class="btn o" id="eExp">Export CSV</button><button class="btn" id="eAdd">+ Add employee</button></div></div><p class="note" id="eCnt"></p><div id="eTbl"></div>';
+  +'<button class="btn o" id="eImp">Import from spreadsheet</button><button class="btn o" id="eExp">Export CSV</button><button class="btn" id="eAdd">+ Add employee</button></div></div><div class="row mid selbar"><p class="note" id="eCnt" style="margin:0"></p><span class="sp"></span><span id="eSelN" class="note" style="margin:0"></span><button class="btn o s" id="eBulk">Edit selected…</button><button class="btn o s" id="eRate">Change rates…</button><button class="btn o s" id="eSelX">Clear selection</button></div><div id="eTbl"></div>';
  const paint=()=>{const q=empF.q.trim().toLowerCase();
   const L=DB.employees.filter(e=>(empF.biz==='ALL'||e.business===empF.biz)&&(empF.show==='all'||(empF.show==='active')===(e.active!==false))&&(!q||[fullName(e),e.position,e.tin,e.sss,e.ph,e.hdmf,e.business].join(' ').toLowerCase().includes(q))).sort(empCmp);
   $('#eCnt').textContent=L.length+' of '+DB.employees.length+' employee'+(DB.employees.length===1?'':'s');
-  $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th></th></tr></thead><tbody>'
-   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+'"><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
-   ||'<tr><td colspan="14" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
-  $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint))};
+  [...empSel].forEach(id=>{if(!empById(id))empSel.delete(id)});const allOn=L.length&&L.every(e=>empSel.has(e.id));
+  $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th class="cbc"><input type="checkbox" id="eAll" aria-label="Select all shown"'+(allOn?' checked':'')+'></th><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th></th></tr></thead><tbody>'
+   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
+   ||'<tr><td colspan="15" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
+  $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint));
+  $$('[data-es]').forEach(c=>c.onchange=()=>{c.checked?empSel.add(c.dataset.es):empSel.delete(c.dataset.es);c.closest('tr').classList.toggle('sel',c.checked);selN()});
+  const a=$('#eAll');if(a)a.onchange=()=>{L.forEach(e=>a.checked?empSel.add(e.id):empSel.delete(e.id));paint()};selN()};
+ const selN=()=>{const n=empSel.size;$('#eSelN').textContent=n?n+' selected':'Tick employees to edit several at once';$('#eBulk').disabled=!n;$('#eRate').disabled=!n;$('#eSelX').hidden=!n};
+ $('#eBulk').onclick=()=>bulkModal([...empSel],paint);$('#eRate').onclick=()=>rateModal([...empSel],paint);$('#eSelX').onclick=()=>{empSel.clear();paint()};
  $('#eQ').oninput=e=>{empF.q=e.target.value;paint()};$('#eBiz').onchange=e=>{empF.biz=e.target.value;paint()};$('#eShow').onchange=e=>{empF.show=e.target.value;paint()};
  $('#eAdd').onclick=()=>empForm(null,paint);$('#eImp').onclick=()=>empImport(paint);
  $('#eExp').onclick=()=>dl('employees_'+today()+'.csv',toCsv([EMP_COLS.map(c=>c[1])].concat(DB.employees.slice().sort(empCmp).map(e=>EMP_COLS.map(c=>c[2]?c[2](e):e[c[0]]==null?'':e[c[0]])))));
@@ -537,8 +572,12 @@ function empForm(id,after){
   +fg('TIN','<input id="fTin" value="'+esc(v.tin||'')+'">')+fg('SSS no.','<input id="fSss" value="'+esc(v.sss||'')+'">')+fg('PhilHealth no.','<input id="fPh" value="'+esc(v.ph||'')+'">')+fg('Pag-IBIG no.','<input id="fHdmf" value="'+esc(v.hdmf||'')+'">')
   +fg('Address','<input id="fAddr" value="'+esc(v.address||'')+'">')+fg('Contact no.','<input id="fCon" value="'+esc(v.contact||'')+'">')+'</div>'
   +'<h3 style="margin-top:14px">Recurring pay or deductions every cutoff</h3><p class="note">For example a fixed rice subsidy or a uniform deduction. They are filled in when a new payroll is created; you can still change them per cutoff. For loans and cash advances with a balance, use Loans & Advances instead.</p><div id="fRec"></div><button type="button" class="btn o s" id="fRecAdd">+ Add recurring item</button>'
+  +(e?'<h3 style="margin-top:14px">Rate history</h3><div id="fHist">'+histHtml(e)+'</div>':'')
   +'<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="fAct"'+(v.active!==false?' checked':'')+'> Active (included in new payroll runs)</label>'
-  +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',820);
+  +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button><button class="btn o" id="fRaise">Change rates…</button><button class="btn o" id="fFinal">Final pay…</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',860);
+ if(e){$('#fRaise',m).onclick=()=>{m.close();rateModal([e.id],after)};$('#fFinal',m).onclick=()=>{m.close();finalPayModal(e.id,after)};
+  const hb=()=>{const b=$('[data-hu]',m);if(b)b.onclick=async()=>{const h=(e.hist||[]).find(x=>x.id===b.dataset.hu);if(!h||!(await confirmBox('Undo the rate change effective '+esc(fd(h.eff))+'? The rates go back to what they were before it.','Undo')))return;
+   Object.assign(e,h.from);e.hist=e.hist.filter(x=>x!==h);$('#fRate',m).value=pe(e.rate);$('#fMon',m).value=pe(e.monthly);$('#fAllow',m).value=pe(e.allowance);sync();save();$('#fHist',m).innerHTML=histHtml(e);hb();toast('Rate change undone. Use “Update rates” in draft payrolls.','ok',5000)}};hb()}
  const sync=()=>{const mo=$('#fBasis',m).value==='monthly';$('#gRate',m).hidden=mo;$('#gMon',m).hidden=!mo;$('#gFac',m).hidden=!mo;$('#fDaily',m).textContent=mo?'Daily rate: ₱'+n2(Math.round(c100($('#fMon',m).value)*12/(+$('#fFac',m).value))):''};
  $('#fBasis',m).onchange=sync;$('#fMon',m).oninput=sync;$('#fFac',m).onchange=sync;sync();
  const rec=()=>{$('#fRec',m).innerHTML=recur.map((x,i)=>'<div class="row mid" style="margin-bottom:6px"><select data-ri="'+i+'">'+opt(DB.items.filter(it=>it.active!==false).map(it=>[it.id,it.name+(it.kind==='D'?' (deduction)':'')]),x.item)+'</select><input type="number" step="0.01" min="0" data-ra="'+i+'" value="'+pe(x.amt)+'" style="width:120px" placeholder="per cutoff"><button type="button" class="btn d s" data-rx="'+i+'">Remove</button></div>').join('');
@@ -591,7 +630,7 @@ function empImport(after){
 // =====================================================================================
 // Payroll Run (data entry)
 // =====================================================================================
-let runUI={biz:'ALL',q:'',hide:true};
+let runUI={biz:'ALL',q:'',hide:true,view:'pay'};
 function parsePer(a){const m=/^(\d{4})-(\d{1,2})-([12])$/.exec(a||'');if(m)return{y:+m[1],m:+m[2],q:+m[3]};const n=new Date();return{y:n.getFullYear(),m:n.getMonth()+1,q:n.getDate()<=15?1:2}}
 function gridCols(run){
  const used=k=>run.rows.some(r=>k.startsWith('i:')?(r.items||{})[k.slice(2)]:(r.ded||{})[k.slice(2)])||(run.show||[]).includes(k);
@@ -623,12 +662,14 @@ PAGES.run={title:'Payroll Run',render(v,a){
  const B=$('#runBody');
  if(!run){
   const list=DB.employees.filter(e=>e.active!==false&&employedIn(e,p.y,p.m,p.q));
-  const hs=holsIn(p.y,p.m,p.q);
+  const hs=holsIn(p.y,p.m,p.q),pv=prevRun({year:p.y,month:p.m,q:p.q});
   B.innerHTML='<div class="card"><h2>'+esc(perLabel(p.y,p.m,p.q))+'</h2><p>No payroll yet for this cutoff. Creating it adds the <b>'+list.length+'</b> active employee'+(list.length===1?'':'s')+' employed in this period, fills in cash advances and loan installments due, and recurring pay items.</p>'
    +(hs.length?'<p class="note">Holidays in this cutoff: '+hs.map(x=>esc(fdw(x.date))+' '+esc(x.name)+' ('+(x.type==='R'?'regular':'special')+')').join('; ')+'</p>':'')
+   +(list.length&&pv?'<div class="copybox"><b>Start from the last payroll ('+esc(perShort(pv.year,pv.month,pv.q))+')</b>'+copyOpts(true)+'</div>':'')
    +(list.length?'<button class="btn" id="pNew">Create payroll for '+esc(perShort(p.y,p.m,p.q))+'</button>':'<p class="note">Add employees first in <a href="#emp">Employees</a>.</p>')+'</div>';
   const b=$('#pNew');if(b)b.onclick=()=>{const r={id:'r'+uid(),year:p.y,month:p.m,q:p.q,status:'draft',created:new Date().toISOString(),rows:[],show:[]};
-   list.sort(empCmp).forEach(e=>r.rows.push(rowFromEmp(e,r)));DB.runs.push(r);calcRun(r);save();PAGES.run.render(v,a);toast('Payroll created. Enter days worked and other amounts.','ok')};
+   list.sort(empCmp).forEach(e=>r.rows.push(rowFromEmp(e,r)));DB.runs.push(r);const o=pv?readCopyOpts(B):null,n=o&&(o.t||o.i)?copyInto(pv,r,o):0;calcRun(r);save();PAGES.run.render(v,a);
+   toast('Payroll created.'+(n?' Copied entries for '+n+' employee'+(n===1?'':'s')+' from '+perShort(pv.year,pv.month,pv.q)+'.':' Enter days worked and other amounts.'),'ok',5000)};
   return}
  if(run.status!=='final'){calcRun(run)}
  drawRun(B,run);
@@ -642,33 +683,39 @@ function drawRun(B,run){
  let h='<div class="card'+(fin?' locked':'')+'" id="runCard"><div class="row mid"><div><h2 style="margin:0">'+esc(perLabel(run.year,run.month,run.q))+' '+(fin?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')+'</h2>'
   +'<div class="note" style="margin:2px 0 0">'+run.rows.length+' employees'+(fin&&run.finalAt?' · finalized '+esc(fd(run.finalAt.slice(0,10))):'')+(run.payDate?' · pay date '+esc(fd(run.payDate)):'')+'</div></div><span class="sp"></span>'
   +(fin?'<button class="btn o" id="rReopen">Reopen for changes</button>':'<button class="btn" id="rFinal">Finalize</button>')
-  +'<a class="btn o" href="#slips/'+run.id+'">Payslips</a><a class="btn o" href="#reg/'+run.id+'">Register</a><button class="btn o" id="rCsv">Export CSV</button></div>';
- h+='<div class="row" style="margin-top:12px"><div class="fg"><label>Business</label><select id="rBiz">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select></div>'
+  +'<button class="btn o" id="rChk">Check</button><a class="btn o" href="#slips/'+run.id+'">Payslips</a><a class="btn o" href="#reg/'+run.id+'">Register</a><button class="btn o" id="rCsv">Export CSV</button></div>';
+ h+='<div class="row mid" style="margin-top:12px"><div class="seg" role="tablist" aria-label="View"><button role="tab" data-view="pay" aria-selected="'+(runUI.view!=='time')+'" class="'+(runUI.view!=='time'?'on':'')+'">Pay amounts</button><button role="tab" data-view="time" aria-selected="'+(runUI.view==='time')+'" class="'+(runUI.view==='time'?'on':'')+'">Time sheet (hours & holidays)</button></div></div>'
+  +'<div class="row" style="margin-top:10px"><div class="fg"><label>Business</label><select id="rBiz">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select></div>'
   +'<div class="fg"><label>Find</label><input id="rQ" placeholder="Employee name" value="'+esc(runUI.q)+'"></div>'
-  +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button>')
-  +'<span class="sp"></span><label style="display:flex;gap:6px;align-items:center;font-size:.85rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>'
-  +(runUI.hide&&hid.length&&!fin?'<select id="rShow"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
+  +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rCopy">Copy from last cutoff…</button><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button>')
+  +'<span class="sp"></span>'+(runUI.view==='time'?'':'<label style="display:flex;gap:6px;align-items:center;font-size:.85rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>')
+  +(runUI.view!=='time'&&runUI.hide&&hid.length&&!fin?'<select id="rShow"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
  if(hs.length)h+='<div class="alert info" style="margin:12px 0 0">Holidays in this cutoff: '+hs.map(x=>'<b>'+esc(fdw(x.date))+'</b> '+esc(x.name)+' ('+(x.type==='R'?'regular':'special non-working')+')').join('; ')+'. Daily-paid employees who worked in this cutoff are paid for regular holidays automatically. Use ⏱ to mark who worked on a holiday, or who is not entitled.</div>';
  if(run.month===12&&run.q===2&&S().annualize)h+='<div class="alert info" style="margin:12px 0 0">Year-end: withholding tax in this payroll is the annual tax due less tax already withheld this year (annualization). A negative amount is a refund to the employee.</div>';
  h+='</div>';
+ const TV=runUI.view==='time';
+ if(TV)h+=timeGridHtml(run,rows,fin);else{
  h+='<div class="tw" style="max-height:66vh"><table class="t grid'+(fin?' locked':'')+'" id="rGrid"><thead><tr><th>Employee</th>'+cols.map(c=>'<th class="'+(c.grp==='E'?'grpE':c.grp==='D'?'grpD':'')+'">'+esc(c.h)+'</th>').join('')+'</tr></thead><tbody>';
  rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+(isMwe(empById(r.empId),r)?' · MWE':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
   +cols.map(c=>{if(c.calc)return '<td class="calc'+(c.net?' net':'')+'" data-c="'+c.k+'"></td>';return '<td><input data-k="'+c.k+'" class="'+(c.cls||'')+'" inputmode="decimal" aria-label="'+esc(c.h+' – '+r.name)+'"'+(fin?' disabled':'')+'></td>'}).join('')+'</tr>'});
  if(!rows.length)h+='<tr><td colspan="'+(cols.length+1)+'" class="empty">No employees match.</td></tr>';
  h+='</tbody><tfoot><tr><td>TOTAL</td>'+cols.map(c=>'<td class="calc" data-t="'+c.k+'"></td>').join('')+'</tr></tfoot></table></div>';
- h+='<p class="note">Type amounts in pesos. Yellow boxes were typed over the automatic amount; clear a yellow box to go back to the automatic amount. Press <span class="kbd">Enter</span> to move down. Changes are saved as you type.</p>';
+ h+='<p class="note">Type amounts in pesos. Yellow boxes were typed over the automatic amount; clear a yellow box to go back to the automatic amount. Press <span class="kbd">Enter</span> to move down. Changes are saved as you type.</p>';}
  if(!fin)h+='<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn d s" id="rDel">Delete this payroll</button></div>';
  B.innerHTML=h;
- rows.forEach(({r,i})=>paintRow(run,i));paintFoot(run,rows.map(x=>x.r));
+ if(TV)paintTime(run,rows);else{rows.forEach(({r,i})=>paintRow(run,i));paintFoot(run,rows.map(x=>x.r))}
  const redraw=()=>drawRun(B,run);
+ $$('[data-view]',B).forEach(b=>b.onclick=()=>{runUI.view=b.dataset.view;redraw()});
+ $('#rChk').onclick=()=>checkModal(run);
  $('#rBiz').onchange=e=>{runUI.biz=e.target.value;redraw()};
  let qt;$('#rQ').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{runUI.q=e.target.value;redraw();const q=$('#rQ');q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)};
- $('#rHide').onchange=e=>{runUI.hide=e.target.checked;redraw()};
+ const rh=$('#rHide');if(rh)rh.onchange=e=>{runUI.hide=e.target.checked;redraw()};
  const sh=$('#rShow');if(sh)sh.onchange=()=>{if(!sh.value)return;run.show=(run.show||[]).concat(sh.value);save();redraw()};
  $('#rCsv').onclick=()=>exportRunCsv(run);
  if(fin){$('#rReopen').onclick=async()=>{const later=DB.runs.some(x=>x.status==='final'&&pkey(x.year,x.month,x.q)>pkey(run.year,run.month,run.q)&&x.year===run.year);
   if(!(await confirmBox('Reopen '+esc(perLabel(run.year,run.month,run.q))+' for changes?'+(later?' <b>Later payrolls this year are already final</b>; their contributions, benefit limits and year-end tax will not change unless you reopen them too.':''),'Reopen')))return;
   run.status='draft';delete run.finalAt;save();redraw()};return}
+ if(TV)bindTime(run,redraw);else{
  const grid=$('#rGrid');
  grid.addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i,r=run.rows[i],k=t.dataset.k,raw=t.value.trim();
   if(k==='days'){const d=Math.max(0,parseFloat(raw)||0);if(r.basis==='monthly'){r.tm.abs=r4(Math.max(0,(r.factor||261)/24-d-(+r.tm.late||0)/480))}else r.tm.days=d}
@@ -685,14 +732,15 @@ function drawRun(B,run){
    row.forEach((v,j)=>{const el=all[start+j];if(!el)return;el.value=String(v).replace(/[₱,\s]/g,'');el.dispatchEvent(new Event('input',{bubbles:true}))});n++;tr=tr.nextElementSibling});
   toast('Pasted '+n+' row'+(n===1?'':'s')+'.','ok')});
  grid.addEventListener('change',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i;paintRow(run,i)});
- grid.addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b)timeModal(run,+b.dataset.tm,redraw)});
+ grid.addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b)timeModal(run,+b.dataset.tm,redraw)});}
+ $('#rCopy').onclick=()=>copyModal(run,redraw);
  $('#rFinal').onclick=()=>finalizeRun(run,redraw);
  $('#rDel').onclick=async()=>{if(!(await confirmBox('Delete the payroll for '+esc(perLabel(run.year,run.month,run.q))+'? Everything typed in it is removed.','Delete',1)))return;DB.runs=DB.runs.filter(x=>x!==run);recalcFrom(run);save();PAGES.run.render($('#view'),run.year+'-'+run.month+'-'+run.q)};
  $('#rRecalc').onclick=async()=>{if(!(await confirmBox('Recompute SSS, PhilHealth, Pag-IBIG and withholding tax for every employee? Amounts you typed over (yellow) are replaced by the automatic amounts.','Recompute')))return;run.rows.forEach(r=>['sss','ph','pg','tax'].forEach(k=>delete r.man[k]));recalcFrom(run);save();redraw();toast('Deductions recomputed.','ok')};
- $('#rRates').onclick=async()=>{const ch=run.rows.filter(r=>{const e=empById(r.empId);return e&&(dailyOf(e)!==r.daily||(e.monthly||0)!==(r.monthly||0)||(e.allowance||0)!==(r.allowance||0)||e.basis!==r.basis)});
+ $('#rRates').onclick=async()=>{const ch=rateDiff(run);
   if(!ch.length)return toast('All rates already match the employee records.');
   if(!(await confirmBox('Update the rates of '+ch.length+' employee'+(ch.length===1?'':'s')+' from their employee records?<br><small>'+ch.slice(0,8).map(r=>esc(r.name)).join(', ')+(ch.length>8?'…':'')+'</small>','Update')))return;
-  ch.forEach(r=>{const e=empById(r.empId);if(e.basis!==r.basis)r.tm=e.basis==='monthly'?{abs:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol}:{days:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol};Object.assign(r,{basis:e.basis,rate:e.rate,monthly:e.monthly||0,factor:+e.factor||261,daily:dailyOf(e),allowance:e.allowance||0,position:e.position,business:e.business,name:fullName(e)})});
+  ch.forEach(r=>syncRowRate(run,r));
   recalcFrom(run);save();redraw();toast('Rates updated.','ok')};
  $('#rLoans').onclick=async()=>{if(!(await confirmBox('Fill in the cash advance and loan deductions again from Loans & Advances? Amounts typed in those columns for this cutoff are replaced.','Refresh')))return;
   run.rows.forEach(r=>{DB.dtypes.forEach(d=>{const s=ledgerSuggest(r.empId,d.id,run);if(s)r.ded[d.id]=s;else delete r.ded[d.id]})});calcRun(run);save();redraw();toast('Loan and advance deductions refreshed.','ok')};
@@ -704,6 +752,7 @@ function drawRun(B,run){
  $('#rAdd').onclick=()=>{const L=DB.employees.filter(e=>!run.rows.some(r=>r.empId===e.id)&&employedIn(e,run.year,run.month,run.q)).sort(empCmp);
   if(!L.length)return toast('Everyone employed in this period is already in this payroll.');
   const m=modal('<h2>Add employee to this payroll</h2>'+fg('Employee','<select id="aeS">'+opt(L.map(e=>[e.id,fullName(e)+' – '+e.business+(e.active===false?' (inactive)':'')]))+'</select>')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="aeGo">Add</button></div>',520);
+  combo($('#aeS',m));$('#aeS_q',m).focus();
   $('#aeGo',m).onclick=()=>{const e=empById($('#aeS',m).value);run.rows.push(rowFromEmp(e,run));calcRun(run);save();m.close();redraw()}};
 }
 function paintRow(run,i,skip){
@@ -721,9 +770,11 @@ function paintFoot(run,list){
 async function finalizeRun(run,after){
  const zero=run.rows.filter(r=>!r.gross),neg=run.rows.filter(r=>r.net<0);
  if(neg.length)return toast('Net pay is negative for '+neg.map(r=>r.name).slice(0,4).join(', ')+'. Reduce the deductions first.','bad',7000);
+ const CK=runChecks(run).filter(c=>c.id!=='zero'&&c.id!=='neg');
  const m=modal('<h2>Finalize '+esc(perLabel(run.year,run.month,run.q))+'</h2><p>Finalizing locks this payroll. Cash advances and loans are reduced by what it deducts, and it is used for reports, 13th month pay and year-end tax.</p>'
   +(zero.length?'<div class="alert">'+zero.length+' employee'+(zero.length===1?' has':'s have')+' no pay in this cutoff ('+zero.slice(0,6).map(r=>esc(r.name)).join(', ')+(zero.length>6?'…':'')+'). They will be removed from this payroll.</div>':'')
-  +fg('Pay date','<input type="date" id="fnD" value="'+(run.payDate||cutoff(run.year,run.month,run.q)[1])+'">')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="fnGo">Finalize</button></div>',520);
+  +(CK.length?'<h3>Before you finalize, please check</h3>'+checksHtml(CK):'<p class="chip ok">No issues found by the checks.</p>')
+  +fg('Pay date','<input type="date" id="fnD" value="'+(run.payDate||cutoff(run.year,run.month,run.q)[1])+'">')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="fnGo">Finalize</button></div>',CK.length?720:520);
  $('#fnGo',m).onclick=()=>{run.rows=run.rows.filter(r=>r.gross);run.payDate=$('#fnD',m).value;recalcFrom(run);run.status='final';run.finalAt=new Date().toISOString();
   // later drafts depend on this one
   const k=pkey(run.year,run.month,run.q);DB.runs.filter(x=>x.status!=='final'&&x.year===run.year&&pkey(x.year,x.month,x.q)>k).forEach(calcRun);
@@ -794,6 +845,7 @@ PAGES.loans={title:'Loans & Advances',render(v){
    +(R.map(l=>{const e=empById(l.empId);return '<tr><td>'+esc(fd(l.date))+'</td><td>'+esc(e?fullName(e):'(deleted)')+'</td><td>'+esc(dtName(l.type))+'</td><td class="n">'+n2(l.amount)+'</td><td class="n">'+(l.inst?n2(l.inst):'whole balance')+'</td><td>'+esc(l.start?fd(l.start):'next payroll')+'</td><td class="wrap">'+esc(l.note)+'</td><td><button class="btn o s" data-le="'+l.id+'">Edit</button></td></tr>'}).join('')||'<tr><td colspan="8" class="empty">No records yet.</td></tr>')+'</tbody></table></div>';
   $$('[data-le]').forEach(b=>b.onclick=()=>ledgerForm(b.dataset.le,paint));
   $('#lCsv').onclick=()=>dl('loans_advances_'+today()+'.csv',T.csv())};
+ combo($('#lE'),'All employees – type a name to search');
  $('#lE').onchange=e=>{lnF.emp=e.target.value;paint()};$('#lT').onchange=e=>{lnF.type=e.target.value;paint()};$('#lS').onchange=e=>{lnF.show=e.target.value;paint()};
  $('#lAdd').onclick=()=>ledgerForm(null,paint);paint();
 }};
@@ -802,14 +854,15 @@ function ledgerForm(id,after){
  const emps=DB.employees.filter(e=>e.active!==false||e.id===v.empId).sort(empCmp);
  if(!emps.length)return toast('Add employees first.','bad');
  const m=modal('<h2>'+(l?'Edit record':'Record a cash advance or loan')+'</h2><div class="grid2">'
-  +fg('Employee *','<select id="lfE">'+opt(emps.map(e=>[e.id,fullName(e)+' – '+e.business]),v.empId)+'</select>')+fg('Type *','<select id="lfT">'+opt(DB.dtypes.map(d=>[d.id,d.name]),v.type)+'</select>','Add types in Settings › Deduction types')
+  +fg('Employee *','<select id="lfE">'+opt((v.empId?[]:[['','']]).concat(emps.map(e=>[e.id,fullName(e)+' – '+e.business])),v.empId)+'</select>')+fg('Type *','<select id="lfT">'+opt(DB.dtypes.map(d=>[d.id,d.name]),v.type)+'</select>','Add types in Settings › Deduction types')
   +fg('Date','<input type="date" id="lfD" value="'+esc(v.date)+'">')+fg('Amount (₱) *','<input type="number" step="0.01" min="0" id="lfA" value="'+pe(v.amount)+'">','Total to collect, e.g. the cash advance or loan amount')
   +fg('Deduct per cutoff (₱)','<input type="number" step="0.01" min="0" id="lfI" value="'+pe(v.inst)+'">','Leave blank to deduct the whole amount in the next payroll')
   +fg('Start deducting on','<input type="date" id="lfS" value="'+esc(v.start||'')+'">','Optional')+'</div>'+fg('Note','<input id="lfN" value="'+esc(v.note)+'" placeholder="e.g. loan no., reason">')
   +'<div id="lfInfo" class="note"></div><div class="acts">'+(l?'<button class="btn d" id="lfDel" style="margin-right:auto">Delete</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="lfGo">Save</button></div>',640);
- const info=()=>{const b=ledgerBal($('#lfE',m).value,$('#lfT',m).value);$('#lfInfo',m).textContent='Current balance of this type for this employee: ₱'+n2(b)+(l?' (including this record)':'')};
+ combo($('#lfE',m));if(!v.empId)$('#lfE_q',m).focus();
+ const info=()=>{if(!$('#lfE',m).value){$('#lfInfo',m).textContent='';return}const b=ledgerBal($('#lfE',m).value,$('#lfT',m).value);$('#lfInfo',m).textContent='Current balance of this type for this employee: ₱'+n2(b)+(l?' (including this record)':'')};
  $('#lfE',m).onchange=info;$('#lfT',m).onchange=info;info();
- $('#lfGo',m).onclick=()=>{const o={empId:$('#lfE',m).value,type:$('#lfT',m).value,date:$('#lfD',m).value||today(),amount:c100($('#lfA',m).value),inst:c100($('#lfI',m).value),start:$('#lfS',m).value,note:$('#lfN',m).value.trim().slice(0,200)};
+ $('#lfGo',m).onclick=()=>{if(!$('#lfE',m).value)return toast('Choose the employee.','bad');const o={empId:$('#lfE',m).value,type:$('#lfT',m).value,date:$('#lfD',m).value||today(),amount:c100($('#lfA',m).value),inst:c100($('#lfI',m).value),start:$('#lfS',m).value,note:$('#lfN',m).value.trim().slice(0,200)};
   if(o.amount<=0)return toast('Enter the amount.','bad');if(o.inst>o.amount)return toast('The amount per cutoff is more than the total.','bad');
   if(l)Object.assign(l,o);else DB.ledger.push(Object.assign({id:'l'+uid()},o));save();m.close();after();toast('Saved. Draft payrolls pick it up with “Refresh loan deductions”; new payrolls include it automatically.','ok',5000)};
  const d=$('#lfDel',m);if(d)d.onclick=async()=>{if(!(await confirmBox('Delete this record? Deductions already made in payroll stay in those payrolls.','Delete',1)))return;DB.ledger=DB.ledger.filter(x=>x!==l);save();m.close();after()};
@@ -841,19 +894,24 @@ function slipHtml(run,r){
 function ledgerBalAfter(empId,type,run){const k=pkey(run.year,run.month,run.q);let c=0,d=0;DB.ledger.forEach(l=>{if(l.empId===empId&&l.type===type)c+=l.amount});DB.runs.forEach(x=>{if(pkey(x.year,x.month,x.q)>k)return;const r=x.rows.find(y=>y.empId===empId);if(r)d+=(r.ded||{})[type]||0});return c-d}
 PAGES.slips={title:'Payslips',render(v,a){
  if(!DB.runs.length){v.innerHTML='<div class="card empty">No payroll yet. Create one in <a href="#run">Payroll Run</a>.</div>';return}
- v.innerHTML='<div class="card"><div class="row">'+runPicker('sR')+fg('Business','<select id="sB"></select>')+fg('Employee','<select id="sE"></select>')+fg('Layout','<select id="sL">'+opt([['4','4 per A4 page'],['1','1 per page']],'4')+'</select>')+'<span class="sp"></span><button class="btn" id="sP">Print / Save as PDF</button></div><p class="note" id="sInfo"></p></div><div id="sPv"></div>';
+ v.innerHTML='<div class="card"><div class="row">'+runPicker('sR')+fg('Business','<select id="sB"></select>')+fg('Employment status','<select id="sS"></select>')+fg('Employee','<select id="sE"></select>')+fg('Layout','<select id="sL">'+opt([['4','4 per A4 page'],['1','1 per page']],'4')+'</select>')+'<span class="sp"></span><button class="btn" id="sP">Print / Save as PDF</button></div><p class="note" id="sInfo"></p></div><div id="sPv"></div>';
  if(a&&DB.runs.some(r=>r.id===a))$('#sR').value=a;
- const fill=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),bz=[...new Set(run.rows.map(r=>r.business))].sort(cmp),cur=$('#sB').value;
-  $('#sB').innerHTML=opt([['ALL','All']].concat(bz),bz.includes(cur)?cur:'ALL');fillE()};
- const fillE=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,L=run.rows.filter(r=>b==='ALL'||r.business===b).sort(rowCmp);$('#sE').innerHTML=opt([['ALL','All ('+L.length+')']].concat(L.map(r=>[r.empId,r.name])));paint()};
- const html=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,e=$('#sE').value,one=$('#sL').value==='1';
-  const L=run.rows.filter(r=>(b==='ALL'||r.business===b)&&(e==='ALL'||r.empId===e)).sort(rowCmp);let out='';const n=one?1:4;
+ combo($('#sE'),'All – type a name to search');
+ const stOf=r=>r.status||(empById(r.empId)||{}).status||'(none)';
+ const fill=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),bz=[...new Set(run.rows.map(r=>r.business))].sort(cmp),cur=$('#sB').value,sc=$('#sS').value,st=[...new Set(run.rows.map(stOf))].sort(cmp);
+  $('#sB').innerHTML=opt([['ALL','All']].concat(bz),bz.includes(cur)?cur:'ALL');$('#sS').innerHTML=opt([['ALL','All']].concat(st.map(s=>[s,s+' ('+run.rows.filter(r=>stOf(r)===s).length+')'])),st.includes(sc)?sc:'ALL');fillE()};
+ const fillE=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,s=$('#sS').value,L=run.rows.filter(r=>(b==='ALL'||r.business===b)&&(s==='ALL'||stOf(r)===s)).sort(rowCmp);$('#sE').innerHTML=opt([['ALL','All ('+L.length+')']].concat(L.map(r=>[r.empId,r.name])));paint()};
+ const html=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,s=$('#sS').value,e=$('#sE').value,one=$('#sL').value==='1';
+  const L=run.rows.filter(r=>(b==='ALL'||r.business===b)&&(s==='ALL'||stOf(r)===s)&&(e==='ALL'||r.empId===e)).sort(rowCmp);let out='';const n=one?1:4;
   for(let i=0;i<L.length;i+=n)out+='<div class="sheet'+(one?' one':'')+'">'+L.slice(i,i+n).map(r=>slipHtml(run,r)).join('')+'</div>';return{out,run,count:L.length}};
  const paint=()=>{const x=html();$('#sInfo').innerHTML=x.count+' payslip'+(x.count===1?'':'s')+(x.run.status==='final'?'':' · <span class="chip warn">this payroll is still a draft</span>');showPreview($('#sPv'),x.out||'<div class="page">No payslips.</div>',false,'Payslips')};
- $('#sR').onchange=fill;$('#sB').onchange=fillE;$('#sE').onchange=paint;$('#sL').onchange=paint;
+ $('#sR').onchange=fill;$('#sB').onchange=fillE;$('#sS').onchange=fillE;$('#sE').onchange=paint;$('#sL').onchange=paint;
  $('#sP').onclick=()=>{const x=html();if(!x.count)return toast('No payslips to print.','bad');printHtml(x.out,false,'Payslips '+perLabel(x.run.year,x.run.month,x.run.q))};fill();
 }};
-function regHtml(run,biz){
+// layout 'sep': each business on its own page with its own heading; 'one': all together under the group name
+function regHtml(run,biz,layout){
+ const bz=[...new Set(run.rows.map(r=>r.business))].sort(cmp);
+ if(biz==='ALL'&&layout!=='one'&&bz.length>1){const P=bz.map(b=>regHtml(run,b));return{pages:P.map(p=>p.pages[0]),csv:regHtml(run,'ALL','one').csv,count:run.rows.length}}
  const rows=run.rows.filter(r=>biz==='ALL'||r.business===biz);
  const dCols=DB.dtypes.filter(d=>rows.some(r=>(r.ded||{})[d.id])),eI=DB.items.filter(i=>i.kind!=='D'&&rows.some(r=>(r.items||{})[i.id])),dI=DB.items.filter(i=>i.kind==='D'&&rows.some(r=>(r.items||{})[i.id]));
  const cols=[{h:'No.',k:'no'},{h:'Employee',k:'name'},{h:'Rate',k:r=>r.basis==='monthly'?r.monthly:r.daily,n:1,sumNo:1},{h:'Days',k:'days',d:1},{h:'Basic pay',k:'basic',n:1},{h:'Meal allow.',k:'allow',n:1},{h:'Holiday pay',k:'hol',n:1},{h:'OT & premium',k:'ot',n:1}]
@@ -861,18 +919,21 @@ function regHtml(run,biz){
    dCols.map(d=>({h:d.name,k:r=>(r.ded||{})[d.id]||0,n:1})),dI.map(i=>({h:i.name,k:r=>(r.items||{})[i.id]||0,n:1})),[{h:'Total deductions',k:'totDed',n:1},{h:'Net pay',k:'net',n:1},{h:'Signature',k:()=>''}]);
  const sorted=rows.slice().sort(rowCmp).map((r,i)=>Object.assign({no:i+1},r));
  const T=rptTable({cols,rows:sorted,groupBy:'business',labelCol:1});
- return{print:hd(coName(biz),'PAYROLL',perLabel(run.year,run.month,run.q)+(run.status==='final'?'':' – DRAFT'))+T.print.replace(/<td class="">(<\/td><\/tr>)/g,'<td class="sg">$1')+'<div class="sigs"><span>Prepared by</span><span>Checked by</span><span>Approved by</span></div>',csv:T.csv,count:rows.length};
+ return{pages:[hd(coName(biz,bz),'PAYROLL',perLabel(run.year,run.month,run.q)+(run.status==='final'?'':' – DRAFT'))+T.print.replace(/<td class="">(<\/td><\/tr>)/g,'<td class="sg">$1')+'<div class="sigs"><span>Prepared by</span><span>Checked by</span><span>Approved by</span></div>'],csv:T.csv,count:rows.length};
 }
+let regLy='sep';
 PAGES.reg={title:'Payroll Register',render(v,a){
  if(!DB.runs.length){v.innerHTML='<div class="card empty">No payroll yet. Create one in <a href="#run">Payroll Run</a>.</div>';return}
- v.innerHTML='<div class="card"><div class="row">'+runPicker('gR')+fg('Business','<select id="gB"></select>')+'<span class="sp"></span><button class="btn o" id="gC">Download CSV (Excel)</button><button class="btn" id="gP">Print / Save as PDF</button></div><p class="note">A signing sheet on A4 landscape, grouped by business with subtotals.</p></div><div id="gPv"></div>';
+ v.innerHTML='<div class="card"><div class="row">'+runPicker('gR')+fg('Business','<select id="gB"></select>')+fg('All businesses','<select id="gLy">'+opt([['sep','Each business on its own page'],['one','Together, under the group name']],regLy)+'</select>','','gLyF')+'<span class="sp"></span><button class="btn o" id="gC">Download CSV (Excel)</button><button class="btn" id="gP">Print / Save as PDF</button></div><p class="note" id="gN">A signing sheet on A4 landscape, grouped by business with subtotals.</p></div><div id="gPv"></div>';
  if(a&&DB.runs.some(r=>r.id===a))$('#gR').value=a;
  const run=()=>DB.runs.find(r=>r.id===$('#gR').value);
  const fill=()=>{const bz=[...new Set(run().rows.map(r=>r.business))].sort(cmp);$('#gB').innerHTML=opt([['ALL','All']].concat(bz));paint()};
- const paint=()=>{const x=regHtml(run(),$('#gB').value);showPreview($('#gPv'),'<div class="page">'+x.print+'</div>',true,'Payroll register')};
- $('#gR').onchange=fill;$('#gB').onchange=paint;
- $('#gP').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value);printHtml('<div class="page" style="padding:0">'+x.print+'</div>',true,'Payroll '+perLabel(r.year,r.month,r.q))};
- $('#gC').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value);dl('payroll_register_'+r.year+'-'+pad(r.month)+'_'+(r.q===1?'1st':'2nd')+'.csv',x.csv())};fill();
+ const paint=()=>{const b=$('#gB').value,multi=b==='ALL'&&new Set(run().rows.map(r=>r.business)).size>1;$('#gLyF').hidden=!multi;regLy=$('#gLy').value;
+  $('#gN').innerHTML='A signing sheet on A4 landscape'+(multi?(regLy==='one'?', all businesses together with subtotals, headed '+(DB.company.name?'“'+esc(DB.company.name)+'”':'with the business names. Set a group name in <a href="#set/company">Settings › Company</a> to use it as the heading instead')+'.':', one page for each business with its own heading.'):'.');
+  const x=regHtml(run(),b,regLy);showPreview($('#gPv'),x.pages.map(p=>'<div class="page">'+p+'</div>').join(''),true,'Payroll register')};
+ $('#gR').onchange=fill;$('#gB').onchange=paint;$('#gLy').onchange=paint;
+ $('#gP').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value,regLy);printHtml(x.pages.map(p=>'<div class="page" style="padding:0">'+p+'</div>').join(''),true,'Payroll '+perLabel(r.year,r.month,r.q))};
+ $('#gC').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value,'one');dl('payroll_register_'+r.year+'-'+pad(r.month)+'_'+(r.q===1?'1st':'2nd')+'.csv',x.csv())};fill();
 }};
 
 
@@ -906,6 +967,7 @@ function filt(parts,run){
  const bind=(sel,k,num)=>{const el=$(sel);if(el)el.onchange=()=>{rpF[k]=num?+el.value:el.value;run()}};
  bind('#fY','y',1);bind('#fM','m',1);bind('#fM1','m1',1);bind('#fM2','m2',1);bind('#fB','biz');bind('#fE','emp');bind('#fA','ag');bind('#fBy','by');
  if($('#fE')&&!rpF.emp&&DB.employees.length)rpF.emp=$('#fE').value;
+ if($('#fE'))combo($('#fE'));
 }
 function outReport(o){
  // o: {title, sub, tables:[{h, def}], land, note, extra}
@@ -1010,6 +1072,277 @@ function c2316(x,y){
 
 
 // =====================================================================================
+// Searchable employee picker: a <select> that can also be typed into
+// =====================================================================================
+function combo(sel,ph){
+ if(!sel||sel._cb)return sel;sel._cb=1;
+ const w=document.createElement('div');w.className='cb';sel.parentNode.insertBefore(w,sel);w.appendChild(sel);
+ sel.classList.add('cb-sel');sel.tabIndex=-1;sel.setAttribute('aria-hidden','true');
+ const inp=document.createElement('input');inp.type='text';inp.autocomplete='off';inp.spellcheck=false;inp.placeholder=ph||'Type a name to search';
+ inp.setAttribute('role','combobox');inp.setAttribute('aria-autocomplete','list');inp.setAttribute('aria-expanded','false');
+ const lid='cbl'+uid();inp.setAttribute('aria-controls',lid);if(sel.id)inp.id=sel.id+'_q';
+ const lab=sel.closest('.fg')&&$('label',sel.closest('.fg'));if(lab&&sel.id)lab.setAttribute('for',inp.id);
+ const ls=document.createElement('div');ls.className='cb-list';ls.id=lid;ls.hidden=true;ls.setAttribute('role','listbox');
+ w.append(inp,ls);
+ let items=[],act=-1,typed=false;
+ const curText=()=>{const o=sel.options[sel.selectedIndex];return o?o.text:''};
+ const show=()=>{if(document.activeElement!==inp||!typed)inp.value=curText()};
+ const paintAct=()=>{$$('[data-i]',ls).forEach(d=>{const on=+d.dataset.i===act;d.classList.toggle('on',on);d.setAttribute('aria-selected',on?'true':'false');if(on){inp.setAttribute('aria-activedescendant',d.id);d.scrollIntoView({block:'nearest'})}})};
+ const open=all=>{const words=all?[]:inp.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  items=[...sel.options].filter(o=>{if(!o.text)return false;const t=o.text.toLowerCase();return words.every(x=>t.includes(x))});
+  ls.innerHTML=items.slice(0,300).map((o,i)=>'<div role="option" id="'+lid+'_'+i+'" data-i="'+i+'">'+esc(o.text)+'</div>').join('')||'<div class="none">No match</div>';
+  act=all?items.findIndex(o=>o.value===sel.value):(items.length?0:-1);ls.hidden=false;inp.setAttribute('aria-expanded','true');paintAct()};
+ const close=()=>{ls.hidden=true;inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant')};
+ const pick=o=>{typed=false;close();if(!o){inp.value=curText();return}const ch=sel.value!==o.value;sel.value=o.value;inp.value=o.text;if(ch)sel.dispatchEvent(new Event('change',{bubbles:true}))};
+ let fresh=false;
+ inp.addEventListener('focus',()=>{typed=false;inp.select();fresh=true;open(true)});
+ inp.addEventListener('mouseup',e=>{if(fresh){e.preventDefault();fresh=false}});
+ inp.addEventListener('keydown',()=>{fresh=false},true);
+ inp.addEventListener('click',()=>{if(ls.hidden)open(true)});
+ inp.addEventListener('input',()=>{typed=true;open(false)});
+ inp.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(ls.hidden)return open(true);if(!items.length)return;act=e.key==='ArrowDown'?Math.min(items.length-1,act+1):Math.max(0,act-1);paintAct()}
+  else if(e.key==='Enter'){if(!ls.hidden){e.preventDefault();e.stopPropagation();pick(items[act])}}
+  else if(e.key==='Escape'){if(!ls.hidden){e.preventDefault();e.stopPropagation();typed=false;close();inp.value=curText()}}
+  else if(e.key==='Tab'){if(!ls.hidden&&typed&&items[act])pick(items[act]);else close()}});
+ inp.addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement===inp)return;close();typed=false;inp.value=curText()},120));
+ ls.addEventListener('mousedown',e=>{e.preventDefault();const d=e.target.closest('[data-i]');if(d)pick(items[+d.dataset.i])});
+ sel.addEventListener('change',show);
+ new MutationObserver(show).observe(sel,{childList:true,subtree:true});
+ // keep the text in step when the code sets the value
+ const D=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+ Object.defineProperty(sel,'value',{configurable:true,get(){return D.get.call(sel)},set(v){D.set.call(sel,v);typed=false;inp.value=curText()}});
+ sel._inp=inp;show();return sel}
+
+// =====================================================================================
+// Payroll Run: copy from the last cutoff
+// =====================================================================================
+const copyOpts=c=>'<label class="ck"><input type="checkbox" data-co="t"'+(c?' checked':'')+'> Days worked, absences, leave, lates and overtime hours</label>'
+ +'<label class="ck"><input type="checkbox" data-co="i"> Other pay and deductions typed in that payroll (commission, incentive, uniform…), but not loans or 13th month pay</label>'
+ +'<p class="note" style="margin:4px 0 0">Holidays are not copied because the dates are different. Recurring items from the employee records are filled in either way.</p>';
+const readCopyOpts=el=>({t:!!($('[data-co=t]',el)||{}).checked,i:!!($('[data-co=i]',el)||{}).checked});
+const NOCOPY=new Set(['m13','sil','sepx','sept']);
+function copyInto(src,run,o){let n=0;
+ run.rows.forEach(r=>{const x=src.rows.find(y=>y.empId===r.empId);if(!x)return;let did=false;
+  if(o.t&&x.basis===r.basis){['days','abs','leave','late','ot','nd','rd','rdot'].forEach(k=>{const v=+(x.tm||{})[k]||0;if(v){r.tm[k]=v;did=true}else if(k==='days'||k==='abs'){if(k in r.tm)r.tm[k]=0}else delete r.tm[k]});delete r.man.ot;delete r.man.allow}
+  if(o.i){const rec=new Set(((empById(r.empId)||{}).recur||[]).map(z=>z.item));Object.entries(x.items||{}).forEach(([id,v])=>{if(!v||NOCOPY.has(id)||rec.has(id)||!DB.items.some(i=>i.id===id&&i.active!==false))return;r.items[id]=v;did=true})}
+  if(did)n++});
+ return n}
+function copyModal(run,after){const pv=prevRun(run);if(!pv)return toast('There is no earlier payroll to copy from.','bad');
+ const m=modal('<h2>Copy from '+esc(perLabel(pv.year,pv.month,pv.q))+'</h2><p>Fills this payroll with what was entered in the last payroll, for employees who were in it. What you typed in this payroll for those entries is replaced.</p>'+copyOpts(true)
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="cpGo">Copy</button></div>',600);
+ $('#cpGo',m).onclick=()=>{const o=readCopyOpts(m);if(!o.t&&!o.i)return toast('Tick what to copy.','bad');const n=copyInto(pv,run,o);recalcFrom(run);save();m.close();after();toast('Copied entries for '+n+' employee'+(n===1?'':'s')+'.','ok')}}
+
+// rates a payroll row should have: those in effect on the first day of its cutoff
+const wantRate=(e,run)=>{const R=rateAt(e,cutoff(run.year,run.month,run.q)[0]);return{basis:e.basis||'daily',rate:R.rate,monthly:R.monthly||0,factor:+e.factor||261,daily:dailyOf(Object.assign({},e,R)),allowance:R.allowance||0}};
+function rateDiff(run){return run.rows.filter(r=>{const e=empById(r.empId);if(!e)return false;const w=wantRate(e,run);return w.daily!==r.daily||w.monthly!==(r.monthly||0)||w.allowance!==(r.allowance||0)||w.basis!==r.basis})}
+function syncRowRate(run,r){const e=empById(r.empId);if(!e)return;const w=wantRate(e,run);
+ if(w.basis!==r.basis)r.tm=w.basis==='monthly'?{abs:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol}:{days:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol};
+ Object.assign(r,w,{position:e.position,business:e.business,name:fullName(e),status:e.status||''})}
+
+// =====================================================================================
+// Payroll Run: checks before finalizing
+// =====================================================================================
+function runChecks(run){
+ const C=[],add=(id,lvl,msg,names)=>{if(!names.length)return;C.push({id,lvl,msg,names})},E=r=>empById(r.empId)||{},a=cutoff(run.year,run.month,run.q)[0];
+ add('neg','bad','Net pay is negative. Reduce the deductions before finalizing.',run.rows.filter(r=>r.net<0).map(r=>r.name));
+ add('zero','warn','No pay in this cutoff. They are removed from the payroll when you finalize.',run.rows.filter(r=>!r.gross).map(r=>r.name));
+ add('days','warn','Days worked plus paid leave are more than 16 in one cutoff.',run.rows.filter(r=>r.basis!=='monthly'&&(+r.tm.days||0)+(+r.tm.leave||0)>16).map(r=>r.name));
+ const miss=(f,lbl,has,who)=>add('id_'+f,'warn','No '+lbl+' in the employee record. '+who+' reports need it.',run.rows.filter(r=>has(r)&&!String(E(r)[f]||'').trim()).map(r=>r.name));
+ miss('sss','SSS no.',r=>r.sss,'The SSS');miss('ph','PhilHealth no.',r=>r.ph,'The PhilHealth');miss('hdmf','Pag-IBIG no.',r=>r.pg,'The Pag-IBIG');miss('tin','TIN',r=>r.gross,'BIR 2316 and alphalist');
+ const pv=prevRun(run);
+ if(pv){const big=[];run.rows.forEach(r=>{const o=pv.rows.find(x=>x.empId===r.empId);if(!o||!o.net||!r.gross)return;const d=r.net-o.net;if(Math.abs(d)>=50000&&Math.abs(d)>=Math.abs(o.net)*.3)big.push(r.name+': '+n2(o.net)+' → '+n2(r.net)+' ('+(d>0?'+':'')+Math.round(d/o.net*100)+'%)')});
+  add('chg','warn','Net pay changed by 30% or more from '+perShort(pv.year,pv.month,pv.q)+'. Make sure it is expected.',big)}
+ add('new','warn','Active employees who are not in this payroll (new hires?). Use “Add employee” if they should be paid.',DB.employees.filter(e=>e.active!==false&&employedIn(e,run.year,run.month,run.q)&&!run.rows.some(r=>r.empId===e.id)).sort(empCmp).map(fullName));
+ add('sep','warn','Separated before this cutoff or marked inactive, but still in this payroll.',run.rows.filter(r=>{const e=E(r);return!r.fp&&((e.separated&&e.separated<a)||e.active===false)}).map(r=>r.name));
+ add('rate','info','Pay rates are different from the employee records. Use “Update rates” if the records are right.',rateDiff(run).map(r=>r.name));
+ const ML={allow:'meal allowance',hol:'holiday pay',ot:'OT',sss:'SSS',ph:'PhilHealth',pg:'Pag-IBIG',tax:'tax'};
+ add('man','info','Amounts typed over the automatic amount (yellow boxes).',run.rows.filter(r=>Object.keys(r.man||{}).length).map(r=>r.name+' ('+Object.keys(r.man).map(k=>ML[k]||k).join(', ')+')'));
+ add('draft','info','Earlier payrolls this year are still drafts.',DB.runs.filter(x=>x.year===run.year&&x.status!=='final'&&pkey(x.year,x.month,x.q)<pkey(run.year,run.month,run.q)).sort((x,y)=>pkey(x.year,x.month,x.q)-pkey(y.year,y.month,y.q)).map(x=>perShort(x.year,x.month,x.q)));
+ return C}
+const checksHtml=C=>'<div class="checks">'+C.map(c=>'<div class="ckr '+c.lvl+'"><div><b>'+esc(c.msg)+'</b> <span class="chip'+(c.lvl==='bad'?' bad':c.lvl==='warn'?' warn':'')+'">'+c.names.length+'</span></div><div class="nl">'+c.names.slice(0,15).map(esc).join('; ')+(c.names.length>15?' … and '+(c.names.length-15)+' more':'')+'</div></div>').join('')+'</div>';
+function checkModal(run){const C=runChecks(run);
+ modal('<h2>Checks · '+esc(perLabel(run.year,run.month,run.q))+'</h2>'+(C.length?checksHtml(C):'<p class="chip ok">No issues found.</p>')+'<div class="acts"><button class="btn" data-x>Close</button></div>',760)}
+
+// =====================================================================================
+// Payroll Run: time sheet for everyone (hours, absences, lates, holidays) on one screen
+// =====================================================================================
+const TCOLS=[['days','Days worked','days','d'],['abs','Absences','days','m'],['leave','Leave with pay','days'],['late','Lates & undertime','minutes'],['ot','Overtime','hours'],['nd','Night diff.','hours'],['rd','Rest day work','hours'],['rdot','Rest day OT','hours']];
+const holVal=x=>x.s==='worked'?(x.rd?'wrd':'worked'):(x.s||'auto');
+const holOpts=(h,x)=>opt(h.type==='R'?[['auto','Auto'],['paid','Off, paid'],['worked','Worked'],['wrd','Worked, rest day'],['none','Not paid']]:[['auto','Off'],['worked','Worked'],['wrd','Worked, rest day']],holVal(x));
+const visRows=run=>run.rows.filter(r=>(runUI.biz==='ALL'||r.business===runUI.biz)&&(!runUI.q||r.name.toLowerCase().includes(runUI.q.toLowerCase())));
+function timeGridHtml(run,rows,fin){const hs=holsIn(run.year,run.month,run.q),dis=fin?' disabled':'';
+ let h='<div class="tw" style="max-height:66vh"><table class="t grid tg'+(fin?' locked':'')+'" id="tGrid"><thead><tr><th>Employee</th>'+TCOLS.map(c=>'<th>'+c[1]+'<small>'+c[2]+'</small></th>').join('')
+  +hs.map(x=>'<th class="hcol'+(x.type==='R'?' grpE':'')+'">'+esc(fdw(x.date))+'<small>'+esc(x.name)+' · '+(x.type==='R'?'regular':'special')+'</small></th>').join('')
+  +'<th>Basic pay</th><th>Holiday pay</th><th>OT & premium</th><th>Gross pay</th></tr></thead><tbody>';
+ rows.forEach(({r,i})=>{const mo=r.basis==='monthly',tm=r.tm||{};
+  h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(mo?'monthly-paid':'daily-paid')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Full time window (fewer hours on a holiday, etc.)">⏱</button></div></td>'
+   +TCOLS.map(c=>{const na=(c[3]==='d'&&mo)||(c[3]==='m'&&!mo);return '<td>'+(na?'<input data-t="'+c[0]+'" class="na" value="–" disabled tabindex="-1" aria-hidden="true">':'<input data-t="'+c[0]+'" inputmode="decimal" value="'+(+tm[c[0]]||'')+'" aria-label="'+esc(c[1]+' – '+r.name)+'"'+dis+'>')+'</td>'}).join('')
+   +hs.map(x=>{const o=(tm.hol||{})[x.date]||{};return '<td class="hc"><select data-hs="'+x.date+'" aria-label="'+esc(x.name+' – '+r.name)+'"'+dis+'>'+holOpts(x,o)+'</select><input data-ho="'+x.date+'" inputmode="decimal" placeholder="OT h" title="Overtime hours on '+esc(x.name)+'" aria-label="'+esc('Overtime on '+x.name+' – '+r.name)+'" value="'+(+o.ot||'')+'"'+dis+'></td>'}).join('')
+   +['basic','hol','ot','gross'].map(k=>'<td class="calc" data-c="'+k+'"></td>').join('')+'</tr>'});
+ if(!rows.length)h+='<tr><td colspan="'+(TCOLS.length+hs.length+5)+'" class="empty">No employees match.</td></tr>';
+ h+='</tbody><tfoot><tr><td>TOTAL</td>'+TCOLS.map(c=>'<td class="calc" data-tt="'+c[0]+'"></td>').join('')+hs.map(()=>'<td></td>').join('')+['basic','hol','ot','gross'].map(k=>'<td class="calc" data-tt="'+k+'"></td>').join('')+'</tr></tfoot></table></div>';
+ h+='<p class="note">Days worked do not count holidays. Lates and undertime in minutes; overtime, night shift and rest day work in hours. '+(hs.length?'Holidays: “Auto” pays a regular holiday to daily-paid employees who worked in this cutoff; “Worked” counts 8 hours (use ⏱ for fewer). ':'')+'Paste columns copied from a spreadsheet; <span class="kbd">Enter</span> moves down. Changes are saved as you type.</p>';
+ return h}
+function paintTimeRow(run,i){const r=run.rows[i],tr=$('#tGrid tr[data-i="'+i+'"]');if(!tr)return;$$('td[data-c]',tr).forEach(td=>td.textContent=m2(r[td.dataset.c]||0));const b=$('[data-tm]',tr);if(b)b.classList.toggle('on',hasTime(r))}
+function paintTimeFoot(run){const L=visRows(run);$$('#tGrid td[data-tt]').forEach(td=>{const k=td.dataset.tt;td.textContent=['basic','hol','ot','gross'].includes(k)?n2(L.reduce((s,r)=>s+(r[k]||0),0)):fN(L.reduce((s,r)=>s+(+(r.tm||{})[k]||0),0))})}
+function paintTime(run,rows){rows.forEach(({i})=>paintTimeRow(run,i));paintTimeFoot(run)}
+function bindTime(run,redraw){const g=$('#tGrid');if(!g)return;
+ const upd=t=>{const tr=t.closest('tr');if(!tr)return;const i=+tr.dataset.i,r=run.rows[i];r.tm=r.tm||{};r.man=r.man||{};
+  if(t.dataset.t){const k=t.dataset.t,v=Math.max(0,parseFloat(String(t.value).replace(/,/g,''))||0);
+   if(v)r.tm[k]=v;else if(k==='days'||k==='abs')r.tm[k]=0;else delete r.tm[k];
+   if(['ot','nd','rd','rdot'].includes(k))delete r.man.ot;else delete r.man.allow;
+   t.classList.toggle('bad',r.basis!=='monthly'&&(+r.tm.days||0)+(+r.tm.leave||0)>16)}
+  else{const d=t.dataset.hs||t.dataset.ho;r.tm.hol=r.tm.hol||{};const x=r.tm.hol[d]||{};
+   if(t.dataset.hs){const s=t.value;delete x.rd;if(s==='auto')delete x.s;else if(s==='wrd'){x.s='worked';x.rd=true}else x.s=s}
+   else{const v=Math.max(0,parseFloat(t.value)||0);if(v){x.ot=v;if(!x.s)x.s='worked'}else delete x.ot;const sel=$('select[data-hs="'+d+'"]',tr);if(sel)sel.value=holVal(x)}
+   if(!x.s&&!x.ot&&x.h==null&&!x.rd)delete r.tm.hol[d];else r.tm.hol[d]=x;
+   delete r.man.hol;delete r.man.ot;delete r.man.allow}
+  calcRow(run,r);paintTimeRow(run,i);paintTimeFoot(run);save()};
+ g.addEventListener('input',e=>{if(e.target.matches('input[data-t],input[data-ho]'))upd(e.target)});
+ g.addEventListener('change',e=>{if(e.target.matches('select[data-hs]'))upd(e.target)});
+ const keyOf=t=>t.dataset.t?'[data-t="'+t.dataset.t+'"]':t.dataset.ho?'[data-ho="'+t.dataset.ho+'"]':null;
+ g.addEventListener('keydown',e=>{const t=e.target,k=keyOf(t);if(!k||t.tagName!=='INPUT'||!['Enter','ArrowDown','ArrowUp'].includes(e.key))return;e.preventDefault();
+  let tr=t.closest('tr');do{tr=e.key==='ArrowUp'?tr.previousElementSibling:tr.nextElementSibling;const n=tr&&$('input'+k,tr);if(n&&!n.disabled){n.focus();n.select();return}}while(tr)});
+ g.addEventListener('focusin',e=>{if(e.target.tagName==='INPUT')setTimeout(()=>e.target.select(),0)});
+ g.addEventListener('paste',e=>{const t=e.target;if(!keyOf(t)||t.tagName!=='INPUT')return;const txt=(e.clipboardData||window.clipboardData).getData('text');if(!/[\r\n\t]/.test(txt.trim()))return;e.preventDefault();
+  const vals=txt.replace(/\r/g,'').split('\n').filter((x,i,a)=>!(i===a.length-1&&x==='')).map(x=>x.split('\t'));let tr=t.closest('tr'),n=0;
+  vals.forEach(row=>{if(!tr)return;const all=$$('input[data-t],input[data-ho]',tr),start=all.indexOf($('input'+keyOf(t),tr));
+   row.forEach((v,j)=>{const el=all[start+j];if(!el||el.disabled)return;el.value=String(v).replace(/[,\s]/g,'');upd(el)});n++;tr=tr.nextElementSibling});
+  toast('Pasted '+n+' row'+(n===1?'':'s')+'.','ok')});
+ g.addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b)timeModal(run,+b.dataset.tm,redraw)});
+}
+
+// =====================================================================================
+// Employees: change rates with an effective date, edit many at once
+// =====================================================================================
+function nextCutoffStart(){const n=new Date(),y=n.getFullYear(),m=n.getMonth()+1;return n.getDate()<=15?ymd(y,m,16):(m===12?ymd(y+1,1,1):ymd(y,m+1,1))}
+function rateModal(ids,after){
+ const L=ids.map(empById).filter(Boolean).sort(empCmp);if(!L.length)return toast('Tick the employees first.','bad');
+ const m=modal('<h2>Change pay rates</h2><p class="note">'+L.length+' employee'+(L.length===1?'':'s')+'. The old rates stay in each employee’s rate history, so payrolls before the effective date keep using them.</p><div class="grid3">'
+  +fg('Change','<select id="rcW">'+opt([['pay','Pay rate (daily rate, or monthly salary)'],['allow','Meal allowance per day']],'pay')+'</select>')
+  +fg('How','<select id="rcH">'+opt([['add','Add an amount (₱)'],['pct','Add a percentage (%)'],['set','Set to an amount (₱)']],'add')+'</select>')
+  +fg('Amount','<input type="number" step="0.01" id="rcV" placeholder="e.g. 25">')
+  +fg('Effective date','<input type="date" id="rcD" value="'+nextCutoffStart()+'">')
+  +fg('Reason or reference','<input id="rcN" placeholder="e.g. Wage Order No. RBVII-25">')+'</div><p class="note" id="rcDn"></p><div id="rcPv"></div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="rcGo">Apply</button></div>',860);
+ const calc=()=>{const w=$('#rcW',m).value,h=$('#rcH',m).value,raw=$('#rcV',m).value,v=parseFloat(raw);
+  return L.map(e=>{const k=w==='allow'?'allowance':(e.basis==='monthly'?'monthly':'rate'),old=e[k]||0;let nw=old;if(raw!==''&&Number.isFinite(v))nw=h==='add'?old+Math.round(v*100):h==='pct'?Math.round(old*(1+v/100)):Math.round(v*100);return{e,k,old,nw:Math.max(0,nw)}})};
+ const paint=()=>{const d=$('#rcD',m).value,day=+d.slice(8,10);
+  $('#rcDn',m).innerHTML=!d?'':(day!==1&&day!==16?'<b style="color:var(--warn)">This date is inside a cutoff.</b> A payroll uses the rates in effect on the first day of its cutoff, so the new rate starts with the next cutoff. Pay the difference for the days before that as Salary Adjustment.':'Payrolls whose cutoff starts on or after '+esc(fd(d))+' use the new rate. Draft payrolls from that date are updated.');
+  const P=calc();$('#rcPv',m).innerHTML='<div class="tw" style="max-height:40vh"><table class="t"><thead><tr><th>Employee</th><th>Business</th><th>Rate</th><th class="n">Now</th><th class="n">New</th><th class="n">Change</th></tr></thead><tbody>'
+   +P.map(x=>'<tr><td>'+esc(fullName(x.e))+'</td><td>'+esc(x.e.business)+'</td><td>'+(x.k==='allowance'?'meal allowance a day':x.k==='monthly'?'monthly salary':'daily rate')+'</td><td class="n">'+n2(x.old)+'</td><td class="n"><b>'+n2(x.nw)+'</b></td><td class="n">'+(x.nw!==x.old?n2(x.nw-x.old):'–')+'</td></tr>').join('')+'</tbody></table></div>'};
+ $$('input,select',m).forEach(el=>{el.addEventListener('input',paint);el.addEventListener('change',paint)});paint();
+ $('#rcGo',m).onclick=()=>{const d=$('#rcD',m).value;if(!d)return toast('Enter the effective date.','bad');if($('#rcV',m).value==='')return toast('Enter the amount.','bad');
+  const P=calc().filter(x=>x.nw!==x.old);if(!P.length)return toast('No rate changes.','bad');
+  const late=P.find(x=>(x.e.hist||[]).some(h=>h.eff>=d));if(late)return toast(fullName(late.e)+' already has a rate change on or after '+fd(d)+'. Undo it first in the employee’s rate history.','bad',7000);
+  const note=$('#rcN',m).value.trim().slice(0,120);
+  P.forEach(x=>{const e=x.e,from={rate:e.rate||0,monthly:e.monthly||0,allowance:e.allowance||0};e[x.k]=x.nw;e.hist=(e.hist||[]).concat({id:'h'+uid(),eff:d,from,to:{rate:e.rate||0,monthly:e.monthly||0,allowance:e.allowance||0},note,at:new Date().toISOString()})});
+  let nr=0;DB.runs.filter(r=>r.status!=='final'&&cutoff(r.year,r.month,r.q)[0]>=d).sort((a,b)=>pkey(a.year,a.month,a.q)-pkey(b.year,b.month,b.q)).forEach(r=>{const ch=rateDiff(r).filter(x=>P.some(p=>p.e.id===x.empId));ch.forEach(x=>syncRowRate(r,x));if(ch.length){recalcFrom(r);nr++}});
+  save();m.close();after&&after();toast('New rates for '+P.length+' employee'+(P.length===1?'':'s')+' from '+fd(d)+'.'+(nr?' '+nr+' draft payroll'+(nr===1?' was':'s were')+' updated.':''),'ok',6000)}}
+function histHtml(e){const H=(e.hist||[]).slice().sort((a,b)=>cmp(b.eff,a.eff));if(!H.length)return '<p class="note">No rate changes recorded yet. Use “Change rates…” to give a raise with an effective date; editing the rate above corrects it for all payrolls created from now on.</p>';
+ const R=(o)=>e.basis==='monthly'?'₱'+n2(o.monthly)+'/mo':'₱'+n2(o.rate)+'/day';
+ return '<div class="tw"><table class="t"><thead><tr><th>Effective</th><th>Pay rate</th><th>Meal allowance</th><th>Reason</th><th></th></tr></thead><tbody>'+H.map((h,i)=>'<tr><td>'+esc(fd(h.eff))+'</td><td>'+R(h.from)+' → <b>'+R(h.to)+'</b></td><td>'+(h.from.allowance!==h.to.allowance?n2(h.from.allowance)+' → <b>'+n2(h.to.allowance)+'</b>':'–')+'</td><td class="wrap">'+esc(h.note)+'</td><td>'+(i===0?'<button type="button" class="btn o s" data-hu="'+h.id+'">Undo</button>':'')+'</td></tr>').join('')+'</tbody></table></div>'}
+function bulkModal(ids,after){
+ const L=ids.map(empById).filter(Boolean);if(!L.length)return toast('Tick the employees first.','bad');
+ const nc='— no change —';
+ const m=modal('<h2>Edit '+L.length+' employee'+(L.length===1?'':'s')+'</h2><p class="note">Only the fields you fill in or choose are changed. Pay rates are changed with “Change rates…” so their history is kept.</p><div class="grid3">'
+  +fg('Business','<input id="bBiz" list="bBizL" placeholder="'+nc+'"><datalist id="bBizL">'+bizList().map(b=>'<option value="'+esc(b)+'">').join('')+'</datalist>')
+  +fg('Position','<input id="bPos" placeholder="'+nc+'">')
+  +fg('Employment status','<select id="bStat">'+opt([['',nc]].concat(STATUSES),'')+'</select>')
+  +fg('Days factor (monthly-paid)','<select id="bFac">'+opt([['',nc],[261,'261 – 5-day week'],[313,'313 – 6-day week'],[365,'365 – paid every day']],'')+'</select>')
+  +fg('Minimum wage earner','<select id="bMwe">'+opt([['',nc],['1','Yes'],['0','No']],'')+'</select>')
+  +fg('Included in new payrolls','<select id="bAct">'+opt([['',nc],['1','Active'],['0','Inactive']],'')+'</select>')+'</div>'
+  +'<h3 style="margin-top:12px">Recurring pay or deduction every cutoff</h3><div class="row">'+fg('Item','<select id="bItem">'+opt([['',nc]].concat(DB.items.filter(i=>i.active!==false).map(i=>[i.id,i.name+(i.kind==='D'?' (deduction)':'')])),'')+'</select>')
+  +fg('Action','<select id="bIA">'+opt([['set','Set the amount per cutoff'],['rm','Remove it']],'set')+'</select>')+fg('Amount per cutoff (₱)','<input type="number" step="0.01" min="0" id="bIV">')+'</div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="bGo">Apply to '+L.length+'</button></div>',820);
+ $('#bGo',m).onclick=()=>{const g=k=>$(k,m).value.trim();let n=0;const it=g('#bItem'),ia=g('#bIA'),iv=c100(g('#bIV'));
+  if(it&&ia==='set'&&!iv)return toast('Enter the amount per cutoff, or choose “Remove it”.','bad');
+  L.forEach(e=>{const b=JSON.stringify(e);
+   if(g('#bBiz'))e.business=g('#bBiz');if(g('#bPos'))e.position=g('#bPos');if(g('#bStat'))e.status=g('#bStat');if(g('#bFac')&&e.basis==='monthly')e.factor=+g('#bFac');
+   if(g('#bMwe'))e.mwe=g('#bMwe')==='1';if(g('#bAct'))e.active=g('#bAct')==='1';
+   if(it){e.recur=(e.recur||[]).filter(x=>x.item!==it);if(ia==='set')e.recur.push({item:it,amt:iv})}
+   if(JSON.stringify(e)!==b)n++});
+  if(g('#bBiz')&&!DB.biz.some(x=>x.name===g('#bBiz')))DB.biz.push({name:g('#bBiz')});
+  save();m.close();after&&after();toast(n+' employee'+(n===1?'':'s')+' updated.'+(n?' Draft payrolls keep their rows; use “Update rates” there to bring in the new business or position.':''),'ok',6000)}}
+
+// =====================================================================================
+// Final pay for an employee who is leaving
+// =====================================================================================
+const SEP_REASONS=[['resign','Resigned'],['eoc','End of contract or project'],['just','Dismissed for a just cause'],['red','Redundancy or labor-saving devices (authorized cause)'],['ret','Retrenchment or closure (authorized cause)'],['dis','Disease (authorized cause)'],['retire','Retirement'],['death','Death']];
+const SEP_EXEMPT=new Set(['red','ret','dis','death']);
+function ensureItem(id,name,tax){let it=DB.items.find(i=>i.id===id);if(!it){it={id,name,kind:'E',tax};DB.items.push(it)}it.active=true;return it}
+function yrsOfService(e,d){if(!e.hired)return 0;const a=new Date(e.hired+'T00:00'),b=new Date(d+'T00:00');let m=(b.getFullYear()-a.getFullYear())*12+b.getMonth()-a.getMonth();if(b.getDate()<a.getDate())m--;return Math.max(0,m)/12}
+function fpCalc(e,d,run){const y=+d.slice(0,4);let basic=0,paid13=0,leave=0;
+ DB.runs.filter(r=>r.year===y&&cutoff(r.year,r.month,r.q)[0]<=d).forEach(r=>{const x=r.rows.find(z=>z.empId===e.id);if(!x)return;basic+=x.basic||0;leave+=+x.leave||0;if(!x.fp)paid13+=(x.items||{}).m13||0});
+ const o=(DB.ytd[y]||{})[e.id]||{};basic+=o.basic13||0;paid13+=o.paid13||0;
+ const yrs=yrsOfService(e,d),silEnt=yrs>=1?(S().silDays||5):0,daily=dailyAt(e,d),R=rateAt(e,d),monthly=e.basis==='monthly'?R.monthly:Math.round(daily*26);
+ const bals=DB.dtypes.map(t=>({id:t.id,name:t.name,bal:pos(ledgerBal(e.id,t.id,run||null))})).filter(x=>x.bal>0);
+ return{basic,paid13,m13:pos(Math.round(basic/12)-paid13),leave,silEnt,silLeft:Math.max(0,r4(silEnt-leave)),daily,monthly,yrs,bals}}
+function finalPayModal(id,after){
+ const e=empById(id);if(!e)return;const d0=e.separated||today();
+ const drafts=DB.runs.filter(r=>r.status!=='final').sort((a,b)=>pkey(b.year,b.month,b.q)-pkey(a.year,a.month,a.q));
+ const m=modal('<h2>Final pay · '+esc(fullName(e))+'</h2><p class="note" style="margin-top:-4px">'+esc(e.business)+(e.position?' · '+esc(e.position):'')+(e.hired?' · hired '+esc(fd(e.hired)):'')+'</p>'
+  +'<div class="grid3">'+fg('Last day of work','<input type="date" id="fpD" value="'+esc(d0)+'">')+fg('Reason','<select id="fpR">'+opt(SEP_REASONS,'resign')+'</select>')+fg('Put the final pay in this payroll','<select id="fpRun"></select>','<span id="fpRunN"></span>')+'</div>'
+  +'<div id="fpBody"></div>'
+  +'<label class="ck"><input type="checkbox" id="fpAnn" checked> Compute the year’s tax in the final payroll (annualize; may give a refund)</label>'
+  +'<label class="ck"><input type="checkbox" id="fpSep" checked> Mark the employee as separated on the last day and inactive</label>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="fpGo">Add to payroll</button></div>',880);
+ const fillRuns=()=>{const d=$('#fpD',m).value||today(),y=+d.slice(0,4),mo=+d.slice(5,7),q=+d.slice(8,10)<=15?1:2,has=runOf(y,mo,q);
+  const o=drafts.map(r=>[r.id,perLabel(r.year,r.month,r.q)+(r.rows.some(x=>x.empId===id)?'':' (employee will be added)')]);
+  if(!has)o.unshift(['new:'+y+'-'+mo+'-'+q,'New payroll for '+perLabel(y,mo,q)]);
+  const cur=$('#fpRun',m).value;$('#fpRun',m).innerHTML=opt(o,o.some(x=>x[0]===cur)?cur:(has&&has.status!=='final'?has.id:o[0]&&o[0][0]));
+  $('#fpRunN',m).textContent=has&&has.status==='final'?'The payroll for that cutoff is already final. Reopen it in Payroll Run to add the final pay to it, or choose another draft.':'Pay the last days worked in that payroll as usual.'};
+ let F=null;
+ const paint=()=>{const d=$('#fpD',m).value||today(),rs=$('#fpR',m).value,rv=$('#fpRun',m).value,run=DB.runs.find(r=>r.id===rv);F=fpCalc(e,d,run);
+  const half=Math.round(F.monthly/2),yr=Math.max(1,Math.round(F.yrs)),old=$('#fpBody',m).dataset.k===d;
+  const val=(k,def)=>old&&$('#'+k,m)?$('#'+k,m).value:def;
+  $('#fpBody',m).dataset.k=d;
+  $('#fpBody',m).innerHTML='<table class="t kvt"><tbody>'
+   +'<tr><td><b>13th month pay not yet paid</b><small>Basic pay earned this year ₱'+n2(F.basic)+' ÷ 12 = ₱'+n2(Math.round(F.basic/12))+', less ₱'+n2(F.paid13)+' already paid. Includes the payroll you choose if its days are entered.</small></td><td><input type="number" step="0.01" min="0" id="fpM13" value="'+val('fpM13',pe(F.m13))+'"></td></tr>'
+   +'<tr><td><b>Unused service incentive leave, converted to cash</b><small>'+(F.silEnt?F.silEnt+' days a year, '+r4(F.leave)+' used this year':'Not yet 1 year of service')+' · daily rate ₱'+n2(F.daily)+'</small></td><td><input type="number" step="0.5" min="0" id="fpSil" value="'+val('fpSil',F.silLeft||'')+'" title="days"> days = ₱<b id="fpSilA"></b></td></tr>'
+   +'<tr><td><b>Separation pay</b><small>'+(SEP_EXEMPT.has(rs)?'Tax-exempt for causes beyond the employee’s control. ':'Usually none for this reason (taxable if given). ')+'Reference, '+F.yrs.toFixed(1)+' years of service: ½ month a year = ₱'+n2(half*yr)+' · 1 month a year = ₱'+n2(F.monthly*yr)+'. Check the Labor Code rule for the reason.</small></td><td><input type="number" step="0.01" min="0" id="fpSp" value="'+val('fpSp','')+'"></td></tr>'
+   +'<tr><td><b>Balances to deduct</b><small>'+(F.bals.length?F.bals.map(b=>esc(b.name)+' ₱'+n2(b.bal)).join(' · '):'No loan or advance balances.')+'</small></td><td>'+(F.bals.length?'<label class="ck" style="margin:0"><input type="checkbox" id="fpBal" checked> Deduct ₱'+n2(F.bals.reduce((s,b)=>s+b.bal,0))+'</label>':'–')+'</td></tr>'
+   +'</tbody></table>';
+  const sp=()=>{$('#fpSilA',m).textContent=n2(Math.round((parseFloat($('#fpSil',m).value)||0)*F.daily))};$('#fpSil',m).oninput=sp;sp()};
+ $('#fpD',m).onchange=()=>{fillRuns();paint()};$('#fpR',m).onchange=paint;$('#fpRun',m).onchange=paint;fillRuns();paint();
+ $('#fpGo',m).onclick=()=>{const d=$('#fpD',m).value;if(!d)return toast('Enter the last day of work.','bad');if(e.hired&&d<e.hired)return toast('The last day is before the date hired.','bad');
+  let rv=$('#fpRun',m).value,run;if(!rv)return toast('Create the payroll for that cutoff first, in Payroll Run.','bad');
+  if(rv.startsWith('new:')){const [y,mo,q]=rv.slice(4).split('-').map(Number);run={id:'r'+uid(),year:y,month:mo,q,status:'draft',created:new Date().toISOString(),rows:[],show:[]};
+   DB.employees.filter(x=>(x.active!==false||x.id===id)&&employedIn(x,y,mo,q)).sort(empCmp).forEach(x=>run.rows.push(rowFromEmp(x,run)));DB.runs.push(run)}
+  else run=DB.runs.find(r=>r.id===rv);
+  if(!run||run.status==='final')return toast('Choose a draft payroll.','bad');
+  let r=run.rows.find(x=>x.empId===id);if(!r){r=rowFromEmp(e,run);run.rows.push(r)}
+  const rs=$('#fpR',m).value,m13=c100($('#fpM13',m).value),sil=Math.max(0,parseFloat($('#fpSil',m).value)||0),silAmt=Math.round(sil*F.daily),sp=c100($('#fpSp',m).value);
+  const setI=(k,v)=>{if(v)r.items[k]=v;else delete r.items[k]};
+  setI('m13',m13);ensureItem('sil','Service Incentive Leave Pay','T');setI('sil',silAmt);
+  delete r.items.sepx;delete r.items.sept;if(sp){const k=SEP_EXEMPT.has(rs)?'sepx':'sept';ensureItem(k,k==='sepx'?'Separation Pay (tax-exempt)':'Separation Pay (taxable)',k==='sepx'?'N':'T');r.items[k]=sp}
+  if($('#fpBal',m)&&$('#fpBal',m).checked)DB.dtypes.forEach(t=>{const b=pos(ledgerBal(id,t.id,run));if(b)r.ded[t.id]=b});
+  r.sepAnn=$('#fpAnn',m).checked;r.fp={date:d,reason:rs,sil,at:new Date().toISOString()};
+  if($('#fpSep',m).checked){e.separated=d;e.active=false}
+  recalcFrom(run);save();m.close();after&&after();
+  const done=modal('<h2>Final pay added</h2><p>'+esc(fullName(e))+' is in the payroll for <b>'+esc(perLabel(run.year,run.month,run.q))+'</b>. Net pay there: <b>₱'+n2(r.net)+'</b>'+(r.sepAnn?' (tax for the year '+(r.tax<0?'refunds ₱'+n2(-r.tax):'withheld ₱'+n2(r.tax))+')':'')+'.</p><p class="note">Enter the last days worked in that payroll if you have not yet. The final pay sheet always shows what is in the payroll now.</p>'
+   +'<div class="acts"><button class="btn o" data-x>Close</button><button class="btn o" id="fpPr">Print final pay sheet</button><a class="btn" href="#run/'+run.year+'-'+run.month+'-'+run.q+'" id="fpOpen">Open the payroll</a></div>',560);
+  $('#fpPr',done).onclick=()=>printFinalPay(run.id,id);$('#fpOpen',done).onclick=()=>done.close()}}
+function printFinalPay(runId,empId){const run=DB.runs.find(r=>r.id===runId),r=run&&run.rows.find(x=>x.empId===empId),e=empById(empId)||{};if(!r)return toast('That payroll no longer has this employee.','bad');
+ const fp=r.fp||{},L=(l,v,neg)=>v?'<tr><td>'+esc(l)+'</td><td class="r">'+(neg?'('+n2(v)+')':n2(v))+'</td></tr>':'';
+ let earnL=L('Salary for the last cutoff (basic pay)',r.basic)+L('Meal allowance',r.allow)+L('Holiday pay',r.hol)+L('Overtime and premium pay',r.ot);
+ DB.items.filter(i=>i.kind!=='D').forEach(i=>{const v=(r.items||{})[i.id];if(v)earnL+=L(i.id==='sil'&&fp.sil?i.name+' ('+fN(fp.sil)+' days)':i.name,v)});
+ let dedL=L('SSS',r.sss,1)+L('PhilHealth',r.ph,1)+L('Pag-IBIG',r.pg,1)+(r.tax?'<tr><td>Withholding tax'+(r.sepAnn?' (year’s tax, annualized)':'')+'</td><td class="r">'+(r.tax<0?n2(-r.tax)+' refund':'('+n2(r.tax)+')')+'</td></tr>':'');
+ DB.dtypes.forEach(t=>dedL+=L(t.name,(r.ded||{})[t.id],1));DB.items.filter(i=>i.kind==='D').forEach(i=>dedL+=L(i.name,(r.items||{})[i.id],1));
+ const rs=(SEP_REASONS.find(x=>x[0]===fp.reason)||[,''])[1];
+ const html='<div class="page">'+hd(r.business,'FINAL PAY COMPUTATION',run.status==='final'?'':'Draft – '+perLabel(run.year,run.month,run.q))
+  +'<table class="kv" style="margin-bottom:4mm"><tbody><tr><td>Employee</td><td><b>'+esc(r.name)+'</b></td></tr><tr><td>Position</td><td>'+esc(r.position||'–')+'</td></tr><tr><td>Date hired</td><td>'+esc(fd(e.hired)||'–')+'</td></tr><tr><td>Last day of work</td><td>'+esc(fd(fp.date)||'–')+'</td></tr><tr><td>Reason</td><td>'+esc(rs||'–')+'</td></tr><tr><td>Paid in payroll</td><td>'+esc(perLabel(run.year,run.month,run.q))+'</td></tr></tbody></table>'
+  +'<div class="cert"><h3>EARNINGS</h3><table class="kv"><tbody>'+earnL+'<tr><td><b>Total earnings</b></td><td class="r"><b>'+n2(r.gross)+'</b></td></tr></tbody></table>'
+  +'<h3>DEDUCTIONS</h3><table class="kv"><tbody>'+(dedL||'<tr><td>None</td><td></td></tr>')+'<tr><td><b>Total deductions</b></td><td class="r"><b>'+n2(r.totDed)+'</b></td></tr></tbody></table></div>'
+  +'<div class="net" style="margin-top:5mm"><span>NET FINAL PAY</span><b>₱ '+n2(r.net)+'</b></div>'
+  +'<p style="margin-top:8mm;font-size:9pt">I acknowledge that I received the amount above as my final pay from '+esc(r.business)+'.</p>'
+  +'<div class="sigs" style="grid-template-columns:1.4fr 1fr"><span>'+esc(r.name)+' – signature over printed name</span><span>Date received</span></div>'
+  +'<div class="sigs"><span>Prepared by</span><span>Checked by</span><span>Approved by</span></div></div>';
+ printHtml(html,false,'Final pay '+r.name)}
+
+
+// =====================================================================================
 // Backups: date-and-time file names, warning when leaving, reminders every few minutes, copies kept in this browser
 // =====================================================================================
 function stampNow(){const d=new Date();return today()+'_'+pad(d.getHours())+'h'+pad(d.getMinutes())+'m'+pad(d.getSeconds())+'s'}
@@ -1018,25 +1351,41 @@ const changedSinceBackup=()=>!!hasData()&&(!DB.meta.lastBackup||(DB.meta.rev||0)
 const tShort=iso=>{const d=new Date(iso),t=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())===today()?t:d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t};
 function bkStatus(){const el=$('#bkSt'),btn=$('#bkBtn');if(!el||!DB)return;const ch=changedSinceBackup();
  el.className='bkst '+(ch?'warn':'ok');el.textContent=ch?(DB.meta.lastBackup?'Not backed up since '+tShort(DB.meta.lastBackup):'Not backed up yet'):(DB.meta.lastBackup?'Backed up '+tShort(DB.meta.lastBackup):'');if(!hasData())el.textContent='';
+ if(FB.h&&hasData())el.textContent+=FB.ok?' · auto to “'+FB.name+'”':' · folder needs permission';
  btn.classList.toggle('due',ch);btn.title=ch?'There are changes since your last backup. Download a backup now.':'Download a backup of all payroll data'}
 // leaving the page or closing the browser: the browser shows its own "Leave site?" question when there are changes not backed up
 window.addEventListener('beforeunload',e=>{if(changedSinceBackup()){e.preventDefault();e.returnValue='You have changes that are not backed up.';return e.returnValue}});
 // if the person chose to stay, remind them right away
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&changedSinceBackup()&&S().autoBk&&Date.now()>=nextAuto)autoTick(true)});
+// ---------------------------------------------------------------- backup folder (Chrome / Edge): automatic backups written straight into a folder you choose
+const FB={h:null,ok:false,name:'',last:null,err:''};
+const fbSupported=()=>!!window.showDirectoryPicker;
+async function fbInit(){if(!fbSupported()||!IDB.db)return;try{const h=await IDB.get('bkdir');if(h&&typeof h==='object'&&h.kind==='directory'){FB.h=h;FB.name=h.name;FB.ok=(await h.queryPermission({mode:'readwrite'}))==='granted'}}catch(e){}bkStatus()}
+async function fbPick(){try{const h=await window.showDirectoryPicker({id:'ajpay-backups',mode:'readwrite',startIn:'documents'});FB.h=h;FB.name=h.name;FB.ok=true;FB.err='';try{await IDB.put('bkdir',h)}catch(e){}return true}catch(e){if(e&&e.name!=='AbortError')toast('Could not use that folder: '+e.message,'bad');return false}}
+async function fbAsk(){if(!FB.h)return false;try{FB.ok=(await FB.h.requestPermission({mode:'readwrite'}))==='granted'}catch(e){FB.ok=false}bkStatus();return FB.ok}
+async function fbWrite(name,text){try{const fh=await FB.h.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(text);await w.close();FB.last=new Date().toISOString();FB.err='';return true}catch(e){FB.err=e&&e.message||'write failed';if(e&&/permission|NotAllowed/i.test(e.name+e.message))FB.ok=false;return false}}
+// keep the newest 48 automatic files in the folder; backups made with the button are never removed
+async function fbPrune(){try{const L=[];for await(const x of FB.h.values())if(x.kind==='file'&&/^AJ-Payroll-auto_.*\.json$/.test(x.name))L.push(x.name);L.sort().reverse().slice(48).forEach(n=>FB.h.removeEntry(n).catch(()=>{}))}catch(e){}}
+async function fbForget(){FB.h=null;FB.ok=false;FB.name='';try{await IDB.put('bkdir',null)}catch(e){}bkStatus()}
 function hideAutoCard(){const c=$('#abCard');if(c)c.remove()}
 function showAutoCard(msg){hideAutoCard();const c=document.createElement('div');c.id='abCard';c.setAttribute('role','alertdialog');c.setAttribute('aria-label','Backup reminder');
- c.innerHTML='<b>Time to back up · '+esc(new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+'</b><p>'+esc(msg)+'</p><div class="row mid"><button class="btn" id="abGo">Download backup</button><button class="btn o" id="abLater">Later</button></div>';
- document.body.appendChild(c);$('#abGo').onclick=()=>backup();$('#abLater').onclick=()=>{hideAutoCard();nextAuto=Date.now()+(S().autoBk||5)*60000}}
+ const re=FB.h&&!FB.ok;
+ c.innerHTML='<b>'+(re?'Reconnect the backup folder':'Time to back up')+' · '+esc(new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+'</b><p>'+esc(msg)+'</p><div class="row mid">'+(re?'<button class="btn" id="abRe">Allow saving to “'+esc(FB.name)+'”</button><button class="btn o" id="abGo">Download instead</button>':'<button class="btn" id="abGo">Download backup</button>')+'<button class="btn o" id="abLater">Later</button></div>';
+ document.body.appendChild(c);$('#abGo').onclick=()=>backup(true);if(re)$('#abRe').onclick=async()=>{if(await fbAsk()){hideAutoCard();await autoTick(true)}};$('#abLater').onclick=()=>{hideAutoCard();nextAuto=Date.now()+(S().autoBk||5)*60000}}
 let nextAuto=Date.now()+5*60000,autoTimer=null;
 async function autoTick(force){
  if(!DB||!changedSinceBackup()){hideAutoCard();return}
  if(!force&&(!S().autoBk||Date.now()<nextAuto))return;
  nextAuto=Date.now()+(S().autoBk||5)*60000;
  await addSnap();
+ if(FB.h&&FB.ok){if(await fbWrite(bkName(true),JSON.stringify(DB))){markBackedUp();fbPrune();return}}
+ if(FB.h&&!FB.ok){showAutoCard('Automatic backups go to the folder “'+FB.name+'”. The browser needs your permission again before it can save there (it asks after the app is reopened).');return}
  showAutoCard('There are changes since '+(DB.meta.lastBackup?'your last backup at '+tShort(DB.meta.lastBackup):'you started')+'. Download a backup file (named with today’s date and time) and keep it off this computer.');
 }
-function startAutoBackup(){bkStatus();nextAuto=Date.now()+(S().autoBk||5)*60000;clearInterval(autoTimer);autoTimer=setInterval(()=>autoTick(false),20000);
- if(changedSinceBackup())setTimeout(()=>showAutoCard('This payroll data has changes that were never downloaded as a backup'+(DB.meta.lastBackup?' (last backup '+tShort(DB.meta.lastBackup)+')':'')+'. Download a backup now.'),800)}
+async function startAutoBackup(){await fbInit();bkStatus();nextAuto=Date.now()+(S().autoBk||5)*60000;clearInterval(autoTimer);autoTimer=setInterval(()=>autoTick(false),20000);
+ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+ if(FB.h&&!FB.ok)setTimeout(()=>showAutoCard('Backups are set to go to the folder “'+FB.name+'”. Click below so the browser lets this app save there again.'),800);
+ else if(changedSinceBackup()&&!FB.ok)setTimeout(()=>showAutoCard('This payroll data has changes that were never downloaded as a backup'+(DB.meta.lastBackup?' (last backup '+tShort(DB.meta.lastBackup)+')':'')+'. Download a backup now.'),800)}
 // copies inside this browser (IndexedDB), newest first, at most 12
 async function getSnaps(){if(!IDB.db)return[];try{return JSON.parse(await IDB.get('snaps')||'[]')}catch(e){return[]}}
 async function addSnap(){if(!IDB.db)return;const L=await getSnaps(),s=JSON.stringify(DB);if(L[0]&&L[0].data===s)return;L.unshift({at:new Date().toISOString(),n:DB.employees.length,r:DB.runs.length,data:s});await IDB.put('snaps',JSON.stringify(L.slice(0,12)))}
@@ -1046,6 +1395,16 @@ async function paintSnaps(el){const L=await getSnaps();if(!el.isConnected)return
  $$('[data-sd]',el).forEach(b=>b.onclick=()=>{const x=L[+b.dataset.sd],d=new Date(x.at);dl('AJ-Payroll-autobackup_'+slug(DB.company.name||'payroll')+'_'+ymd(d.getFullYear(),d.getMonth()+1,d.getDate())+'_'+pad(d.getHours())+'h'+pad(d.getMinutes())+'m'+pad(d.getSeconds())+'s.json',x.data,'application/json')});
  $$('[data-sr]',el).forEach(b=>b.onclick=async()=>{const x=L[+b.dataset.sr];if(!(await confirmBox('Go back to the copy saved '+esc(new Date(x.at).toLocaleString())+'? Everything changed after it is replaced. Download a backup of the current data first if you may need it.','Restore this copy',1)))return;
   await addSnap();DB=migrate(JSON.parse(x.data));save(true);brand();bkStatus();toast('Restored the copy from '+new Date(x.at).toLocaleString()+'.','ok');go('dash')})}
+
+function paintFold(el,after){
+ if(!fbSupported()){el.innerHTML='<p class="note">This browser cannot save into a folder by itself. Open AJ Payroll in <b>Google Chrome</b> or <b>Microsoft Edge</b> to use a backup folder; until then, use the download button above.</p>';return}
+ el.innerHTML='<p>Choose a folder and AJ Payroll saves a backup into it automatically every '+(S().autoBk||5)+' minutes when something changed, and when you press Backup. No download questions.</p>'
+  +'<p class="note">Best: a folder that Google Drive, OneDrive or Dropbox keeps in sync, so the copies also leave this computer. The newest 48 automatic files are kept; files from the Backup button are never removed.</p>'
+  +(FB.h?'<p><b>Folder:</b> '+esc(FB.name)+' · '+(FB.ok?'<span class="chip ok">saving</span>':'<span class="chip warn">needs your permission</span>')+(FB.last?' · last saved '+esc(tShort(FB.last)):'')+(FB.err?' · <span class="chip bad">'+esc(FB.err)+'</span>':'')+'</p><p class="note">Browsers ask again for permission each time the app is reopened unless you choose “Allow on every visit”.</p>':'<p><b>No folder chosen.</b> Backups are downloaded instead.</p>')
+  +'<div class="row">'+(FB.h&&!FB.ok?'<button class="btn" id="fbRe">Allow saving to “'+esc(FB.name)+'”</button>':'')+'<button class="btn'+(FB.h?' o':'')+'" id="fbPick">'+(FB.h?'Choose another folder…':'Choose backup folder…')+'</button>'+(FB.h?'<button class="btn o" id="fbOff">Stop using this folder</button>':'')+'</div>';
+ $('#fbPick',el).onclick=async()=>{if(await fbPick()){toast('Backups will be saved in “'+FB.name+'”.','ok');if(hasData())await backup();bkStatus();after()}};
+ const re=$('#fbRe',el);if(re)re.onclick=async()=>{if(await fbAsk()){toast('Saving to “'+FB.name+'” again.','ok');hideAutoCard();if(changedSinceBackup())await autoTick(true)}after()};
+ const off=$('#fbOff',el);if(off)off.onclick=async()=>{await fbForget();toast('Backups will be downloaded instead.','ok');after()}}
 
 
 // =====================================================================================
@@ -1124,12 +1483,14 @@ const SET={
     $('#yGo',m).onclick=()=>{const rows=parseCsv($('#yTx',m).value);if(rows.length<2)return toast('Paste the header and rows.','bad');let n=0;DB.ytd[y]=DB.ytd[y]||{};
      rows.slice(1).forEach(r=>{const e=DB.employees.find(x=>fullName(x).toLowerCase()===String(r[0]).trim().toLowerCase());if(!e)return;DB.ytd[y][e.id]={};F.forEach((f,i)=>DB.ytd[y][e.id][f[0]]=c100(r[i+2]));n++});save();m.close();paint();toast(n+' employees updated.','ok')}}};paint()},
  data(B){const age=backupAge();
-  B.innerHTML='<div class="card"><h2>Backup</h2><p>All payroll data is stored in this browser on this computer. If the browser’s data is cleared, or the computer fails, it is gone unless you have a backup. Download a backup at least once a week and after every finalized payroll, and keep copies outside this computer.</p><p class="note">Last backup: '+(DB.meta.lastBackup?esc(new Date(DB.meta.lastBackup).toLocaleString())+(age?' ('+age+' days ago)':''):'never')+'</p><button class="btn" id="dBk">Download backup</button></div>'
+  B.innerHTML='<div class="card"><h2>Backup</h2><p>All payroll data is stored in this browser on this computer. If the browser’s data is cleared, or the computer fails, it is gone unless you have a backup. Download a backup at least once a week and after every finalized payroll, and keep copies outside this computer.</p><p class="note">Last backup: '+(DB.meta.lastBackup?esc(new Date(DB.meta.lastBackup).toLocaleString())+(age?' ('+age+' days ago)':''):'never')+'</p><div class="row"><button class="btn" id="dBk">Back up now</button><button class="btn o" id="dBkD">Download a backup file</button></div></div>'
+   +'<div class="card"><h2>Backup folder</h2><div id="dFold"></div></div>'
    +'<div class="card"><h2>Automatic backups</h2><div class="row">'+fg('Remind me to download a backup every','<select id="dAuto">'+opt([[0,'Off'],[5,'5 minutes'],[10,'10 minutes'],[15,'15 minutes'],[30,'30 minutes'],[60,'1 hour']],S().autoBk)+'</select>','Only when something changed since the last backup. Each reminder also keeps a copy inside this browser.')+'</div><h3 style="margin-top:14px">Copies kept in this browser</h3><p class="note">The last 12 automatic copies. Use them to undo a mistake; they do not protect you if this browser’s data is cleared, so still download backups.</p><div id="dSnaps" class="note">Loading…</div></div>'
    +'<div class="card"><h2>Restore from a backup</h2><p class="note">Replaces everything in this app with the contents of the backup file.</p><input type="file" id="dFile" accept=".json"></div>'
    +'<div class="card"><h2>Storage</h2><p class="note" id="dSt"></p></div>'
    +'<div class="card"><h2>Start over</h2><p class="note">Deletes all employees, payrolls and settings in this browser. Download a backup first.</p><button class="btn d" id="dClr">Delete all data</button></div>';
-  $('#dBk').onclick=()=>{backup();SET.data(B)};
+  $('#dBk').onclick=async()=>{await backup();SET.data(B)};$('#dBkD').onclick=async()=>{await backup(true);SET.data(B)};
+  paintFold($('#dFold'),()=>SET.data(B));
   $('#dAuto').onchange=e=>{S().autoBk=+e.target.value;save(true,true);nextAuto=Date.now()+S().autoBk*60000;toast(S().autoBk?'Backup reminder every '+S().autoBk+' minutes.':'Backup reminders turned off.','ok')};
   paintSnaps($('#dSnaps'));
   $('#dFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{let d;try{d=JSON.parse(rd.result)}catch(x){return toast('That file is not an AJ Payroll backup.','bad')}
@@ -1137,7 +1498,7 @@ const SET={
    if(!(await confirmBox('Replace all current data with this backup ('+d.employees.length+' employees, '+d.runs.length+' payrolls)?','Restore',1)))return;DB=migrate(d);DB.meta.backupRev=DB.meta.rev||0;save(true,true);brand();bkStatus();toast('Backup restored.','ok');go('dash')};rd.readAsText(f)};
   $('#dClr').onclick=async()=>{if(!(await confirmBox('Delete <b>all</b> payroll data in this browser? This cannot be undone.','Delete everything',1)))return;DB=blank();save(true);brand();go('dash')};
   try{const n=JSON.stringify(DB).length;$('#dSt').textContent='Data size: '+(n/1024).toFixed(0)+' KB · '+DB.employees.length+' employees, '+DB.runs.length+' payrolls. Stored in this browser'+(IDB.db?' (IndexedDB, plus a copy in local storage while it fits).':' (local storage, about 5,000 KB available).')}catch(e){}
-  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().then(p=>{const el=$('#dSt');if(el&&el.isConnected)el.textContent+=p?' The browser has agreed to keep this data even when the disk is low on space.':' The browser has not promised to keep this data when the disk is low on space; keep backups outside the computer.'}).catch(()=>{})}
 };
 function bizForm(name,after){
  const b=name?bizInfo(name):{name:''},has=name&&DB.biz.some(x=>x.name===name);
@@ -1170,7 +1531,7 @@ function itemForm(id,after){
 // start
 // =====================================================================================
 (async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':'';startAutoBackup()})();
-window.AJPAY={autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+window.AJPAY={FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
 
 </script>
 </body>
