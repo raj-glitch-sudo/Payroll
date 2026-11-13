@@ -113,6 +113,18 @@ details>summary{cursor:pointer;font-weight:700}
 @media print{body{display:block}.side,.top{display:none}}
 
 [hidden]{display:none!important}
+.cal .calh{margin-bottom:10px;gap:8px}.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.cw{font-size:.74rem;font-weight:700;color:var(--muted);text-align:center;padding:2px 0}
+.cd{min-height:92px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:4px 5px;text-align:left;display:flex;flex-direction:column;gap:2px;font:inherit;cursor:pointer;min-width:0;overflow:hidden}.cd:hover{border-color:#9fd2c4}.cd.x{border:0;background:none;cursor:default}
+.cd .dn{font-weight:700;font-size:.82rem}.cd.td .dn{background:var(--brand);color:#fff;border-radius:99px;padding:0 6px;align-self:flex-start}.cd.sel{box-shadow:0 0 0 2px var(--brand)}.cd.hol{background:#fff8ec}
+.cd .hl{font-size:.66rem;color:#9a6400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cd .lv,.cal .lv{font-size:.68rem;background:#e6f1fc;color:#17426b;border-radius:4px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal .lv.pend{background:#fff;border:1px dashed #8bb1d6}
+.cd .rs{font-size:.66rem;color:var(--muted);margin-top:auto}.cd .more{font-size:.66rem;color:#17426b}.cal.compact .cd{min-height:78px}
+.calp{margin-top:12px;border-top:1px solid var(--line2);padding-top:10px}.calp .pl{font-size:.88rem;padding:2px 0}
+.wdp{display:flex;gap:4px;flex-wrap:wrap}.wdp label{display:flex}.wdp input{position:absolute;opacity:0;width:1px;height:1px}.wdp span{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:.82rem;cursor:pointer;background:#fff}.wdp input:checked+span{background:var(--brand);color:#fff;border-color:var(--brand)}.wdp input:focus-visible+span{outline:2px solid var(--brand);outline-offset:1px}
+.lbt th[colspan]{text-align:center}.lbt td.calc{min-width:48px}
+@media(max-width:900px){.cd{min-height:58px;padding:3px}.cd .lv,.cd .hl{display:none}.cd .rs{font-size:.6rem}}
+.rcs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.rc{display:block;border:1px solid var(--line);border-radius:10px;padding:8px 12px;text-decoration:none;color:var(--ink);background:#fff;min-width:220px}.rc small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}.rc.on{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand2)}
+.step{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line2)}.step:first-of-type{border-top:0}.sn{flex:0 0 30px;height:30px;border-radius:50%;background:var(--line2);display:grid;place-items:center;font-weight:700;color:var(--muted)}.step.done .sn{background:var(--ok2);color:var(--ok)}.sbd{flex:1;min-width:0}.sbd h3{margin:4px 0 6px}
+.reqt input[type=date]{width:150px}.reqt input:not([type]){width:220px}.reqt tr.late td{background:#fdf1ef}
 .sigpad canvas{width:100%;max-width:600px;aspect-ratio:3/1;border:1.5px dashed #9fb3ad;border-radius:10px;background:#fff linear-gradient(transparent calc(75% - 1px),#d6e2de calc(75% - 1px),#d6e2de 75%,transparent 75%);touch-action:none;cursor:crosshair;display:block}
 .grid .nm small .nocon{color:#9a6400}
 /* view switch, copy box, checks */
@@ -196,13 +208,22 @@ const DEF_ITEMS=[
  {id:'ntx',name:'Other Non-taxable Pay (reimbursement)',kind:'E',tax:'N'},
  {id:'uni',name:'Uniform',kind:'D'},
  {id:'odd',name:'Other Deduction',kind:'D'}];
+const DEF_REQS=[{id:'id',name:'Valid government-issued ID',when:'before'},{id:'cv',name:'Resume or bio-data',when:'before'},{id:'sss',name:'SSS number (E-1 form or SS card)',when:'during',days:30},{id:'ph',name:'PhilHealth number (PMRF or ID)',when:'during',days:30},{id:'hdmf',name:'Pag-IBIG MID number',when:'during',days:30},{id:'tin',name:'TIN (BIR Form 1902 or TIN ID)',when:'during',days:30},{id:'psa',name:'PSA birth certificate',when:'during',days:30},{id:'nbi',name:'NBI clearance',when:'during',days:30},{id:'brgy',name:'Barangay clearance',when:'during',days:30},{id:'med',name:'Medical certificate (fit to work)',when:'during',days:30},{id:'photo',name:'2x2 ID photos',when:'during',days:15},{id:'p2316',name:'BIR 2316 from the previous employer (if employed earlier this year)',when:'during',days:30,opt:true}];
+const DEF_LTYPES=[{id:'sil',name:'Service Incentive Leave',abbr:'SIL',days:5,pay:'paid',svc:12,law:'Labor Code Art. 95: 5 days a year after 1 year of service'},
+ {id:'vl',name:'Vacation Leave',abbr:'VL',days:0,pay:'paid',svc:0,law:'Company policy'},{id:'sl',name:'Sick Leave',abbr:'SL',days:0,pay:'paid',svc:0,law:'Company policy'},
+ {id:'mat',name:'Maternity Leave',abbr:'ML',days:105,pay:'out',ev:1,cal:1,law:'RA 11210: 105 days (+15 for solo mothers); SSS benefit + salary differential'},
+ {id:'pat',name:'Paternity Leave',abbr:'PL',days:7,pay:'paid',ev:1,law:'RA 8187: 7 days for each of the first 4 deliveries'},
+ {id:'solo',name:'Solo Parent Leave',abbr:'SPL',days:7,pay:'paid',svc:6,who:'set',law:'RA 11861: 7 days a year after 6 months of service (solo parents)'},
+ {id:'vawc',name:'VAWC Leave',abbr:'VAWC',days:10,pay:'paid',ev:1,law:'RA 9262: up to 10 days'},
+ {id:'slw',name:'Special Leave for Women',abbr:'SLW',days:60,pay:'paid',ev:1,cal:1,law:'RA 9710: up to 2 months after gynecological surgery'},
+ {id:'lwop',name:'Leave Without Pay',abbr:'LWOP',days:0,pay:'unpaid',unl:1,law:'Unpaid'}];
 const DEF_DTYPES=['Cash Advance','Credit','Credit Balance','SSS Loan','Pag-IBIG Loan'];
 const TAXK={T:'Taxable',N:'Non-taxable',DM:'De minimis (tax-free up to a limit)',B:'13th month & other benefits (tax-free up to ₱90,000 a year)'};
 
 // ---------------------------------------------------------------- data
 let DB=null;
-function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',contribFor:'reg',mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
- items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],signers:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
+function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',contribFor:'reg',reqs:clone(DEF_REQS),mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
+ items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],signers:[],leaves:[],ltypes:clone(DEF_LTYPES),hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
 function migrate(d){
  const b=blank();if(!d||typeof d!=='object')return b;
  for(const k of Object.keys(b))if(d[k]==null||typeof d[k]!==typeof b[k]||Array.isArray(b[k])!==Array.isArray(d[k]))d[k]=b[k];
@@ -264,7 +285,7 @@ function timeCalc(r,run){
  const P=S().prem,tm=r.tm||{},mo=r.basis==='monthly',daily=r.daily,H=daily/8,fac=+r.factor||261;
  const L=[],late=pos(+tm.late||0),leave=pos(+tm.leave||0),lateAmt=Math.round(late/480*daily);
  let basic,days,absAmt=0,wd;
- if(mo){const abs=pos(+tm.abs||0);absAmt=Math.round(abs*daily);basic=pos(Math.round((r.monthly||0)/2)-absAmt-lateAmt);days=pos(fac/24-abs-late/480);wd=days}
+ if(mo){const abs=pos(+tm.abs||0)+pos(+tm.lwop||0);absAmt=Math.round(abs*daily);basic=pos(Math.round((r.monthly||0)/2)-absAmt-lateAmt);days=pos(fac/24-abs-late/480);wd=days}
  else{wd=pos(+tm.days||0);basic=pos(Math.round((wd+leave)*daily)-lateAmt);days=pos(wd+leave-late/480)}
  let hol=0,ot=0,whol=0;
  const add=(k,label,hrs,pct)=>{hrs=pos(+hrs||0);if(!hrs||!pct)return;const a=Math.round(hrs*H*pct/100);if(k==='hol')hol+=a;else ot+=a;L.push({k,label,hrs,pct,amt:a})};
@@ -387,6 +408,7 @@ function rowFromEmp(e,run){
   tm:e.basis==='monthly'?{abs:0}:{days:0},items:{},ded:{},man:{},basic:0,allow:0,hol:0,ot:0,sss:0,ph:0,pg:0,tax:0};
  DB.dtypes.forEach(d=>{const v=ledgerSuggest(e.id,d.id,run);if(v)r.ded[d.id]=v});
  (e.recur||[]).forEach(x=>{if(x.amt&&DB.items.some(i=>i.id===x.item))r.items[x.item]=(r.items[x.item]||0)+x.amt});
+ if(typeof leaveFill==='function')leaveFill(run,r);
  return r;
 }
 const employedIn=(e,y,m,q)=>{const [a,b]=cutoff(y,m,q);return(!e.hired||e.hired<=b)&&(!e.separated||e.separated>=a)};
@@ -474,11 +496,12 @@ function rptTable(def){
 // =====================================================================================
 // navigation
 // =====================================================================================
-const NAV=[['Overview'],['dash','Dashboard'],['Payroll'],['run','Payroll Run'],['loans','Loans & Advances'],['slips','Payslips'],['reg','Payroll Register'],['Records'],['emp','Employees'],['docs','Documents'],['rep','Reports'],['set','Settings']];
+const NAV=[['Overview'],['dash','Dashboard'],['Payroll'],['run','Payroll Run'],['loans','Loans & Advances'],['leave','Leaves & Rest Days'],['slips','Payslips'],['reg','Payroll Register'],['Records'],['emp','Employees'],['docs','Documents'],['rep','Reports'],['set','Settings']];
 const ICON={dash:'<rect x="3" y="3" width="7" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>',
  run:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/>',loans:'<circle cx="9" cy="9" r="5"/><path d="M14.5 5.2a5 5 0 1 1-1.3 9.3M9 7v4M7.5 9h3"/><path d="M3 20h8"/>',
  slips:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',reg:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/>',
  emp:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',rep:'<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+ leave:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
  docs:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/><path d="M15.5 19.5l3-3"/>',
  set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const isPhone=()=>window.matchMedia('(max-width:900px)').matches;
@@ -533,6 +556,7 @@ PAGES.dash={title:'Dashboard',render(v){
   +'<div class="kpi"><span>Latest payroll</span><b>'+(last?esc(perShort(last.year,last.month,last.q)):'–')+'</b><small>'+(last?(last.status==='final'?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')+' · '+last.rows.length+' employees':'none yet')+'</small></div>'
   +'<div class="kpi"><span>Latest net pay</span><b>₱'+(lt?n2(lt.n):'0.00')+'</b><small>gross ₱'+(lt?n2(lt.g):'0.00')+'</small></div>'
   +'<div class="kpi"><span>Open loans & advances</span><b>₱'+n2(openLedgerTotal())+'</b><small><a href="#loans">see balances</a></small></div></div>';
+ if(DB.employees.length)h+='<div class="card" id="dashCal"></div>';
  h+='<div class="card"><div class="row mid"><h2 style="margin:0">Quick actions</h2></div><div class="row" style="margin-top:10px"><a class="btn" href="#run/'+n.getFullYear()+'-'+(n.getMonth()+1)+'-'+q+'">Payroll for '+esc(perShort(n.getFullYear(),n.getMonth()+1,q))+'</a><a class="btn o" href="#emp">Add or edit employees</a><a class="btn o" href="#loans">Record a cash advance or loan</a><a class="btn o" href="#slips">Print payslips</a><a class="btn o" href="#rep/contrib">SSS, PhilHealth, Pag-IBIG report</a></div></div>';
  if(drafts.length)h+='<div class="card"><h2>Drafts not yet final</h2><p class="note">Finalize a payroll when it is paid. Final payrolls are locked, and loans are reduced by what they deducted.</p>'+drafts.map(r=>'<a class="btn o s" style="margin:0 6px 6px 0" href="#run/'+r.year+'-'+r.month+'-'+r.q+'">'+esc(perShort(r.year,r.month,r.q))+'</a>').join('')+'</div>';
  // remittances due: previous month
@@ -540,10 +564,12 @@ PAGES.dash={title:'Dashboard',render(v){
  const mr=DB.runs.filter(r=>r.year===pm[0]&&r.month===pm[1]);
  if(mr.length){const T={sss:0,ph:0,pg:0,tax:0};mr.forEach(r=>r.rows.forEach(x=>{T.sss+=x.sss+x.erSss+x.erEc;T.ph+=x.ph+x.erPh;T.pg+=x.pg+x.erPg;T.tax+=x.tax}));
   h+='<div class="card"><h2>To remit for '+MN[pm[1]-1]+' '+pm[0]+'</h2><div class="kpis" style="margin:8px 0 0"><div class="kpi"><span>SSS (employee + employer + EC)</span><b>₱'+n2(T.sss)+'</b></div><div class="kpi"><span>PhilHealth</span><b>₱'+n2(T.ph)+'</b></div><div class="kpi"><span>Pag-IBIG</span><b>₱'+n2(T.pg)+'</b></div><div class="kpi"><span>Withholding tax (1601-C)</span><b>₱'+n2(T.tax)+'</b><small>due on the 10th of '+MN[n.getMonth()]+' (manual filers)</small></div></div><p class="note"><a href="#rep/contrib">Contributions report</a> · <a href="#rep/wtax">Withholding tax report</a>. Follow each agency’s schedule for your employer number.</p></div>'}
+ const PN=DB.employees.filter(isPending),OD=DB.employees.filter(x=>x.onb&&x.onb.state==='accepted'&&reqState(x).some(r=>r.late));
+ if(PN.length||OD.length)h+='<div class="card"><h2>New employees</h2>'+(PN.length?'<p>Pending acceptance: '+PN.map(x=>'<a href="#docs/new/'+x.id+'">'+esc(fullName(x))+'</a>'+(x.onb.signedAt?' (contract signed)':'')).join(', ')+'</p>':'')+(OD.length?'<p>Requirements overdue: '+OD.map(x=>'<a href="#docs/new/'+x.id+'">'+esc(fullName(x))+'</a>').join(', ')+'</p>':'')+'</div>';
  const ca=contractAlerts();if(ca.length)h+='<div class="card"><h2>Contracts and probation ending within 30 days</h2>'+ca.map(x=>'<div class="row mid" style="margin:4px 0"><b>'+esc(fullName(x.e))+'</b><span>'+esc(CT_STATUS[x.c.type])+' · '+(x.late?'<span class="chip bad">ended '+esc(fd(x.c.end))+'</span>':'ends '+esc(fd(x.c.end)))+'</span><a class="btn o s" href="#docs/contract/'+x.e.id+'">Prepare next contract</a></div>').join('')+'<p class="note">A probationary employee who keeps working after the probation ends becomes regular (Article 296). Update the status in Employees.</p></div>';
  const hs=holidays(n.getFullYear()).filter(x=>x.date>=today()).slice(0,4);
  if(hs.length)h+='<div class="card"><h2>Coming holidays</h2>'+hs.map(x=>'<div>'+esc(fdw(x.date))+' – '+esc(x.name)+' <span class="chip">'+(x.type==='R'?'Regular':x.type==='S'?'Special non-working':'Special working')+'</span></div>').join('')+'<p class="note">Check new proclamations each year (Eid’l Fitr, Eid’l Adha, Chinese New Year, local holidays) and add them in <a href="#set/hol">Settings › Holidays</a>.</p></div>';
- v.innerHTML=h;
+ v.innerHTML=h;const dc=$('#dashCal');if(dc)renderCal(dc,true);
 }};
 function openLedgerTotal(){let t=0;const seen=new Set();DB.ledger.forEach(l=>{const k=l.empId+'|'+l.type;if(seen.has(k))return;seen.add(k);t+=pos(ledgerBal(l.empId,l.type))});return t}
 
@@ -554,14 +580,14 @@ let empF={q:'',biz:'ALL',show:'active'};const empSel=new Set();
 PAGES.emp={title:'Employees',render(v){
  v.innerHTML='<div class="card"><div class="row"><div class="fg sp"><label>Search</label><input id="eQ" placeholder="Name, position, TIN, SSS no." value="'+esc(empF.q)+'"></div>'
   +fg('Business','<select id="eBiz">'+opt([['ALL','All businesses']].concat(bizList()),empF.biz)+'</select>')
-  +fg('Show','<select id="eShow">'+opt([['active','Active'],['inactive','Inactive / separated'],['all','All']],empF.show)+'</select>')
+  +fg('Show','<select id="eShow">'+opt([['active','Active'],['pending','New hires (pending)'],['inactive','Inactive / separated'],['all','All']],empF.show)+'</select>')
   +'<button class="btn o" id="eImp">Import from spreadsheet</button><button class="btn o" id="eExp">Export CSV</button><button class="btn" id="eAdd">+ Add employee</button></div></div><div class="row mid selbar"><p class="note" id="eCnt" style="margin:0"></p><span class="sp"></span><span id="eSelN" class="note" style="margin:0"></span><button class="btn o s" id="eBulk">Edit selected…</button><button class="btn o s" id="eRate">Change rates…</button><button class="btn o s" id="eSelX">Clear selection</button></div><div id="eTbl"></div>';
  const paint=()=>{const q=empF.q.trim().toLowerCase();
-  const L=DB.employees.filter(e=>(empF.biz==='ALL'||e.business===empF.biz)&&(empF.show==='all'||(empF.show==='active')===(e.active!==false))&&(!q||[fullName(e),e.position,e.tin,e.sss,e.ph,e.hdmf,e.business].join(' ').toLowerCase().includes(q))).sort(empCmp);
+  const L=DB.employees.filter(e=>(empF.biz==='ALL'||e.business===empF.biz)&&(empF.show==='all'||(empF.show==='pending'?isPending(e):!isRecruit(e)&&(empF.show==='active')===(e.active!==false)))&&(!q||[fullName(e),e.position,e.tin,e.sss,e.ph,e.hdmf,e.business].join(' ').toLowerCase().includes(q))).sort(empCmp);
   $('#eCnt').textContent=L.length+' of '+DB.employees.length+' employee'+(DB.employees.length===1?'':'s');
   [...empSel].forEach(id=>{if(!empById(id))empSel.delete(id)});const allOn=L.length&&L.every(e=>empSel.has(e.id));
   $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th class="cbc"><input type="checkbox" id="eAll" aria-label="Select all shown"'+(allOn?' checked':'')+'></th><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th></th></tr></thead><tbody>'
-   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.noSss||e.noPh||e.noPg?' <span class="chip warn" title="Not registered yet – no deduction">no '+[e.noSss&&'SSS',e.noPh&&'PH',e.noPg&&'HDMF'].filter(Boolean).join('/')+' yet</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
+   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.noSss||e.noPh||e.noPg?' <span class="chip warn" title="Not registered yet – no deduction">no '+[e.noSss&&'SSS',e.noPh&&'PH',e.noPg&&'HDMF'].filter(Boolean).join('/')+' yet</span>':'')+(isPending(e)?' <a class="chip warn" href="#docs/new/'+e.id+'">Pending – onboarding</a>':e.onb&&e.onb.state==='withdrawn'?' <span class="chip">Did not push through</span>':e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
    ||'<tr><td colspan="15" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
   $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint));
   $$('[data-es]').forEach(c=>c.onchange=()=>{c.checked?empSel.add(c.dataset.es):empSel.delete(c.dataset.es);c.closest('tr').classList.toggle('sel',c.checked);selN()});
@@ -592,14 +618,16 @@ function empForm(id,after){
   +fg('Monthly rate (₱) *','<input type="number" step="0.01" min="0" id="fMon" value="'+pe(v.monthly)+'">','',"gMon")
   +fg('Days factor','<select id="fFac">'+opt([[261,'261 – 5-day week'],[313,'313 – 6-day week'],[365,'365 – paid every day']],v.factor||261)+'</select>','<span id="fDaily"></span>',"gFac")
   +fg('Meal allowance per day (₱)','<input type="number" step="0.01" min="0" id="fAllow" value="'+pe(v.allowance)+'">')
-  +fg('Minimum wage earner','<label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="fMwe"'+(v.mwe?' checked':'')+'> Basic, holiday and overtime pay not taxed</label>')+'</div>'
+  +fg('Minimum wage earner','<label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="fMwe"'+(v.mwe?' checked':'')+'> Basic, holiday and overtime pay not taxed</label>')
+  +fg('Weekly rest day(s)','<div class="wdp">'+WD.map((w,i)=>'<label><input type="checkbox" data-wd="'+i+'"'+(restDays(v).includes(i)?' checked':'')+'><span>'+w+'</span></label>').join('')+'</div>','Leaves skip rest days. Change one date in Leaves › Calendar.')+'</div>'
   +'<h3 style="margin-top:14px">Government numbers</h3><div class="grid3">'
   +fg('TIN','<input id="fTin" value="'+esc(v.tin||'')+'">')+fg('SSS no.','<input id="fSss" value="'+esc(v.sss||'')+'">')+fg('PhilHealth no.','<input id="fPh" value="'+esc(v.ph||'')+'">')+fg('Pag-IBIG no.','<input id="fHdmf" value="'+esc(v.hdmf||'')+'">')
   +fg('Not registered yet (no deduction)','<div class="row" style="gap:12px"><label class="ck" style="margin:0"><input type="checkbox" id="fNoS"'+(v.noSss?' checked':'')+'> SSS</label><label class="ck" style="margin:0"><input type="checkbox" id="fNoP"'+(v.noPh?' checked':'')+'> PhilHealth</label><label class="ck" style="margin:0"><input type="checkbox" id="fNoH"'+(v.noPg?' checked':'')+'> Pag-IBIG</label></div>','Untick when they register. Typing the number in also unticks it.')
   +fg('Address','<input id="fAddr" value="'+esc(v.address||'')+'">')+fg('Contact no.','<input id="fCon" value="'+esc(v.contact||'')+'">')+'</div>'
   +'<h3 style="margin-top:14px">Recurring pay or deductions every cutoff</h3><p class="note">For example a fixed rice subsidy or a uniform deduction. They are filled in when a new payroll is created; you can still change them per cutoff. For loans and cash advances with a balance, use Loans & Advances instead.</p><div id="fRec"></div><button type="button" class="btn o s" id="fRecAdd">+ Add recurring item</button>'
   +(e?'<h3 style="margin-top:14px">Rate history</h3><div id="fHist">'+histHtml(e)+'</div>':'')
-  +'<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="fAct"'+(v.active!==false?' checked':'')+'> Active (included in new payroll runs)</label>'
+  +(e?'':'<label class="ck" style="margin-top:14px"><input type="checkbox" id="fNew" checked> <span><b>New hire</b> – stays pending (not in payroll) until the contract is signed and you accept them in Documents › New employee. Untick only for someone already working here.</span></label>')
+  +'<label style="display:flex;gap:8px;align-items:center;margin-top:14px"'+(isPending(e)?' hidden':'')+' id="fActL"><input type="checkbox" id="fAct"'+(v.active!==false&&!isPending(e)?' checked':'')+'> Active (included in new payroll runs)</label>'+(isPending(e)?'<p class="note">Pending new hire: accept them in <a href="#docs/new/'+e.id+'">Documents › New employee</a> to include them in payroll.</p>':'')
   +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button><button class="btn o" id="fDoc">Contract / COE…</button><button class="btn o" id="fRaise">Change rates…</button><button class="btn o" id="fFinal">Final pay…</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',860);
  if(e){$('#fDoc',m).onclick=()=>{m.close();go('docs','contract/'+e.id)};$('#fRaise',m).onclick=()=>{m.close();rateModal([e.id],after)};$('#fFinal',m).onclick=()=>{m.close();finalPayModal(e.id,after)};
   const hb=()=>{const b=$('[data-hu]',m);if(b)b.onclick=async()=>{const h=(e.hist||[]).find(x=>x.id===b.dataset.hu);if(!h||!(await confirmBox('Undo the rate change effective '+esc(fd(h.eff))+'? The rates go back to what they were before it.','Undo')))return;
@@ -611,7 +639,7 @@ function empForm(id,after){
  $('#fRecAdd',m).onclick=()=>{recur.push({item:(DB.items.find(i=>i.id==='rice')||DB.items[0]).id,amt:0});rec()};rec();
  $('#fSave',m).onclick=()=>{
   const g=k=>$(k,m).value.trim(),o={last:g('#fLast'),first:g('#fFirst'),mi:g('#fMi'),business:g('#fBiz'),position:g('#fPos'),status:g('#fStat'),hired:g('#fHired'),separated:g('#fSep'),birth:g('#fBirth'),
-   basis:g('#fBasis'),rate:c100(g('#fRate')),monthly:c100(g('#fMon')),factor:+g('#fFac'),allowance:c100(g('#fAllow')),mwe:$('#fMwe',m).checked,tin:g('#fTin'),sss:g('#fSss'),ph:g('#fPh'),hdmf:g('#fHdmf'),address:g('#fAddr'),contact:g('#fCon'),active:$('#fAct',m).checked,recur:recur.filter(x=>x.amt>0),noSss:$('#fNoS',m).checked,noPh:$('#fNoP',m).checked,noPg:$('#fNoH',m).checked};
+   basis:g('#fBasis'),rate:c100(g('#fRate')),monthly:c100(g('#fMon')),factor:+g('#fFac'),allowance:c100(g('#fAllow')),mwe:$('#fMwe',m).checked,tin:g('#fTin'),sss:g('#fSss'),ph:g('#fPh'),hdmf:g('#fHdmf'),address:g('#fAddr'),contact:g('#fCon'),rest:$$('[data-wd]',m).filter(c=>c.checked).map(c=>+c.dataset.wd),active:$('#fAct',m).checked,recur:recur.filter(x=>x.amt>0),noSss:$('#fNoS',m).checked,noPh:$('#fNoP',m).checked,noPg:$('#fNoH',m).checked};
   const started=[];[['noSss','sss','SSS'],['noPh','ph','PhilHealth'],['noPg','hdmf','Pag-IBIG']].forEach(([f,n,l])=>{if(o[f]&&o[n]&&!(v[n]||'').trim()){o[f]=false;started.push(l)}});
   if(!o.last||!o.first)return toast('Enter the last and first name.','bad');if(!o.business)return toast('Enter the business.','bad');
   if(o.basis==='monthly'?!o.monthly:!o.rate)return toast('Enter the '+(o.basis==='monthly'?'monthly':'daily')+' rate.','bad');
@@ -619,10 +647,11 @@ function empForm(id,after){
   if(o.separated&&o.hired&&o.separated<o.hired)return toast('Date separated is before date hired.','bad');
   const dup=DB.employees.find(x=>x.id!==id&&x.last.toLowerCase()===o.last.toLowerCase()&&x.first.toLowerCase()===o.first.toLowerCase()&&x.business===o.business);
   if(dup&&!e)return toast('There is already an employee named '+fullName(dup)+' in '+dup.business+'.','bad');
-  let neu=null;if(e)Object.assign(e,o);else{neu=Object.assign({id:'e'+uid()},o);DB.employees.push(neu)}
+  let neu=null;const rec=!e&&$('#fNew',m)&&$('#fNew',m).checked;if(rec)o.active=false;
+  if(e)Object.assign(e,o);else{neu=Object.assign({id:'e'+uid()},o);if(rec)neu.onb={state:'pending',since:today(),docs:{}};DB.employees.push(neu)}
   if(!DB.biz.some(b=>b.name===o.business))DB.biz.push({name:o.business});
-  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.'+(started.length?' '+started.join(', ')+' deductions start now that the number is entered. Open draft payrolls pick this up.':''),'ok',started.length?7000:3500);
-  if(neu)confirmBox('Prepare the employment contract for '+esc(o.first+' '+o.last)+' now?','Prepare contract').then(y=>{if(y)go('docs','contract/'+neu.id+'/new')})};
+  if(e)leaveSync(e.id);save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.'+(started.length?' '+started.join(', ')+' deductions start now that the number is entered. Open draft payrolls pick this up.':''),'ok',started.length?7000:3500);
+  if(neu&&rec){toast(o.first+' '+o.last+' added as a pending new hire. Prepare the contract next.','ok',5000);go('docs','new/'+neu.id)}};
  const del=$('#fDel',m);if(del)del.onclick=async()=>{if(used){e.active=false;save();m.close();after&&after();toast('Marked inactive. Past payrolls keep this employee.','ok');return}
   if(!(await confirmBox('Delete '+esc(fullName(e))+'? This cannot be undone.','Delete',1)))return;DB.employees=DB.employees.filter(x=>x!==e);DB.ledger=DB.ledger.filter(l=>l.empId!==e.id);save();m.close();after&&after()};
 }
@@ -777,7 +806,7 @@ function drawRun(B,run){
    +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="sdGo">Apply</button></div>',460);
   $('#sdGo',m).onclick=()=>{const n=Math.max(0,parseFloat($('#sdN',m).value)||0),all=$('input[name=sdW]:checked',m).value==='all';let c=0;
    run.rows.forEach(r=>{if(r.basis==='monthly'||(runUI.biz!=='ALL'&&r.business!==runUI.biz))return;if(all||!(+r.tm.days)){r.tm.days=n;c++}});calcRun(run);save();m.close();redraw();toast(c+' employee'+(c===1?'':'s')+' set to '+n+' days.','ok')}};
- $('#rAdd').onclick=()=>{const L=DB.employees.filter(e=>!run.rows.some(r=>r.empId===e.id)&&employedIn(e,run.year,run.month,run.q)).sort(empCmp);
+ $('#rAdd').onclick=()=>{const L=DB.employees.filter(e=>!isRecruit(e)&&!run.rows.some(r=>r.empId===e.id)&&employedIn(e,run.year,run.month,run.q)).sort(empCmp);
   if(!L.length)return toast('Everyone employed in this period is already in this payroll.');
   const m=modal('<h2>Add employee to this payroll</h2>'+fg('Employee','<select id="aeS">'+opt(L.map(e=>[e.id,fullName(e)+' – '+e.business+(e.active===false?' (inactive)':'')]))+'</select>')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="aeGo">Add</button></div>',520);
   combo($('#aeS',m));$('#aeS_q',m).focus();
@@ -849,7 +878,7 @@ function timeModal(run,i,after){
  $$('input,select',m).forEach(el=>{el.addEventListener('input',paint);el.addEventListener('change',paint)});paint();
  if(fin)return;
  $('#tmGo',m).onclick=()=>{const o=read();if(!mo&&o.days+(o.leave||0)>16)return toast('Days worked and leave cannot be more than 16 in one cutoff.','bad');
-  r.tm=o;delete r.man.hol;delete r.man.ot;delete r.man.allow;calcRow(run,r);save();m.close();after();toast('Updated '+r.name+'.','ok')};
+  if(r.tm.lwop)o.lwop=r.tm.lwop;r.tm=o;delete r.man.hol;delete r.man.ot;delete r.man.allow;calcRow(run,r);save();m.close();after();toast('Updated '+r.name+'.','ok')};
  $('#tmRm',m).onclick=async()=>{if(!(await confirmBox('Remove '+esc(r.name)+' from this payroll?','Remove',1)))return;run.rows.splice(i,1);save();m.close();after()};
 }
 
@@ -1322,6 +1351,7 @@ function bulkModal(ids,after){
   +fg('Days factor (monthly-paid)','<select id="bFac">'+opt([['',nc],[261,'261 – 5-day week'],[313,'313 – 6-day week'],[365,'365 – paid every day']],'')+'</select>')
   +fg('Minimum wage earner','<select id="bMwe">'+opt([['',nc],['1','Yes'],['0','No']],'')+'</select>')
   +fg('Included in new payrolls','<select id="bAct">'+opt([['',nc],['1','Active'],['0','Inactive']],'')+'</select>')
+  +fg('Weekly rest day','<select id="bRest">'+opt([['',nc]].concat(WDL.map((w,i)=>[String(i),w]),[['0,6','Saturday and Sunday']]),'')+'</select>')
   +fg('SSS, PhilHealth, Pag-IBIG','<select id="bReg">'+opt([['',nc],['none','Not registered yet with any – no deductions'],['all','Registered with all three – deduct']],'')+'</select>','For one agency only, use the employee’s own record.')+'</div>'
   +'<h3 style="margin-top:12px">Recurring pay or deduction every cutoff</h3><div class="row">'+fg('Item','<select id="bItem">'+opt([['',nc]].concat(DB.items.filter(i=>i.active!==false).map(i=>[i.id,i.name+(i.kind==='D'?' (deduction)':'')])),'')+'</select>')
   +fg('Action','<select id="bIA">'+opt([['set','Set the amount per cutoff'],['rm','Remove it']],'set')+'</select>')+fg('Amount per cutoff (₱)','<input type="number" step="0.01" min="0" id="bIV">')+'</div>'
@@ -1330,7 +1360,7 @@ function bulkModal(ids,after){
   if(it&&ia==='set'&&!iv)return toast('Enter the amount per cutoff, or choose “Remove it”.','bad');
   L.forEach(e=>{const b=JSON.stringify(e);
    if(g('#bBiz'))e.business=g('#bBiz');if(g('#bPos'))e.position=g('#bPos');if(g('#bStat'))e.status=g('#bStat');if(g('#bFac')&&e.basis==='monthly')e.factor=+g('#bFac');
-   if(g('#bMwe'))e.mwe=g('#bMwe')==='1';if(g('#bReg')){const x=g('#bReg')==='none';e.noSss=x;e.noPh=x;e.noPg=x}if(g('#bAct'))e.active=g('#bAct')==='1';
+   if(g('#bMwe'))e.mwe=g('#bMwe')==='1';if(g('#bRest')){e.rest=g('#bRest').split(',').map(Number);leaveSync(e.id)}if(g('#bReg')){const x=g('#bReg')==='none';e.noSss=x;e.noPh=x;e.noPg=x}if(g('#bAct'))e.active=g('#bAct')==='1';
    if(it){e.recur=(e.recur||[]).filter(x=>x.item!==it);if(ia==='set')e.recur.push({item:it,amt:iv})}
    if(JSON.stringify(e)!==b)n++});
   if(g('#bBiz')&&!DB.biz.some(x=>x.name===g('#bBiz')))DB.biz.push({name:g('#bBiz')});
@@ -1536,11 +1566,14 @@ function docDefaults(id){const e=empById(id)||{};const st=e.hired||today();
  return{emp:id,position:e.position||'',start:st,months:6,end:addMonths(st,6),signed:today(),city:cityOf(e.business),place:bizInfo(e.business||'').address||'',hours:'eight (8) hours a day, from 8:00 a.m. to 5:00 p.m., six (6) days a week',rest:'Sunday',sched:'every 15th and last day of the month',
   duties:'Perform the work of a '+(e.position||'[position]')+' as assigned by the Employer\nKeep the work area clean and orderly\nReport problems and incidents promptly to the supervisor',standards:DEF_STD,purpose:'',regz:e.status==='Probationary',w1:'',w2:'',title:'',pay:false,stat:true,extra:'',cpurpose:''}}
 PAGES.docs={title:'Documents',render(v,a){
+ if(((a||'').split('/')[0]||'new')==='new'&&v.id!=='onbEd')return onbRender(v,a);
+ const ONB=v.id==='onbEd';if(ONB)docF.tab='contract';
  const parts=(a||'').split('/');if(parts[0]==='contract'||parts[0]==='coe')docF.tab=parts[0];
  if(parts[1]&&empById(parts[1])&&parts[1]!==docF.emp){Object.assign(docF,docDefaults(parts[1]));docF.signer=''}
  if(parts[2]==='new'){docF.type='prob';docF.setStat=true;location.replace('#docs/contract/'+parts[1]);return}
  if(!DB.employees.length){v.innerHTML='<div class="card empty">Add employees first in <a href="#emp">Employees</a>.</div>';return}
- if(!docF.emp||!empById(docF.emp))Object.assign(docF,docDefaults(DB.employees.slice().sort(empCmp).filter(e=>e.active!==false)[0]?.id||DB.employees[0].id));
+ const pool=ONB?[empById(docF.emp)]:DB.employees.filter(x=>!isRecruit(x));if(!ONB&&!pool.length){v.innerHTML=docTabs(docF.tab)+'<div class="card empty">No employees yet. New recruits are prepared in “New employee (onboarding)”.</div>';return}
+ if(!docF.emp||!empById(docF.emp)||(!ONB&&isRecruit(empById(docF.emp))))Object.assign(docF,docDefaults((pool.slice().sort(empCmp).filter(e=>e.active!==false)[0]||pool[0]).id));
  const e=empById(docF.emp),S=(DB.signers||[]).filter(s=>!s.biz||s.biz===e.business);
  if(docF.signer!=='_'&&!S.some(s=>s.id===docF.signer))docF.signer=S[0]?S[0].id:'_';
  const ct=docF.tab==='contract',T=docF.type;
@@ -1548,8 +1581,8 @@ PAGES.docs={title:'Documents',render(v,a){
  const ta=(k,lbl,help,rows)=>fg(lbl,'<textarea data-f="'+k+'" rows="'+(rows||4)+'" style="width:100%">'+esc(docF[k]||'')+'</textarea>',help);
  const ck=(k,lbl)=>'<label class="ck"><input type="checkbox" data-c="'+k+'"'+(docF[k]?' checked':'')+'> '+lbl+'</label>';
  const log=(e.docs||[]).slice(-4).reverse();
- v.innerHTML='<div class="tabs"><a href="#docs/contract" class="'+(ct?'on':'')+'">Employment contract</a><a href="#docs/coe" class="'+(ct?'':'on')+'">Certificate of employment</a><a href="#set/sign">Signatories</a></div>'
-  +'<div class="card"><div class="grid3">'+fg('Employee','<select id="dE">'+opt(DB.employees.slice().sort(empCmp).map(x=>[x.id,fullName(x)+' – '+x.business+(x.active===false?' (separated)':'')]),docF.emp)+'</select>','<span class="note">'+esc(e.business)+(e.status?' · '+esc(e.status):'')+(e.hired?' · hired '+esc(fd(e.hired)):'')+(log.length?' · printed: '+log.map(d=>esc((d.kind==='coe'?'COE':CT_STATUS[d.type]+' contract')+' '+fd(d.at.slice(0,10)))).join(', '):'')+'</span>')
+ v.innerHTML=(ONB?'':docTabs(ct?'contract':'coe'))
+  +'<div class="card"><div class="grid3">'+fg('Employee','<select id="dE">'+opt(pool.slice().sort(empCmp).map(x=>[x.id,fullName(x)+' – '+x.business+(x.active===false?' (separated)':'')]),docF.emp)+'</select>','<span class="note">'+esc(e.business)+(e.status?' · '+esc(e.status):'')+(e.hired?' · hired '+esc(fd(e.hired)):'')+(log.length?' · printed: '+log.map(d=>esc((d.kind==='coe'?'COE':CT_STATUS[d.type]+' contract')+' '+fd(d.at.slice(0,10)))).join(', '):'')+'</span>')
   +(ct?fg('Contract','<select id="dT">'+opt(CTYPES,T)+'</select>'):fg('Title before the name','<select data-f="title">'+opt([['','None'],['Mr.','Mr.'],['Ms.','Ms.'],['Mrs.','Mrs.']],docF.title)+'</select>'))
   +fg('Signed for the business by','<select id="dS">'+opt(S.map(s=>[s.id,s.name+' – '+s.position]).concat([['_','Type a name…']]),docF.signer)+'</select>',(DB.signers||[]).length?'':'Save signatories with their digital signature in <a href="#set/sign">Settings › Signatories</a>.')+'</div>'
   +(docF.signer==='_'?'<div class="grid3">'+inp('sgName','Name of the authorized person')+inp('sgPos','Position')+fg('Digital signature','<div class="row mid"><button type="button" class="btn o s" id="dDraw">'+(docF.sgSig?'Redraw signature…':'Draw or upload signature…')+'</button>'+(docF.sgSig?'<img src="'+docF.sgSig+'" alt="Signature" style="height:30px;max-width:120px;object-fit:contain">':'')+'</div>','Used for this document only')+'</div>':'')
@@ -1570,7 +1603,7 @@ PAGES.docs={title:'Documents',render(v,a){
  combo($('#dE'));
  const sg=()=>docF.signer==='_'?{name:docF.sgName||'',position:docF.sgPos||'',sig:docF.sgSig||''}:(signerById(docF.signer)||{});
  const paint=()=>{const F=Object.assign({},docF,{sgn:sg()});previewDoc($('#dPv'),ct?contractHtml(F):coeHtml(F))};
- const redraw=()=>PAGES.docs.render(v,'');
+ const redraw=()=>PAGES.docs.render(v,ONB?'':docF.tab);
  $('#dE').onchange=e2=>{Object.assign(docF,docDefaults(e2.target.value));docF.signer='';redraw()};
  if($('#dT'))$('#dT').onchange=e2=>{docF.type=e2.target.value;docF.setStat=true;redraw()};
  $('#dS').onchange=e2=>{docF.signer=e2.target.value;redraw()};
@@ -1585,13 +1618,233 @@ PAGES.docs={title:'Documents',render(v,a){
   printDocFrom($('#dPv'),(ct?'Contract ':'COE ')+fullName(e));
   e.docs=(e.docs||[]).concat({kind:ct?'contract':'coe',type:ct?T:'',start:ct?docF.start:'',end:ct?docF.end||'':'',by:s.name,at:new Date().toISOString()}).slice(-30);
   if(ct&&docF.setStat&&e.status!==CT_STATUS[T]){e.status=CT_STATUS[T];toast('Status of '+fullName(e)+' set to '+CT_STATUS[T]+'.','ok')}
-  if(ct&&!e.hired&&docF.start)e.hired=docF.start;save()};
+  if(ct&&!e.hired&&docF.start&&!isRecruit(e))e.hired=docF.start;
+  if(ONB&&ct){Object.assign(e.onb,{ctype:T,start:docF.start,end:docF.end||''});if(e.onb.signedAt)e.onb.ctype=T;save();setTimeout(()=>onbRender($('#view'),'new/'+e.id),500);return}save()};
  paint();
 }};
 // contracts and probation ending soon (Dashboard)
 function contractAlerts(){const t=today(),lim=(()=>{const d=new Date();d.setDate(d.getDate()+30);return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())})(),L=[];
  DB.employees.filter(e=>e.active!==false).forEach(e=>{const c=(e.docs||[]).filter(d=>d.kind==='contract').slice(-1)[0];if(!c||!c.end||c.type==='reg')return;if(c.end<=lim&&CT_STATUS[c.type]===e.status)L.push({e,c,late:c.end<t})});
  return L.sort((a,b)=>cmp(a.c.end,b.c.end))}
+
+
+// =====================================================================================
+// New employees (onboarding): pending → contract signed → requirements → accepted as employee
+// =====================================================================================
+const isRecruit=e=>!!(e&&e.onb&&e.onb.state!=='accepted');
+const isPending=e=>!!(e&&e.onb&&e.onb.state==='pending');
+const reqList=()=>(S().reqs||[]);
+const startOf=e=>(e.onb&&e.onb.start)||e.hired||(e.onb&&e.onb.since)||today();
+const addDays=(s,n)=>{const d=new Date(s+'T00:00');d.setDate(d.getDate()+(+n||0));return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())};
+function reqState(e){const D=(e.onb&&e.onb.docs)||{},st=startOf(e),t=today();
+ return reqList().map(q=>{const d=D[q.id];const due=q.when==='before'?st:addDays(st,q.days||30);return{q,done:!!(d&&d.at),at:d&&d.at,note:d&&d.note||'',due,late:!(d&&d.at)&&!q.opt&&due<t}})}
+const reqMissing=e=>reqState(e).filter(x=>!x.done&&!x.q.opt);
+const docTabs=on=>'<div class="tabs"><a href="#docs/new" class="'+(on==='new'?'on':'')+'">New employee (onboarding)</a><a href="#docs/contract" class="'+(on==='contract'?'on':'')+'">Existing employee: contract</a><a href="#docs/coe" class="'+(on==='coe'?'on':'')+'">Existing employee: certificate of employment</a><a href="#set/sign">Signatories</a><a href="#set/onb">Requirements list</a></div>';
+function newRecruit(){empForm(null,()=>{})}
+function onbRender(v,a){
+ const id=(a||'').split('/')[1];
+ const P=DB.employees.filter(isPending).sort(empCmp),A=DB.employees.filter(e=>e.onb&&e.onb.state==='accepted'&&reqMissing(e).length).sort(empCmp);
+ let e=id&&empById(id);if(!e||!(isPending(e)||(e.onb&&e.onb.state==='accepted')))e=P[0]||A[0]||null;
+ const chip=x=>{const m=reqMissing(x),L=reqState(x).filter(r=>!r.q.opt),late=L.some(r=>r.late);return '<a class="rc'+(e&&x.id===e.id?' on':'')+'" href="#docs/new/'+x.id+'"><b>'+esc(fullName(x))+'</b><small>'+esc(x.business)+' · '+(isPending(x)?(x.onb.signedAt?'contract signed':'contract not signed'):'accepted')+' · '+(L.length-m.length)+'/'+L.length+' requirements'+(late?' · <span style="color:var(--danger)">overdue</span>':'')+'</small></a>'};
+ let h=docTabs('new')+'<div class="card"><div class="row mid"><h2 style="margin:0">New employees</h2><span class="sp"></span><button class="btn" id="onNew">+ New recruit</button></div>'
+  +'<p class="note">A recruit stays <b>pending</b> (not in payroll) until the contract is signed and you accept them. Requirements marked “before starting” must be in by then; the rest can follow during employment by their due dates.</p>'
+  +(P.length?'<h3>Pending</h3><div class="rcs">'+P.map(chip).join('')+'</div>':'<p class="empty" style="padding:8px 0">No pending recruits.</p>')
+  +(A.length?'<h3 style="margin-top:12px">Accepted, still submitting requirements</h3><div class="rcs">'+A.map(chip).join('')+'</div>':'')+'</div>';
+ if(!e){v.innerHTML=h;$('#onNew').onclick=newRecruit;return}
+ const o=e.onb,pend=isPending(e),R=reqState(e),bad=R.filter(r=>r.q.when==='before'&&!r.done&&!r.q.opt);
+ const ct=(e.docs||[]).filter(d=>d.kind==='contract').slice(-1)[0];
+ const step=(n,title,done,body)=>'<div class="step'+(done?' done':'')+'"><div class="sn">'+(done?'✓':n)+'</div><div class="sbd"><h3>'+title+'</h3>'+body+'</div></div>';
+ h+='<div class="card"><div class="row mid"><h2 style="margin:0">'+esc(fullName(e))+'</h2>'+(pend?'<span class="chip warn">Pending</span>':'<span class="chip ok">Accepted '+esc(fd(o.acceptedAt))+'</span>')+'<span class="sp"></span><button class="btn o s" id="onEdit">Edit details</button>'+(pend?'<button class="btn d s" id="onDrop">Did not push through</button>':'')+'</div>'
+  +'<p class="note" style="margin-top:2px">'+esc(e.business)+(e.position?' · '+esc(e.position):'')+' · recruit since '+esc(fd(o.since))+(startOf(e)?' · start '+esc(fd(startOf(e))):'')+'</p>'
+  +step(1,'Employment contract',!!o.signedAt,(ct?'<p>Printed '+esc(fd(ct.at.slice(0,10)))+': '+esc(CT_STATUS[ct.type])+' contract'+(ct.start?' from '+esc(fd(ct.start)):'')+(ct.end?' to '+esc(fd(ct.end)):'')+'.</p>':'<p>Prepare and print the contract below, and have the recruit sign it.</p>')
+   +(o.signedAt?'<p><b>Signed by the employee on '+esc(fd(o.signedAt))+'</b>'+(o.signNote?' · '+esc(o.signNote):'')+(pend?' <button class="btn o s" id="onUnsign">Undo</button>':'')+'</p>':'<button class="btn'+(ct?'':' o')+' s" id="onSign">Mark contract as signed…</button>'))
+  +step(2,'Requirements',!R.some(r=>!r.done&&!r.q.opt),'<div class="tw"><table class="t reqt"><thead><tr><th>Submitted</th><th>Requirement</th><th>Needed</th><th>Date received</th><th>Note</th></tr></thead><tbody>'
+   +R.map(r=>'<tr class="'+(r.late?'late':'')+'"><td class="cbc"><input type="checkbox" data-rq="'+r.q.id+'"'+(r.done?' checked':'')+' aria-label="'+esc(r.q.name)+' submitted"></td><td>'+esc(r.q.name)+(r.q.opt?' <span class="chip">if applicable</span>':'')+'</td><td>'+(r.q.when==='before'?'before starting':'by '+esc(fd(r.due)))+(r.late?' <span class="chip bad">overdue</span>':'')+'</td><td><input type="date" data-rd="'+r.q.id+'" value="'+esc(r.at||'')+'"></td><td><input data-rn="'+r.q.id+'" value="'+esc(r.note)+'" placeholder="e.g. photocopy, original seen"></td></tr>').join('')+'</tbody></table></div>')
+  +step(3,'Acceptance',!pend,pend?(!o.signedAt||bad.length?'<p class="note">To accept: '+[!o.signedAt&&'mark the contract as signed',bad.length&&'receive the requirements needed before starting ('+bad.map(r=>esc(r.q.name)).join(', ')+')'].filter(Boolean).join('; ')+'.</p>':'')+'<button class="btn" id="onAcc"'+(!o.signedAt||bad.length?' disabled':'')+'>Accept as employee…</button>'
+   :'<p>Accepted on '+esc(fd(o.acceptedAt))+' by '+esc(o.acceptedBy)+'. Included in payroll from '+esc(fd(e.hired))+'.</p>')+'</div>';
+ if(pend)h+='<h2 style="margin:16px 0 8px">Contract</h2><div id="onbEd"></div>';
+ v.innerHTML=h;
+ $('#onNew').onclick=newRecruit;$('#onEdit').onclick=()=>empForm(e.id,()=>onbRender(v,'new/'+e.id));
+ const re=()=>onbRender(v,'new/'+e.id);
+ const setD=(qid,f)=>{o.docs=o.docs||{};const d=o.docs[qid]||{};f(d);if(d.at||d.note)o.docs[qid]=d;else delete o.docs[qid];save()};
+ $$('[data-rq]',v).forEach(c=>c.onchange=()=>{setD(c.dataset.rq,d=>{if(c.checked)d.at=d.at||today();else delete d.at});re()});
+ $$('[data-rd]',v).forEach(c=>c.onchange=()=>{setD(c.dataset.rd,d=>{if(c.value)d.at=c.value;else delete d.at});re()});
+ $$('[data-rn]',v).forEach(c=>c.onchange=()=>setD(c.dataset.rn,d=>{d.note=c.value.trim().slice(0,120)}));
+ const sg=$('#onSign');if(sg)sg.onclick=()=>{const m=modal('<h2>Contract signed</h2><p>Record that '+esc(fullName(e))+' signed the employment contract. Keep the signed copy in the employee’s file.</p><div class="grid2">'+fg('Date signed by the employee','<input type="date" id="osD" value="'+today()+'">')+fg('Note','<input id="osN" placeholder="e.g. original in 201 file">')+'</div>'+(ct?'':'<div class="alert">No contract was printed from this app. Mark it signed only if the recruit signed another written contract.</div>')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="osGo">Save</button></div>',560);
+  $('#osGo',m).onclick=()=>{const d=$('#osD',m).value;if(!d)return toast('Enter the date signed.','bad');o.signedAt=d;o.signNote=$('#osN',m).value.trim().slice(0,120);if(ct){o.ctype=ct.type;o.start=ct.start||o.start;o.end=ct.end||''}save();m.close();re()}};
+ const us=$('#onUnsign');if(us)us.onclick=()=>{delete o.signedAt;delete o.signNote;save();re()};
+ const dp=$('#onDrop');if(dp)dp.onclick=async()=>{if(!(await confirmBox('Mark '+esc(fullName(e))+' as not pushing through? The record is kept (Employees › Show: All) but leaves this list.','Did not push through',1)))return;o.state='withdrawn';o.droppedAt=today();save();go('docs','new')};
+ const ac=$('#onAcc');if(ac)ac.onclick=()=>acceptModal(e,re);
+ if(pend){if(docF.emp!==e.id){Object.assign(docF,docDefaults(e.id));docF.signer='';docF.type=o.ctype||'prob';docF.setStat=true;if(o.start)docF.start=o.start}PAGES.docs.render($('#onbEd'),'contract/'+e.id)}
+}
+function acceptModal(e,after){const o=e.onb,R=reqState(e),miss=R.filter(r=>!r.done&&!r.q.opt),S2=(DB.signers||[]).filter(s=>!s.biz||s.biz===e.business);
+ const ctype=o.ctype||'prob';
+ const m=modal('<h2>Accept '+esc(fullName(e))+' as an employee</h2>'
+  +'<table class="t kvt"><tbody><tr><td>Business</td><td>'+esc(e.business)+'</td></tr><tr><td>Contract</td><td>'+esc(CT_STATUS[ctype])+(o.start?' from '+esc(fd(o.start)):'')+(o.end?' to '+esc(fd(o.end)):'')+'</td></tr><tr><td>Signed by the employee</td><td>'+esc(fd(o.signedAt))+'</td></tr><tr><td>Requirements</td><td>'+(R.filter(r=>r.done).length)+' of '+R.length+' received'+(miss.length?'<small>Still due: '+miss.map(r=>esc(r.q.name)+' ('+esc(fd(r.due))+')').join('; ')+'</small>':'')+'</td></tr></tbody></table>'
+  +'<div class="grid3" style="margin-top:10px">'+fg('Accepted by','<select id="acB">'+opt(S2.map(s=>[s.name+' – '+s.position,s.name+' – '+s.position]).concat([['_','Type a name…']]),S2[0]?S2[0].name+' – '+S2[0].position:'_')+'</select><input id="acT" placeholder="Name and position" style="margin-top:6px"'+(S2.length?' hidden':'')+'>')
+  +fg('Date accepted','<input type="date" id="acD" value="'+today()+'">')+fg('First day in payroll','<input type="date" id="acS" value="'+esc(o.start||e.hired||today())+'">')+'</div>'
+  +'<label class="ck"><input type="checkbox" id="acOk"> I have checked the employment contract signed by '+esc(fullName(e))+' and the requirements received.</label>'
+  +'<p class="note">The employee becomes active, with status “'+esc(CT_STATUS[ctype])+'”, and is included in payrolls from the first day. Requirements still due stay on the list until received.</p>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="acGo">Accept as employee</button></div>',720);
+ $('#acB',m).onchange=()=>{$('#acT',m).hidden=$('#acB',m).value!=='_'};
+ $('#acGo',m).onclick=()=>{if(!$('#acOk',m).checked)return toast('Tick the box to confirm you checked the signed contract.','bad');const by=$('#acB',m).value==='_'?$('#acT',m).value.trim():$('#acB',m).value;if(!by)return toast('Enter who accepts the employee.','bad');
+  const st=$('#acS',m).value;if(!st)return toast('Enter the first day in payroll.','bad');
+  Object.assign(o,{state:'accepted',acceptedAt:$('#acD',m).value||today(),acceptedBy:by});e.active=true;e.hired=st;e.status=CT_STATUS[ctype];
+  save();m.close();after&&after();toast(fullName(e)+' is now an employee ('+CT_STATUS[ctype]+'). New payrolls from '+fd(st)+' include them; for a draft payroll already made, use “Add employee”.','ok',7000)}}
+// Settings › Requirements list
+function paintReqs(B){const L=S().reqs=S().reqs||[];
+ B.innerHTML='<div class="card"><div class="row mid"><h2 style="margin:0">Requirements for new employees</h2><span class="sp"></span><button class="btn" id="rqAdd">+ Add requirement</button></div><p class="note">Shown as a checklist for each recruit. “Before starting” items must be received before the recruit can be accepted; the others are due a number of days after the first day. Items marked “if applicable” are never overdue.</p>'
+  +'<div class="tw"><table class="t"><thead><tr><th>Requirement</th><th>Needed</th><th class="n">Days after start</th><th>If applicable</th><th></th></tr></thead><tbody>'
+  +L.map((q,i)=>'<tr><td><input data-qn="'+i+'" value="'+esc(q.name)+'" style="min-width:300px"></td><td><select data-qw="'+i+'">'+opt([['before','Before starting'],['during','During employment']],q.when)+'</select></td><td class="n"><input type="number" min="0" data-qd="'+i+'" value="'+(q.days||30)+'" style="width:80px"'+(q.when==='before'?' disabled':'')+'></td><td class="cbc"><input type="checkbox" data-qo="'+i+'"'+(q.opt?' checked':'')+'></td><td><button class="btn d s" data-qx="'+i+'">Remove</button></td></tr>').join('')+'</tbody></table></div><div class="row" style="margin-top:8px"><button class="btn o s" id="rqDef">Restore the default list</button></div></div>';
+ const ch=()=>{save();toast('Saved.','ok')};
+ $$('[data-qn]',B).forEach(x=>x.onchange=()=>{L[+x.dataset.qn].name=x.value.trim()||L[+x.dataset.qn].name;ch()});
+ $$('[data-qw]',B).forEach(x=>x.onchange=()=>{L[+x.dataset.qw].when=x.value;ch();paintReqs(B)});
+ $$('[data-qd]',B).forEach(x=>x.onchange=()=>{L[+x.dataset.qd].days=Math.max(0,+x.value||0);ch()});
+ $$('[data-qo]',B).forEach(x=>x.onchange=()=>{L[+x.dataset.qo].opt=x.checked;ch()});
+ $$('[data-qx]',B).forEach(x=>x.onclick=()=>{L.splice(+x.dataset.qx,1);ch();paintReqs(B)});
+ $('#rqAdd',B).onclick=()=>{L.push({id:'q'+uid(),name:'New requirement',when:'during',days:30});ch();paintReqs(B)};
+ $('#rqDef',B).onclick=async()=>{if(!(await confirmBox('Replace the list with the default requirements? Received dates already recorded for the same items are kept.','Restore')))return;S().reqs=clone(DEF_REQS);ch();paintReqs(B)}}
+
+
+// =====================================================================================
+// Leaves and rest days: weekly rest days, leave types and entitlements, leave records, calendar
+// =====================================================================================
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],WDL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const restDays=e=>Array.isArray(e.rest)?e.rest:(e.basis==='monthly'&&+e.factor===261?[0,6]:[0]);
+const restOn=(e,d)=>{const x=(e.restX||{})[d];if(x)return x==='rest';return restDays(e).includes(new Date(d+'T00:00').getDay())};
+let HMC={};const holReset=()=>{HMC={}};
+const holOn=d=>{const y=+d.slice(0,4);if(!HMC[y]){HMC[y]={};holidays(y).forEach(h=>{if(h.type==='R'||h.type==='S')HMC[y][h.date]=HMC[y][h.date]?{date:h.date,type:h.type==='R'||HMC[y][h.date].type==='R'?'R':'S',name:HMC[y][h.date].name+' / '+h.name}:h})}return HMC[y][d]};
+const ltById=id=>(DB.ltypes||[]).find(t=>t.id===id)||{id,name:id,pay:'paid'};
+const nextDay=d=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+1);return ymd(x.getFullYear(),x.getMonth()+1,x.getDate())};
+// dates a leave actually uses: rest days and holidays are skipped unless the type counts calendar days
+function leaveDates(lv){const e=empById(lv.empId)||{},t=ltById(lv.type),out=[];if(!lv.from||!lv.to||lv.to<lv.from)return out;let d=lv.from,i=0;
+ while(d<=lv.to&&i++<400){if(t.cal||!(restOn(e,d)||holOn(d)))out.push({d,n:lv.half&&lv.from===lv.to?.5:1});d=nextDay(d)}return out}
+const leaveDays=lv=>leaveDates(lv).reduce((s,x)=>s+x.n,0);
+const svcMonths=(e,d)=>{if(!e.hired)return 0;const a=new Date(e.hired+'T00:00'),b=new Date(d+'T00:00');let m=(b.getFullYear()-a.getFullYear())*12+b.getMonth()-a.getMonth();if(b.getDate()<a.getDate())m--;return Math.max(0,m)};
+const annualT=t=>!t.ev&&!t.unl;
+function entitled(e,t,y){if(e.lent&&e.lent[t.id]!=null&&e.lent[t.id]!=='')return +e.lent[t.id];if(t.who==='set')return 0;const asOf=String(y)===today().slice(0,4)?today():ymd(y,12,31);return svcMonths(e,asOf)>=(+t.svc||0)?(+t.days||0):0}
+function usedIn(e,t,y,st){return(DB.leaves||[]).filter(l=>l.empId===e.id&&l.type===t.id&&(l.status||'ok')===(st||'ok')).reduce((s,l)=>s+leaveDates(l).filter(x=>+x.d.slice(0,4)===y).reduce((a,x)=>a+x.n,0),0)}
+// payroll: approved leave in a cutoff fills "leave with pay" (and, for monthly-paid, unpaid leave as absences)
+function leaveFill(run,r){holReset();const [a,b]=cutoff(run.year,run.month,run.q);let paid=0,unp=0;
+ (DB.leaves||[]).forEach(l=>{if(l.empId!==r.empId||(l.status||'ok')!=='ok'||l.to<a||l.from>b)return;const t=ltById(l.type);leaveDates(l).forEach(x=>{if(x.d<a||x.d>b)return;if(t.pay==='paid')paid+=x.n;else if(t.pay==='unpaid')unp+=x.n})});
+ r.tm=r.tm||{};if(paid)r.tm.leave=paid;else delete r.tm.leave;if(r.basis==='monthly'&&unp)r.tm.lwop=unp;else delete r.tm.lwop;return paid+unp}
+function leaveSync(empId){let n=0;DB.runs.filter(x=>x.status!=='final').forEach(run=>{const r=run.rows.find(x=>x.empId===empId);if(!r)return;const before=JSON.stringify([r.tm.leave,r.tm.lwop]);leaveFill(run,r);if(JSON.stringify([r.tm.leave,r.tm.lwop])!==before){recalcFrom(run);n++}});return n}
+const empsOn=(d,biz)=>DB.employees.filter(e=>!isRecruit(e)&&e.active!==false&&(!e.hired||e.hired<=d)&&(!e.separated||e.separated>=d)&&(!biz||biz==='ALL'||e.business===biz));
+
+// ---------------------------------------------------------------- calendar (Dashboard and Leaves page)
+let calF={y:new Date().getFullYear(),m:new Date().getMonth()+1,biz:'ALL',sel:today()};
+function renderCal(el,compact){holReset();const y=calF.y,m=calF.m,first=new Date(y,m-1,1).getDay(),nd=lastDay(y,m),t=today();
+ const lv=(DB.leaves||[]).filter(l=>(l.status||'ok')!=='no'&&l.to>=ymd(y,m,1)&&l.from<=ymd(y,m,nd));
+ const day=d=>{const E=empsOn(d,calF.biz),ids=new Set(E.map(e=>e.id));const L=[];lv.forEach(l=>{if(!ids.has(l.empId))return;const x=leaveDates(l).find(z=>z.d===d);if(x)L.push({l,n:x.n})});const onL=new Set(L.map(x=>x.l.empId));return{E,L,R:E.filter(e=>!onL.has(e.id)&&restOn(e,d)),h:holOn(d)}};
+ let h='<div class="cal'+(compact?' compact':'')+'"><div class="row mid calh"><button class="btn o s" data-cm="-1" aria-label="Previous month">‹</button><h2 style="margin:0;min-width:170px;text-align:center">'+MN[m-1]+' '+y+'</h2><button class="btn o s" data-cm="1" aria-label="Next month">›</button><button class="btn o s" data-cm="0">Today</button><span class="sp"></span>'
+  +(bizList().length>1?'<select id="calB" aria-label="Business">'+opt([['ALL','All businesses']].concat(bizList()),calF.biz)+'</select>':'')+'<a class="btn s" href="#leave/new">+ File a leave</a></div>'
+  +'<div class="cg">'+WD.map(w=>'<div class="cw">'+w+'</div>').join('');
+ for(let i=0;i<first;i++)h+='<div class="cd x"></div>';
+ for(let dd=1;dd<=nd;dd++){const d=ymd(y,m,dd),D=day(d);
+  h+='<button type="button" class="cd'+(d===t?' td':'')+(d===calF.sel?' sel':'')+(D.h?' hol':'')+'" data-cd="'+d+'" aria-label="'+esc(fdw(d))+': '+D.L.length+' on leave, '+D.R.length+' on rest day'+(D.h?', '+esc(D.h.name):'')+'"><span class="dn">'+dd+'</span>'
+   +(D.h?'<span class="hl" title="'+esc(D.h.name)+'">'+esc(D.h.name)+'</span>':'')
+   +D.L.slice(0,compact?2:3).map(x=>'<span class="lv'+((x.l.status||'ok')==='pend'?' pend':'')+'" title="'+esc(fullName(empById(x.l.empId))+' – '+ltById(x.l.type).name)+'">'+esc((empById(x.l.empId)||{}).first||'')+' '+esc(((empById(x.l.empId)||{}).last||'').slice(0,1))+'. · '+esc(ltAbbr(x.l.type))+(x.n<1?' ½':'')+'</span>').join('')
+   +(D.L.length>(compact?2:3)?'<span class="more">+'+(D.L.length-(compact?2:3))+' on leave</span>':'')
+   +(D.R.length?'<span class="rs">'+D.R.length+' rest day</span>':'')+'</button>'}
+ h+='</div><div class="calp" id="calP"></div><p class="note" style="margin:6px 0 0"><span class="lv" style="display:inline-block">Name · type</span> approved leave · <span class="lv pend" style="display:inline-block">pending</span> filed, not yet approved · click a date for the full list.</p></div>';
+ el.innerHTML=h;
+ $$('[data-cm]',el).forEach(b=>b.onclick=()=>{const k=+b.dataset.cm;if(!k){const n=new Date();calF.y=n.getFullYear();calF.m=n.getMonth()+1;calF.sel=today()}else{calF.m+=k;if(calF.m<1){calF.m=12;calF.y--}if(calF.m>12){calF.m=1;calF.y++}}renderCal(el,compact)});
+ const cb=$('#calB',el);if(cb)cb.onchange=()=>{calF.biz=cb.value;renderCal(el,compact)};
+ $$('[data-cd]',el).forEach(b=>b.onclick=()=>{calF.sel=b.dataset.cd;$$('.cd.sel',el).forEach(x=>x.classList.remove('sel'));b.classList.add('sel');panel()});
+ const panel=()=>{const d=calF.sel;if(d.slice(0,7)!==ymd(y,m,1).slice(0,7)){$('#calP',el).innerHTML='';return}const D=day(d),W=D.E.filter(e=>!D.L.some(x=>x.l.empId===e.id)&&!D.R.includes(e));
+  $('#calP',el).innerHTML='<div class="row mid"><h3 style="margin:0">'+esc(fdw(d))+(D.h?' · <span class="chip warn">'+esc(D.h.name)+' ('+(D.h.type==='R'?'regular holiday':'special day')+')</span>':'')+'</h3><span class="sp"></span><a class="btn o s" href="#leave/new/'+d+'">+ File a leave on this date</a><button class="btn o s" id="calRx">Change rest days on this date…</button></div>'
+   +'<div class="grid3" style="margin-top:8px"><div><b>On leave ('+D.L.length+')</b>'+(D.L.map(x=>'<div class="pl"><a href="#leave/rec/'+x.l.id+'">'+esc(fullName(empById(x.l.empId)))+'</a> – '+esc(ltById(x.l.type).name)+(x.n<1?' (half day)':'')+((x.l.status||'ok')==='pend'?' <span class="chip warn">pending</span>':'')+'</div>').join('')||'<div class="note">None</div>')+'</div>'
+   +'<div><b>Rest day ('+D.R.length+')</b>'+(D.R.map(e=>'<div class="pl">'+esc(fullName(e))+((e.restX||{})[d]?' <span class="chip">changed</span>':'')+'</div>').join('')||'<div class="note">None</div>')+'</div>'
+   +'<div><b>Working ('+W.length+')</b>'+(W.slice(0,40).map(e=>'<div class="pl">'+esc(fullName(e))+((e.restX||{})[d]?' <span class="chip">changed</span>':'')+'</div>').join('')+(W.length>40?'<div class="note">and '+(W.length-40)+' more</div>':'')||'<div class="note">None</div>')+'</div></div>';
+  $('#calRx',el).onclick=()=>restXModal(d,()=>renderCal(el,compact))};
+ panel()}
+const ltAbbr=id=>{const t=ltById(id);return t.abbr||t.name.split(/\s+/).filter(w=>!/^(leave|of|for|the)$/i.test(w)).map(w=>w[0]).join('').toUpperCase().slice(0,4)};
+function restXModal(d,after){const E=empsOn(d,calF.biz).sort(empCmp);
+ const m=modal('<h2>Rest days on '+esc(fdw(d))+'</h2><p class="note">Tick who is on rest day on this date only (a swapped or extra rest day). The weekly rest days in the employee records stay the same.</p><div class="tw" style="max-height:52vh"><table class="t"><thead><tr><th>Employee</th><th>Weekly rest day</th><th>Rest day on this date</th></tr></thead><tbody>'
+  +E.map(e=>'<tr><td>'+esc(fullName(e))+'</td><td>'+restDays(e).map(i=>WD[i]).join(', ')+'</td><td class="cbc"><input type="checkbox" data-rx="'+e.id+'"'+(restOn(e,d)?' checked':'')+' aria-label="'+esc(fullName(e))+' rest day"></td></tr>').join('')+'</tbody></table></div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="rxGo">Save</button></div>',640);
+ $('#rxGo',m).onclick=()=>{let n=0;$$('[data-rx]',m).forEach(c=>{const e=empById(c.dataset.rx),wk=restDays(e).includes(new Date(d+'T00:00').getDay());e.restX=e.restX||{};const was=restOn(e,d);
+  if(c.checked===wk)delete e.restX[d];else e.restX[d]=c.checked?'rest':'work';if(was!==c.checked){n++;leaveSync(e.id)}});save();m.close();after&&after();toast(n?'Rest days changed for '+n+' employee'+(n===1?'':'s')+' on '+fd(d)+'.':'No changes.','ok')}}
+
+// ---------------------------------------------------------------- leave form
+function leaveForm(id,after,pre){const l=id?(DB.leaves||[]).find(x=>x.id===id):null,v=l||Object.assign({empId:'',type:'sil',from:today(),to:today(),half:false,status:'ok',note:''},pre||{});
+ const emps=DB.employees.filter(e=>!isRecruit(e)&&(e.active!==false||e.id===v.empId)).sort(empCmp);if(!emps.length)return toast('Add employees first.','bad');
+ const T=(DB.ltypes||[]).filter(t=>t.active!==false||t.id===v.type);
+ const m=modal('<h2>'+(l?'Edit leave':'File a leave')+'</h2><div class="grid2">'+fg('Employee *','<select id="lvE">'+opt((v.empId?[]:[['','']]).concat(emps.map(e=>[e.id,fullName(e)+' – '+e.business])),v.empId)+'</select>')
+  +fg('Type of leave','<select id="lvT">'+opt(T.map(t=>[t.id,t.name]),v.type)+'</select>')+fg('From','<input type="date" id="lvF" value="'+esc(v.from)+'">')+fg('To','<input type="date" id="lvTo" value="'+esc(v.to)+'">')
+  +fg('Status','<select id="lvS">'+opt([['ok','Approved'],['pend','Filed – waiting for approval'],['no','Not approved']],v.status||'ok')+'</select>')+fg('Half day','<label class="ck" style="margin:0"><input type="checkbox" id="lvH"'+(v.half?' checked':'')+'> Half day (one date only)</label>')+'</div>'
+  +fg('Reason or note','<input id="lvN" value="'+esc(v.note||'')+'" placeholder="e.g. family occasion, medical certificate attached">')+'<div id="lvI" class="out" style="margin-top:10px"></div>'
+  +'<div class="acts">'+(l?'<button class="btn d" id="lvDel" style="margin-right:auto">Delete</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="lvGo">Save</button></div>',700);
+ combo($('#lvE',m));if(!v.empId)$('#lvE_q',m).focus();
+ const read=()=>({empId:$('#lvE',m).value,type:$('#lvT',m).value,from:$('#lvF',m).value,to:$('#lvTo',m).value||$('#lvF',m).value,half:$('#lvH',m).checked,status:$('#lvS',m).value,note:$('#lvN',m).value.trim().slice(0,200)});
+ const info=()=>{holReset();const o=read(),e=empById(o.empId);if(!e){$('#lvI',m).innerHTML='';return}if(o.to<o.from){$('#lvI',m).innerHTML='<div style="background:var(--danger2)"><span>Dates</span><b>“To” is before “From”</b></div>';return}
+  const t=ltById(o.type),n=leaveDays(Object.assign({},o,{id:l&&l.id})),y=+o.from.slice(0,4),ent=entitled(e,t,y),used=usedIn(e,t,y)-(l&&(l.status||'ok')==='ok'&&l.type===o.type?leaveDates(l).filter(x=>+x.d.slice(0,4)===y).reduce((a,x)=>a+x.n,0):0),left=ent-used-((o.status==='ok')?n:0);
+  $('#lvI',m).innerHTML='<div><span>Days of leave</span><b>'+r4(n)+'</b></div>'+(t.cal?'':'<div><span>Rest days and holidays not counted</span><b>'+Math.max(0,dayCount(o.from,o.to)-leaveDates(Object.assign({},o,{type:'sil',half:false})).length)+'</b></div>')
+   +(annualT(t)?'<div'+(left<0?' style="background:var(--danger2)"':'')+'><span>'+esc(t.name)+' balance '+y+' after this</span><b>'+r4(left)+' of '+r4(ent)+'</b></div>':'<div><span>'+(t.unl?'No limit':'Per event')+'</span><b>'+(t.ev?r4(+t.days||0)+' days':'–')+'</b></div>')
+   +'<div><span>In payroll</span><b>'+(t.pay==='paid'?'paid leave':t.pay==='unpaid'?(e.basis==='monthly'?'deducted as absence':'not paid'):'not in payroll')+'</b></div>'};
+ $$('input,select',m).forEach(el=>{el.addEventListener('change',info);el.addEventListener('input',info)});info();
+ $('#lvGo',m).onclick=async()=>{const o=read();if(!o.empId)return toast('Choose the employee.','bad');if(!o.from)return toast('Enter the date.','bad');if(o.to<o.from)return toast('“To” is before “From”.','bad');if(o.half&&o.to!==o.from)o.half=false;
+  const n=leaveDays(o);if(!n)return toast('Those dates are all rest days or holidays for this employee.','bad');
+  const clash=(DB.leaves||[]).find(x=>x!==l&&x.empId===o.empId&&(x.status||'ok')!=='no'&&x.from<=o.to&&x.to>=o.from);if(clash)return toast('This employee already has a leave from '+fd(clash.from)+' to '+fd(clash.to)+'.','bad',6000);
+  const e=empById(o.empId),t=ltById(o.type),y=+o.from.slice(0,4);
+  if(o.status==='ok'&&annualT(t)){const left=entitled(e,t,y)-usedIn(e,t,y)+(l&&(l.status||'ok')==='ok'&&l.type===o.type?leaveDays(l):0)-n;if(left<0&&!(await confirmBox(esc(fullName(e))+' has only '+r4(left+n)+' day(s) of '+esc(t.name)+' left for '+y+'. Save anyway?','Save anyway')))return}
+  const prev=l?l.empId:null;DB.leaves=DB.leaves||[];if(l)Object.assign(l,o);else DB.leaves.push(Object.assign({id:'v'+uid(),at:new Date().toISOString()},o));
+  let k=leaveSync(o.empId);if(prev&&prev!==o.empId)k+=leaveSync(prev);save();m.close();after&&after();toast('Leave saved.'+(k?' Updated '+k+' draft payroll'+(k===1?'':'s')+'.':''),'ok',5000)};
+ const dl2=$('#lvDel',m);if(dl2)dl2.onclick=async()=>{if(!(await confirmBox('Delete this leave?','Delete',1)))return;DB.leaves=DB.leaves.filter(x=>x!==l);leaveSync(l.empId);save();m.close();after&&after()}}
+const dayCount=(a,b)=>Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/864e5)+1;
+
+// ---------------------------------------------------------------- Leaves & Rest Days page
+const LTABS=[['cal','Calendar'],['rec','Leave records'],['bal','Balances'],['rest','Rest days']];
+let lvF={emp:'ALL',type:'ALL',st:'ALL',y:new Date().getFullYear(),biz:'ALL'};
+PAGES.leave={title:'Leaves & Rest Days',render(v,a){
+ const P=(a||'').split('/');let tab=LTABS.some(x=>x[0]===P[0])?P[0]:'cal';
+ if(P[0]==='new'){setTimeout(()=>leaveForm(null,()=>PAGES.leave.render(v,'cal'),P[1]?{from:P[1],to:P[1]}:null),0);tab='cal';if(P[1]){calF.y=+P[1].slice(0,4);calF.m=+P[1].slice(5,7);calF.sel=P[1]}}
+ if(P[0]==='rec'&&P[1]){setTimeout(()=>leaveForm(P[1],()=>PAGES.leave.render(v,'rec')),0)}
+ v.innerHTML='<div class="tabs">'+LTABS.map(x=>'<a href="#leave/'+x[0]+'" class="'+(x[0]===tab?'on':'')+'">'+x[1]+'</a>').join('')+'<a href="#set/leave">Leave types</a></div><div id="lvB"></div>';
+ const B=$('#lvB');
+ if(tab==='cal'){B.innerHTML='<div class="card" id="lvCal"></div>';renderCal($('#lvCal'));return}
+ if(tab==='rec'){const emps=DB.employees.filter(e=>!isRecruit(e)).sort(empCmp);
+  B.innerHTML='<div class="card"><div class="row">'+fg('Employee','<select id="lfE2">'+opt([['ALL','All employees']].concat(emps.map(e=>[e.id,fullName(e)])),lvF.emp)+'</select>')+fg('Type','<select id="lfT2">'+opt([['ALL','All types']].concat((DB.ltypes||[]).map(t=>[t.id,t.name])),lvF.type)+'</select>')
+   +fg('Status','<select id="lfS2">'+opt([['ALL','All'],['ok','Approved'],['pend','Waiting for approval'],['no','Not approved']],lvF.st)+'</select>')+fg('Year','<select id="lfY2">'+opt([...new Set((DB.leaves||[]).map(l=>+l.from.slice(0,4)).concat([new Date().getFullYear()]))].sort().reverse(),lvF.y)+'</select>')
+   +'<span class="sp"></span><button class="btn o" id="lfCsv">Export CSV</button><button class="btn" id="lfAdd">+ File a leave</button></div></div><div id="lfL"></div>';
+  combo($('#lfE2'),'All employees – type a name');
+  const paint=()=>{holReset();const L=(DB.leaves||[]).filter(l=>(lvF.emp==='ALL'||l.empId===lvF.emp)&&(lvF.type==='ALL'||l.type===lvF.type)&&(lvF.st==='ALL'||(l.status||'ok')===lvF.st)&&(+l.from.slice(0,4)===+lvF.y||+l.to.slice(0,4)===+lvF.y)).sort((a,b)=>cmp(b.from,a.from));
+   const ST={ok:'<span class="chip ok">Approved</span>',pend:'<span class="chip warn">Waiting</span>',no:'<span class="chip bad">Not approved</span>'};
+   $('#lfL').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th class="n">Days</th><th>Status</th><th>Note</th><th></th></tr></thead><tbody>'
+    +(L.map(l=>'<tr><td>'+esc(fullName(empById(l.empId)||{last:'(deleted)',first:''}))+'</td><td>'+esc(ltById(l.type).name)+'</td><td>'+esc(fd(l.from))+'</td><td>'+esc(fd(l.to))+'</td><td class="n">'+r4(leaveDays(l))+'</td><td>'+(ST[l.status||'ok'])+'</td><td class="wrap">'+esc(l.note||'')+'</td><td>'+((l.status||'ok')==='pend'?'<button class="btn s" data-ap="'+l.id+'">Approve</button> ':'')+'<button class="btn o s" data-le2="'+l.id+'">Edit</button></td></tr>').join('')||'<tr><td colspan="8" class="empty">No leaves.</td></tr>')+'</tbody></table></div>';
+   $$('[data-le2]').forEach(b=>b.onclick=()=>leaveForm(b.dataset.le2,paint));
+   $$('[data-ap]').forEach(b=>b.onclick=()=>{const l=DB.leaves.find(x=>x.id===b.dataset.ap);l.status='ok';l.okAt=today();const k=leaveSync(l.empId);save();paint();toast('Approved.'+(k?' Draft payroll updated.':''),'ok')});
+   $('#lfCsv').onclick=()=>dl('leaves_'+lvF.y+'.csv',toCsv([['Employee','Business','Type','From','To','Days','Status','Paid','Note']].concat(L.map(l=>{const e=empById(l.empId)||{};return[fullName(e),e.business,ltById(l.type).name,l.from,l.to,r4(leaveDays(l)),{ok:'Approved',pend:'Waiting',no:'Not approved'}[l.status||'ok'],ltById(l.type).pay,l.note||'']}))))};
+  $('#lfE2').onchange=e=>{lvF.emp=e.target.value;paint()};$('#lfT2').onchange=e=>{lvF.type=e.target.value;paint()};$('#lfS2').onchange=e=>{lvF.st=e.target.value;paint()};$('#lfY2').onchange=e=>{lvF.y=+e.target.value;paint()};
+  $('#lfAdd').onclick=()=>leaveForm(null,paint,lvF.emp!=='ALL'?{empId:lvF.emp}:null);paint();return}
+ if(tab==='bal'){const T=(DB.ltypes||[]).filter(t=>t.active!==false&&annualT(t)),y=lvF.y;
+  B.innerHTML='<div class="card"><div class="row">'+fg('Year','<select id="lbY">'+opt([y-1,y,y+1].filter((x,i,a)=>a.indexOf(x)===i),y)+'</select>')+fg('Business','<select id="lbB">'+opt([['ALL','All businesses']].concat(bizList()),lvF.biz)+'</select>')+'<span class="sp"></span><button class="btn o" id="lbCsv">Export CSV</button></div><p class="note">Entitled days come from the leave type (after the months of service it needs) unless set for the employee. Type a number in a box to set an employee’s own entitlement; clear it to go back to the default.</p></div><div id="lbL"></div>';
+  const paint=()=>{holReset();const E=DB.employees.filter(e=>!isRecruit(e)&&e.active!==false&&(lvF.biz==='ALL'||e.business===lvF.biz)).sort(empCmp);
+   $('#lbL').innerHTML='<div class="tw"><table class="t grid lbt"><thead><tr><th>Employee</th>'+T.map(t=>'<th colspan="4">'+esc(t.name)+'</th>').join('')+'</tr><tr><th></th>'+T.map(()=>'<th>Entitled</th><th>Used</th><th>Waiting</th><th>Left</th>').join('')+'</tr></thead><tbody>'
+    +E.map(e=>'<tr><td class="nm"><b>'+esc(fullName(e))+'</b><small>'+esc(e.business)+(e.hired?' · hired '+esc(fd(e.hired)):'')+'</small></td>'+T.map(t=>{const en=entitled(e,t,y),u=usedIn(e,t,y),pn=usedIn(e,t,y,'pend'),own=e.lent&&e.lent[t.id]!=null&&e.lent[t.id]!=='';
+     return '<td><input data-ent="'+e.id+'|'+t.id+'" value="'+(own?e.lent[t.id]:'')+'" placeholder="'+r4(own?0:en)+'" class="'+(own?'man':'')+'" inputmode="decimal" style="width:58px" aria-label="'+esc(t.name+' entitlement – '+fullName(e))+'"></td><td class="calc">'+r4(u)+'</td><td class="calc">'+(pn?r4(pn):'–')+'</td><td class="calc'+(en-u<0?' neg':'')+'"><b>'+r4(en-u)+'</b></td>'}).join('')+'</tr>').join('')+'</tbody></table></div>';
+   $$('[data-ent]').forEach(i=>i.onchange=()=>{const [eid,tid]=i.dataset.ent.split('|'),e=empById(eid);e.lent=e.lent||{};const v2=i.value.trim();if(v2==='')delete e.lent[tid];else e.lent[tid]=Math.max(0,parseFloat(v2)||0);save();setTimeout(()=>{if($('#lbL'))paint()},0)});
+   $('#lbCsv').onclick=()=>dl('leave_balances_'+y+'.csv',toCsv([['Employee','Business'].concat(...T.map(t=>[t.name+' entitled',t.name+' used',t.name+' left']))].concat(E.map(e=>[fullName(e),e.business].concat(...T.map(t=>{const en=entitled(e,t,y),u=usedIn(e,t,y);return[r4(en),r4(u),r4(en-u)]}))))))};
+  $('#lbY').onchange=e=>{lvF.y=+e.target.value;paint()};$('#lbB').onchange=e=>{lvF.biz=e.target.value;paint()};paint();return}
+ if(tab==='rest'){B.innerHTML='<div class="card"><div class="row">'+fg('Business','<select id="lrB">'+opt([['ALL','All businesses']].concat(bizList()),lvF.biz)+'</select>')+'<span class="sp"></span></div><p class="note">Tick each employee’s weekly rest day(s). Leaves skip rest days and holidays. To change a rest day for one date only, use the calendar.</p></div><div id="lrL"></div>';
+  const paint=()=>{const E=DB.employees.filter(e=>!isRecruit(e)&&e.active!==false&&(lvF.biz==='ALL'||e.business===lvF.biz)).sort(empCmp);
+   $('#lrL').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Employee</th><th>Business</th>'+WD.map(w=>'<th class="cbc">'+w+'</th>').join('')+'<th>Changes on specific dates</th></tr></thead><tbody>'
+    +E.map(e=>{const R=restDays(e),X=Object.entries(e.restX||{}).filter(([d])=>d>=today()).sort();return '<tr><td><b>'+esc(fullName(e))+'</b></td><td>'+esc(e.business)+'</td>'+WD.map((w,i)=>'<td class="cbc"><input type="checkbox" data-rw="'+e.id+'|'+i+'"'+(R.includes(i)?' checked':'')+' aria-label="'+esc(fullName(e))+' rest day '+WDL[i]+'"></td>').join('')+'<td class="wrap note">'+(X.map(([d,k])=>esc(fd(d))+': '+(k==='rest'?'rest':'works')).join('; ')||'–')+'</td></tr>'}).join('')+'</tbody></table></div>';
+   $$('[data-rw]').forEach(c=>c.onchange=()=>{const [eid,i]=c.dataset.rw.split('|'),e=empById(eid);let R=restDays(e).slice();if(c.checked)R.push(+i);else R=R.filter(x=>x!==+i);e.rest=[...new Set(R)].sort();leaveSync(e.id);save()})};
+  $('#lrB').onchange=e=>{lvF.biz=e.target.value;paint()};paint()}
+}};
+// Settings › Leave types
+function paintLtypes(B){const L=DB.ltypes;
+ B.innerHTML='<div class="card"><div class="row mid"><h2 style="margin:0">Leave types</h2><span class="sp"></span><button class="btn" id="ltAdd">+ Add leave type</button></div><p class="note">Days a year are the default entitlement; set an employee’s own number in Leaves › Balances. “Per event” leaves (maternity, paternity, VAWC) have no yearly balance. “In payroll”: paid leave fills “leave with pay”; unpaid leave is not paid (monthly-paid: deducted as absence); “outside payroll” is recorded only — for example maternity leave, where the SSS benefit and salary differential are entered as pay items.</p>'
+  +'<div class="tw"><table class="t"><thead><tr><th>Name</th><th>Short</th><th class="n">Days</th><th>Kind</th><th class="n">Months of service needed</th><th>Who</th><th>In payroll</th><th>Counts</th><th>Basis</th><th></th></tr></thead><tbody>'
+  +L.map((t,i)=>'<tr'+(t.active===false?' class="off"':'')+'><td><input data-lt="'+i+'|name" value="'+esc(t.name)+'" style="min-width:190px"></td><td><input data-lt="'+i+'|abbr" value="'+esc(t.abbr||'')+'" placeholder="'+esc(ltAbbr(t.id))+'" style="width:60px"></td><td class="n"><input type="number" min="0" step="0.5" data-lt="'+i+'|days" value="'+(+t.days||0)+'" style="width:70px"></td>'
+   +'<td><select data-lt="'+i+'|kind">'+opt([['yr','Per year'],['ev','Per event'],['unl','No limit']],t.ev?'ev':t.unl?'unl':'yr')+'</select></td><td class="n"><input type="number" min="0" data-lt="'+i+'|svc" value="'+(+t.svc||0)+'" style="width:60px"></td><td><select data-lt="'+i+'|who">'+opt([['all','Everyone'],['set','Only if set per employee']],t.who||'all')+'</select></td>'
+   +'<td><select data-lt="'+i+'|pay">'+opt([['paid','Paid'],['unpaid','Unpaid'],['out','Outside payroll']],t.pay||'paid')+'</select></td><td><select data-lt="'+i+'|cal">'+opt([['0','Working days'],['1','Calendar days']],t.cal?'1':'0')+'</select></td><td class="wrap note">'+esc(t.law||'Company policy')+'</td><td><button class="btn o s" data-lta="'+i+'">'+(t.active===false?'Show':'Hide')+'</button></td></tr>').join('')+'</tbody></table></div></div>';
+ $$('[data-lt]',B).forEach(x=>x.onchange=()=>{const [i,k]=x.dataset.lt.split('|'),t=L[+i];
+  if(k==='kind'){t.ev=x.value==='ev';t.unl=x.value==='unl'}else if(k==='cal')t.cal=x.value==='1';else if(k==='days'||k==='svc')t[k]=Math.max(0,+x.value||0);else t[k]=x.value.trim()||(k==='name'?t.name:'');
+  DB.employees.forEach(e=>leaveSync(e.id));save();toast('Saved.','ok')});
+ $$('[data-lta]',B).forEach(b=>b.onclick=()=>{const t=L[+b.dataset.lta];t.active=t.active===false;save();paintLtypes(B)});
+ $('#ltAdd',B).onclick=()=>{L.push({id:'t'+uid(),name:'New leave type',days:0,pay:'paid',svc:0});save();paintLtypes(B)}}
 
 
 // =====================================================================================
@@ -1662,7 +1915,7 @@ function paintFold(el,after){
 // =====================================================================================
 // Settings
 // =====================================================================================
-const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['sign','Signatories'],['data','Backup & data']];
+const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['sign','Signatories'],['onb','New hire requirements'],['leave','Leave types'],['data','Backup & data']];
 PAGES.set={title:'Settings',render(v,a){
  const id=SETS.some(x=>x[0]===a)?a:'company';
  v.innerHTML='<div class="tabs">'+SETS.map(x=>'<a href="#set/'+x[0]+'" class="'+(x[0]===id?'on':'')+'">'+x[1]+'</a>').join('')+'</div><div id="setB"></div>';
@@ -1671,6 +1924,8 @@ PAGES.set={title:'Settings',render(v,a){
 const num=(id,v,step)=>'<input type="number" id="'+id+'" step="'+(step||'any')+'" value="'+esc(v)+'">';
 const SET={
  sign(B){paintSigners(B)},
+ onb(B){paintReqs(B)},
+ leave(B){paintLtypes(B)},
  company(B){
   const paint=()=>{B.innerHTML='<div class="card"><h2>Company</h2><div class="grid2">'+fg('Name shown in the app and on reports for “All businesses”','<input id="cN" value="'+esc(DB.company.name||'')+'" placeholder="e.g. GSVC Group">')+'</div></div>'
    +'<div class="card"><div class="row mid"><h2 style="margin:0">Businesses (employers)</h2><span class="sp"></span><button class="btn" id="bAdd">+ Add business</button></div><p class="note">Each business prints its own name on payslips and registers. Its TIN and employer numbers appear on the contribution, 1601-C and 2316 reports.</p>'
@@ -1785,7 +2040,7 @@ function itemForm(id,after){
 // start
 // =====================================================================================
 (async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':'';startAutoBackup()})();
-window.AJPAY={contractHtml,coeHtml,ledgerCharged,ledgerBalAfter,ledgerDeducted,refreshLedgerDrafts,FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+window.AJPAY={leaveDays,leaveDates,entitled,usedIn,restOn,leaveFill,reqState,isRecruit,contractHtml,coeHtml,ledgerCharged,ledgerBalAfter,ledgerDeducted,refreshLedgerDrafts,FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
 
 </script>
 </body>
