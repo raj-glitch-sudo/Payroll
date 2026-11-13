@@ -113,6 +113,7 @@ details>summary{cursor:pointer;font-weight:700}
 @media print{body{display:block}.side,.top{display:none}}
 
 [hidden]{display:none!important}
+.sigpad canvas{width:100%;max-width:600px;aspect-ratio:3/1;border:1.5px dashed #9fb3ad;border-radius:10px;background:#fff linear-gradient(transparent calc(75% - 1px),#d6e2de calc(75% - 1px),#d6e2de 75%,transparent 75%);touch-action:none;cursor:crosshair;display:block}
 .grid .nm small .nocon{color:#9a6400}
 /* view switch, copy box, checks */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}.seg button{border:0;background:none;padding:7px 14px;font:inherit;font-size:.86rem;font-weight:600;color:var(--muted);cursor:pointer}.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--brand2);color:var(--ink)}
@@ -201,7 +202,7 @@ const TAXK={T:'Taxable',N:'Non-taxable',DM:'De minimis (tax-free up to a limit)'
 // ---------------------------------------------------------------- data
 let DB=null;
 function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',contribFor:'reg',mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
- items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
+ items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],signers:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
 function migrate(d){
  const b=blank();if(!d||typeof d!=='object')return b;
  for(const k of Object.keys(b))if(d[k]==null||typeof d[k]!==typeof b[k]||Array.isArray(b[k])!==Array.isArray(d[k]))d[k]=b[k];
@@ -473,11 +474,12 @@ function rptTable(def){
 // =====================================================================================
 // navigation
 // =====================================================================================
-const NAV=[['Overview'],['dash','Dashboard'],['Payroll'],['run','Payroll Run'],['loans','Loans & Advances'],['slips','Payslips'],['reg','Payroll Register'],['Records'],['emp','Employees'],['rep','Reports'],['set','Settings']];
+const NAV=[['Overview'],['dash','Dashboard'],['Payroll'],['run','Payroll Run'],['loans','Loans & Advances'],['slips','Payslips'],['reg','Payroll Register'],['Records'],['emp','Employees'],['docs','Documents'],['rep','Reports'],['set','Settings']];
 const ICON={dash:'<rect x="3" y="3" width="7" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>',
  run:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/>',loans:'<circle cx="9" cy="9" r="5"/><path d="M14.5 5.2a5 5 0 1 1-1.3 9.3M9 7v4M7.5 9h3"/><path d="M3 20h8"/>',
  slips:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',reg:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/>',
  emp:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',rep:'<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+ docs:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/><path d="M15.5 19.5l3-3"/>',
  set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const isPhone=()=>window.matchMedia('(max-width:900px)').matches;
 function setNav(collapsed){document.body.classList.toggle('navc',collapsed);try{localStorage.setItem('ajpay_navc',collapsed?'1':'0')}catch(e){}
@@ -538,6 +540,7 @@ PAGES.dash={title:'Dashboard',render(v){
  const mr=DB.runs.filter(r=>r.year===pm[0]&&r.month===pm[1]);
  if(mr.length){const T={sss:0,ph:0,pg:0,tax:0};mr.forEach(r=>r.rows.forEach(x=>{T.sss+=x.sss+x.erSss+x.erEc;T.ph+=x.ph+x.erPh;T.pg+=x.pg+x.erPg;T.tax+=x.tax}));
   h+='<div class="card"><h2>To remit for '+MN[pm[1]-1]+' '+pm[0]+'</h2><div class="kpis" style="margin:8px 0 0"><div class="kpi"><span>SSS (employee + employer + EC)</span><b>₱'+n2(T.sss)+'</b></div><div class="kpi"><span>PhilHealth</span><b>₱'+n2(T.ph)+'</b></div><div class="kpi"><span>Pag-IBIG</span><b>₱'+n2(T.pg)+'</b></div><div class="kpi"><span>Withholding tax (1601-C)</span><b>₱'+n2(T.tax)+'</b><small>due on the 10th of '+MN[n.getMonth()]+' (manual filers)</small></div></div><p class="note"><a href="#rep/contrib">Contributions report</a> · <a href="#rep/wtax">Withholding tax report</a>. Follow each agency’s schedule for your employer number.</p></div>'}
+ const ca=contractAlerts();if(ca.length)h+='<div class="card"><h2>Contracts and probation ending within 30 days</h2>'+ca.map(x=>'<div class="row mid" style="margin:4px 0"><b>'+esc(fullName(x.e))+'</b><span>'+esc(CT_STATUS[x.c.type])+' · '+(x.late?'<span class="chip bad">ended '+esc(fd(x.c.end))+'</span>':'ends '+esc(fd(x.c.end)))+'</span><a class="btn o s" href="#docs/contract/'+x.e.id+'">Prepare next contract</a></div>').join('')+'<p class="note">A probationary employee who keeps working after the probation ends becomes regular (Article 296). Update the status in Employees.</p></div>';
  const hs=holidays(n.getFullYear()).filter(x=>x.date>=today()).slice(0,4);
  if(hs.length)h+='<div class="card"><h2>Coming holidays</h2>'+hs.map(x=>'<div>'+esc(fdw(x.date))+' – '+esc(x.name)+' <span class="chip">'+(x.type==='R'?'Regular':x.type==='S'?'Special non-working':'Special working')+'</span></div>').join('')+'<p class="note">Check new proclamations each year (Eid’l Fitr, Eid’l Adha, Chinese New Year, local holidays) and add them in <a href="#set/hol">Settings › Holidays</a>.</p></div>';
  v.innerHTML=h;
@@ -597,8 +600,8 @@ function empForm(id,after){
   +'<h3 style="margin-top:14px">Recurring pay or deductions every cutoff</h3><p class="note">For example a fixed rice subsidy or a uniform deduction. They are filled in when a new payroll is created; you can still change them per cutoff. For loans and cash advances with a balance, use Loans & Advances instead.</p><div id="fRec"></div><button type="button" class="btn o s" id="fRecAdd">+ Add recurring item</button>'
   +(e?'<h3 style="margin-top:14px">Rate history</h3><div id="fHist">'+histHtml(e)+'</div>':'')
   +'<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="fAct"'+(v.active!==false?' checked':'')+'> Active (included in new payroll runs)</label>'
-  +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button><button class="btn o" id="fRaise">Change rates…</button><button class="btn o" id="fFinal">Final pay…</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',860);
- if(e){$('#fRaise',m).onclick=()=>{m.close();rateModal([e.id],after)};$('#fFinal',m).onclick=()=>{m.close();finalPayModal(e.id,after)};
+  +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button><button class="btn o" id="fDoc">Contract / COE…</button><button class="btn o" id="fRaise">Change rates…</button><button class="btn o" id="fFinal">Final pay…</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',860);
+ if(e){$('#fDoc',m).onclick=()=>{m.close();go('docs','contract/'+e.id)};$('#fRaise',m).onclick=()=>{m.close();rateModal([e.id],after)};$('#fFinal',m).onclick=()=>{m.close();finalPayModal(e.id,after)};
   const hb=()=>{const b=$('[data-hu]',m);if(b)b.onclick=async()=>{const h=(e.hist||[]).find(x=>x.id===b.dataset.hu);if(!h||!(await confirmBox('Undo the rate change effective '+esc(fd(h.eff))+'? The rates go back to what they were before it.','Undo')))return;
    Object.assign(e,h.from);e.hist=e.hist.filter(x=>x!==h);$('#fRate',m).value=pe(e.rate);$('#fMon',m).value=pe(e.monthly);$('#fAllow',m).value=pe(e.allowance);sync();save();$('#fHist',m).innerHTML=histHtml(e);hb();toast('Rate change undone. Use “Update rates” in draft payrolls.','ok',5000)}};hb()}
  const sync=()=>{const mo=$('#fBasis',m).value==='monthly';$('#gRate',m).hidden=mo;$('#gMon',m).hidden=!mo;$('#gFac',m).hidden=!mo;$('#fDaily',m).textContent=mo?'Daily rate: ₱'+n2(Math.round(c100($('#fMon',m).value)*12/(+$('#fFac',m).value))):''};
@@ -616,9 +619,10 @@ function empForm(id,after){
   if(o.separated&&o.hired&&o.separated<o.hired)return toast('Date separated is before date hired.','bad');
   const dup=DB.employees.find(x=>x.id!==id&&x.last.toLowerCase()===o.last.toLowerCase()&&x.first.toLowerCase()===o.first.toLowerCase()&&x.business===o.business);
   if(dup&&!e)return toast('There is already an employee named '+fullName(dup)+' in '+dup.business+'.','bad');
-  if(e)Object.assign(e,o);else DB.employees.push(Object.assign({id:'e'+uid()},o));
+  let neu=null;if(e)Object.assign(e,o);else{neu=Object.assign({id:'e'+uid()},o);DB.employees.push(neu)}
   if(!DB.biz.some(b=>b.name===o.business))DB.biz.push({name:o.business});
-  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.'+(started.length?' '+started.join(', ')+' deductions start now that the number is entered. Open draft payrolls pick this up.':''),'ok',started.length?7000:3500)};
+  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.'+(started.length?' '+started.join(', ')+' deductions start now that the number is entered. Open draft payrolls pick this up.':''),'ok',started.length?7000:3500);
+  if(neu)confirmBox('Prepare the employment contract for '+esc(o.first+' '+o.last)+' now?','Prepare contract').then(y=>{if(y)go('docs','contract/'+neu.id+'/new')})};
  const del=$('#fDel',m);if(del)del.onclick=async()=>{if(used){e.active=false;save();m.close();after&&after();toast('Marked inactive. Past payrolls keep this employee.','ok');return}
   if(!(await confirmBox('Delete '+esc(fullName(e))+'? This cannot be undone.','Delete',1)))return;DB.employees=DB.employees.filter(x=>x!==e);DB.ledger=DB.ledger.filter(l=>l.empId!==e.id);save();m.close();after&&after()};
 }
@@ -1409,6 +1413,188 @@ function printFinalPay(runId,empId){const run=DB.runs.find(r=>r.id===runId),r=ru
 
 
 // =====================================================================================
+// Documents: employment contracts (regular, probationary, contractual, casual) and certificate of employment, A4
+// =====================================================================================
+const CTYPES=[['reg','Regular employment'],['prob','Probationary employment'],['cont','Contractual (fixed term or project)'],['cas','Casual employment']];
+const CT_STATUS={reg:'Regular',prob:'Probationary',cont:'Contractual',cas:'Casual'};
+const ORD=n=>n+(n%100>=11&&n%100<=13?'th':['th','st','nd','rd'][n%10]||'th');
+const longDate=s=>s?new Date(s+'T00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'________________';
+const dayOf=s=>{if(!s)return '____ day of ____________, ______';const d=new Date(s+'T00:00');return ORD(d.getDate())+' day of '+MN[d.getMonth()]+' '+d.getFullYear()};
+const addMonths=(s,n)=>{if(!s)return '';const d=new Date(s+'T00:00');d.setMonth(d.getMonth()+(+n||0));d.setDate(d.getDate()-1);return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())};
+const peso=c=>'₱'+n2(c);
+const words=c=>{c=Math.round(c||0);const P=Math.floor(c/100),cv=c%100,o=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'],t=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+ const h=n=>(n>=100?o[Math.floor(n/100)]+' hundred'+(n%100?' ':''):'')+(n%100<20?o[n%100]:t[Math.floor(n%100/10)]+(n%10?'-'+o[n%10]:''));
+ const g=n=>{if(!n)return 'zero';let s='',u=[[1e9,'billion'],[1e6,'million'],[1e3,'thousand']];u.forEach(([v,w])=>{if(n>=v){s+=h(Math.floor(n/v))+' '+w+' ';n%=v}});return (s+(n?h(n):'')).trim()};
+ return g(P)+' pesos'+(cv?' and '+cv+'/100':'')};
+// ---------------------------------------------------------------- signatories (Settings)
+const signerById=id=>(DB.signers||[]).find(s=>s.id===id);
+function sigPad(host,init){
+ host.innerHTML='<div class="sigpad"><canvas width="600" height="200" aria-label="Signature pad: draw with the mouse, a pen or a finger"></canvas><div class="row mid" style="margin-top:6px"><button type="button" class="btn o s" data-sc>Clear</button><label class="btn o s" style="cursor:pointer">Upload an image…<input type="file" accept="image/png,image/jpeg" data-su hidden></label><span class="note" style="margin:0">Draw with the mouse, a pen or a finger, or upload a scanned signature.</span></div></div>';
+ const cv=$('canvas',host),cx=cv.getContext('2d');let empty=true,draw=false,last=null;
+ cx.lineWidth=2.6;cx.lineCap='round';cx.lineJoin='round';cx.strokeStyle='#0b1f6b';
+ const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+ cv.addEventListener('pointerdown',e=>{draw=true;last=pt(e);cv.setPointerCapture(e.pointerId);cx.beginPath();cx.arc(last[0],last[1],1.2,0,7);cx.fillStyle=cx.strokeStyle;cx.fill();empty=false});
+ cv.addEventListener('pointermove',e=>{if(!draw)return;const p=pt(e);cx.beginPath();cx.moveTo(last[0],last[1]);cx.lineTo(p[0],p[1]);cx.stroke();last=p});
+ ['pointerup','pointercancel','pointerleave'].forEach(t=>cv.addEventListener(t,()=>draw=false));
+ const load=src=>{const im=new Image();im.onload=()=>{cx.clearRect(0,0,600,200);const s=Math.min(600/im.width,200/im.height);cx.drawImage(im,(600-im.width*s)/2,(200-im.height*s)/2,im.width*s,im.height*s);empty=false};im.src=src};
+ if(init)load(init);
+ $('[data-sc]',host).onclick=()=>{cx.clearRect(0,0,600,200);empty=true};
+ $('[data-su]',host).onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>3e6)return toast('That image is too large (over 3 MB).','bad');const rd=new FileReader();rd.onload=()=>load(rd.result);rd.readAsDataURL(f)};
+ return{get:()=>{if(empty)return '';
+  // crop to the drawing and keep it small
+  const d=cx.getImageData(0,0,600,200).data;let x0=600,y0=200,x1=0,y1=0;for(let y=0;y<200;y++)for(let x=0;x<600;x++)if(d[(y*600+x)*4+3]>10){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<=x0)return '';const w=x1-x0+8,h=y1-y0+8,o=document.createElement('canvas');o.width=w;o.height=h;o.getContext('2d').drawImage(cv,x0-4,y0-4,w,h,0,0,w,h);return o.toDataURL('image/png')},isEmpty:()=>empty}}
+function signerForm(id,after){const s=id?signerById(id):null,v=s||{name:'',position:'',biz:'',sig:''};
+ const m=modal('<h2>'+(s?'Edit signatory':'Add signatory')+'</h2><div class="grid3">'+fg('Name *','<input id="sgN" value="'+esc(v.name)+'" placeholder="e.g. Anthony A. Janiola">')+fg('Position *','<input id="sgP" value="'+esc(v.position)+'" placeholder="e.g. Owner / Manager">')
+  +fg('For business','<select id="sgB">'+opt([['','All businesses']].concat(bizList()),v.biz)+'</select>')+'</div><h3 style="margin-top:12px">Signature</h3><div id="sgPad"></div>'
+  +'<p class="note">The signature is kept only in this app on this computer (and in its backups). Anyone who can open the app can print documents with it, so add it only for people who agree.</p>'
+  +'<div class="acts">'+(s?'<button class="btn d" id="sgDel" style="margin-right:auto">Delete</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="sgGo">Save</button></div>',720);
+ const pad=sigPad($('#sgPad',m),v.sig);
+ $('#sgGo',m).onclick=()=>{const o={name:$('#sgN',m).value.trim(),position:$('#sgP',m).value.trim(),biz:$('#sgB',m).value,sig:pad.get()};if(!o.name||!o.position)return toast('Enter the name and position.','bad');
+  DB.signers=DB.signers||[];if(s)Object.assign(s,o);else DB.signers.push(Object.assign({id:'s'+uid()},o));save();m.close();after&&after();toast('Signatory saved.','ok')};
+ const d=$('#sgDel',m);if(d)d.onclick=async()=>{if(!(await confirmBox('Delete the signatory '+esc(s.name)+' and the saved signature?','Delete',1)))return;DB.signers=DB.signers.filter(x=>x!==s);save();m.close();after&&after()}}
+function paintSigners(B){const L=DB.signers||[];
+ B.innerHTML='<div class="card"><div class="row mid"><h2 style="margin:0">Signatories</h2><span class="sp"></span><button class="btn" id="sgAdd">+ Add signatory</button></div><p class="note">People who sign contracts and certificates for the business, with their digital signature. Choose them in <a href="#docs">Documents</a>.</p>'
+  +'<div class="tw"><table class="t"><thead><tr><th>Name</th><th>Position</th><th>Business</th><th>Signature</th><th></th></tr></thead><tbody>'
+  +(L.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+esc(s.position)+'</td><td>'+esc(s.biz||'All')+'</td><td>'+(s.sig?'<img src="'+s.sig+'" alt="Signature of '+esc(s.name)+'" style="height:34px;max-width:160px;object-fit:contain">':'<span class="chip">none</span>')+'</td><td><button class="btn o s" data-sg="'+s.id+'">Edit</button></td></tr>').join('')||'<tr><td colspan="5" class="empty">No signatories yet.</td></tr>')+'</tbody></table></div></div>';
+ $('#sgAdd',B).onclick=()=>signerForm(null,()=>paintSigners(B));$$('[data-sg]',B).forEach(b=>b.onclick=()=>signerForm(b.dataset.sg,()=>paintSigners(B)))}
+
+// ---------------------------------------------------------------- A4 document printing (editable preview)
+const DOC_CSS=`*{box-sizing:border-box}body{margin:0;font:11pt/1.5 "Times New Roman",Times,serif;color:#000}p{margin:0 0 3mm;text-align:justify}h1{font-size:14pt;text-align:center;margin:0 0 1mm;letter-spacing:.06em}h2{font-size:11pt;text-align:center;margin:0 0 6mm;font-weight:400;font-style:italic}
+.lh{text-align:center;border-bottom:1.4pt solid #000;padding-bottom:3mm;margin-bottom:7mm}.lh b{font-size:14pt;letter-spacing:.04em;text-transform:uppercase;display:block}.lh span{font-size:9.5pt;display:block}
+ol.cl{padding-left:6mm;margin:0}ol.cl>li{margin:0 0 3mm;text-align:justify}ol.cl>li b.t{text-transform:uppercase}ul{margin:1mm 0 2mm;padding-left:7mm}ul li{margin:0 0 1mm}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:10mm;break-inside:avoid;page-break-inside:avoid}.sb{min-height:34mm;display:flex;flex-direction:column;justify-content:flex-end}.sb .cap{font-size:9.5pt;margin-bottom:auto;padding-bottom:2mm}.sb img{height:17mm;max-width:62mm;object-fit:contain;margin-bottom:-6mm;align-self:flex-start}.sb .ln{border-top:1px solid #000;padding-top:1mm;text-align:center}.sb .ln b{display:block;text-transform:uppercase}.sb .ln span{font-size:9.5pt}
+.wit{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:8mm;break-inside:avoid;page-break-inside:avoid}.wit div{border-top:1px solid #000;text-align:center;padding-top:1mm;font-size:9.5pt;margin-top:12mm}
+.coe p{font-size:12pt;line-height:1.9;text-indent:12mm}.coe h1{font-size:18pt;margin:10mm 0 12mm}.coe .to{font-size:12pt;font-weight:700;margin-bottom:6mm}.coe .sg{grid-template-columns:1fr;justify-items:start;margin-top:22mm}.coe .sb{width:80mm}
+.small{font-size:9pt;color:#333}.ctr{text-align:center}`;
+function docPage(inner,preview){return '<!doctype html><html><head><meta charset="utf-8"><title>Document</title><style>'+(preview?'html{background:#c9d1dd}body{width:210mm;min-height:297mm;margin:14px auto;background:#fff;padding:18mm 20mm 18mm 22mm;box-shadow:0 2px 10px rgba(0,0,0,.25);outline:none}':'@page{size:A4 portrait;margin:18mm 20mm 18mm 22mm}')+DOC_CSS+'</style></head><body>'+inner+'</body></html>'}
+function previewDoc(el,inner){el.innerHTML='<iframe class="pv" title="Document preview – click to edit the wording" style="height:80vh"></iframe>';const f=el.firstChild;f.srcdoc=docPage(inner,true);
+ f.onload=()=>{try{const b=f.contentDocument.body;b.contentEditable='true';b.spellcheck=true}catch(e){}}}
+function printDocFrom(el,title){const f=$('iframe',el);if(!f)return;let inner='';try{inner=f.contentDocument.body.innerHTML}catch(e){return toast('Could not read the preview.','bad')}
+ const p=document.createElement('iframe');p.setAttribute('aria-hidden','true');p.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(p);
+ const w=p.contentWindow,d=w.document;d.open();d.write(docPage(inner,false).replace('<title>Document</title>','<title>'+esc(title)+'</title>'));d.close();
+ setTimeout(()=>{try{w.focus();w.print()}catch(e){toast('Printing is blocked here. Open the file in Chrome or Edge.','bad')}},350);setTimeout(()=>p.remove(),120000)}
+const letterhead=b=>{const B=bizInfo(b||'');return '<div class="lh"><b>'+esc(B.name||'')+'</b>'+(B.address?'<span>'+esc(B.address)+'</span>':'')+(B.tin?'<span>TIN '+esc(B.tin)+'</span>':'')+'</div>'};
+const sigBlock=(cap,name,pos,img)=>'<div class="sb">'+(cap?'<div class="cap">'+esc(cap)+'</div>':'')+(img?'<img src="'+img+'" alt="">':'')+'<div class="ln"><b>'+esc(name||' ')+'</b><span>'+esc(pos||'')+'</span></div></div>';
+
+// ---------------------------------------------------------------- contract wording
+function payText(e,F){const R=rateAt(e,F.start||today());const mo=e.basis==='monthly';
+ return (mo?'a monthly salary of '+words(R.monthly)+' ('+peso(R.monthly)+')':'a daily wage of '+words(R.rate)+' ('+peso(R.rate)+') for each day actually worked')+(R.allowance?', plus a meal allowance of '+peso(R.allowance)+' for each day actually worked':'')}
+function contractHtml(F){
+ const e=empById(F.emp)||{},B=bizInfo(e.business||''),nm=e.first?(e.first+' '+(e.mi?String(e.mi).replace(/\.?$/,'.')+' ':'')+e.last):'',sgn=F.sgn||{};
+ const head={reg:'REGULAR EMPLOYMENT',prob:'PROBATIONARY EMPLOYMENT',cont:F.sub==='proj'?'PROJECT EMPLOYMENT':'FIXED-TERM EMPLOYMENT',cas:'CASUAL EMPLOYMENT'}[F.type];
+ const li=(t,b)=>'<li><b class="t">'+t+'.</b> '+b+'</li>';
+ const lst=s=>'<ul>'+String(s||'').split(/\n+/).map(x=>x.replace(/^[-•*\d.)\s]+/,'').trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+ let term='';
+ if(F.type==='reg')term=li('Nature of employment','The Employee is employed as a <b>regular employee</b> effective <b>'+longDate(F.start)+'</b>'+(F.regz?', having satisfactorily completed the probationary period that began on '+longDate(e.hired):'')+'. The employment shall continue until ended in accordance with this Contract and the Labor Code of the Philippines.');
+ else if(F.type==='prob')term=li('Probationary period','The Employee is engaged on <b>probationary status</b> for a period of <b>'+esc(F.months)+' month'+(+F.months===1?'':'s')+'</b>, from <b>'+longDate(F.start)+'</b> to <b>'+longDate(F.end)+'</b>, in accordance with Article 296 of the Labor Code.')
+  +li('Standards for regularization','The Employee’s performance will be evaluated against the following reasonable standards, which the Employer has explained to the Employee at the time of engagement and which the Employee has read and understood:'+lst(F.standards)+'The Employee shall be informed of the results of the evaluation. Failure to meet these standards is a ground for termination of the probationary employment upon written notice. An Employee who meets the standards, or who is allowed to work after the probationary period, shall become a regular employee.');
+ else if(F.type==='cont')term=F.sub==='proj'?li('Project employment','The Employee is engaged for the specific project <b>'+esc(F.purpose||'________________')+'</b>, the duration and scope of which were made known to the Employee at the time of engagement. The employment begins on <b>'+longDate(F.start)+'</b> and shall end upon completion of the project or of the phase of the project to which the Employee is assigned, which is expected on or about <b>'+longDate(F.end)+'</b>. The Employer shall give written notice of the completion.')
+  :li('Fixed term','The Employee is engaged for a <b>fixed period</b> from <b>'+longDate(F.start)+'</b> to <b>'+longDate(F.end)+'</b>'+(F.purpose?', for the following purpose: '+esc(F.purpose):'')+'. The parties knowingly and voluntarily agreed on this period, without force, pressure or improper influence. The employment ends on the last day of the period without need of further notice, unless ended earlier under this Contract or extended by a written agreement signed by both parties.');
+ else if(F.type==='cas')term=li('Casual employment','The Employee is engaged as a <b>casual employee</b> to perform the following work: '+esc(F.purpose||'________________')+', which is not usually necessary or desirable in the usual business of the Employer, from <b>'+longDate(F.start)+'</b>'+(F.end?' to <b>'+longDate(F.end)+'</b>':' until the work is completed')+'. If the Employee renders at least one (1) year of service, whether continuous or broken, the Employee shall be considered a regular employee with respect to the activity for which the Employee is employed, as provided in Article 295 of the Labor Code.');
+ const C=[
+  li('Position and duties','The Employer engages the Employee as <b>'+esc(F.position||'________________')+'</b>. The Employee shall perform the following duties and other related tasks that the Employer may reasonably assign:'+lst(F.duties)),
+  term,
+  li('Place of work','The Employee shall work at '+esc(F.place||B.address||'the Employer’s place of business')+', or at another location of the Employer when reasonably required by the work.'),
+  li('Working hours and rest day','The normal working hours are '+esc(F.hours)+', with a meal break of not less than sixty (60) minutes. The Employee’s weekly rest day is '+esc(F.rest)+'. Overtime work must be authorized in advance by the Employer and shall be paid according to law.'),
+  li('Compensation','The Employee shall receive '+payText(e,F)+', payable '+esc(F.sched)+'. The Employer shall deduct withholding tax, the Employee’s share of government contributions, and other deductions authorized by law or by the Employee in writing.'),
+  li('Benefits','The Employee is entitled to the benefits required by law, including 13th month pay, regular holiday pay, premium pay for work on rest days and special days, overtime pay, night shift differential, service incentive leave of five (5) days with pay after one (1) year of service, and coverage under SSS, PhilHealth and Pag-IBIG, together with other benefits that the Employer may grant under its policies.'),
+  li('Company rules','The Employee shall observe the Employer’s rules, policies and code of conduct as issued or amended from time to time and made known to the Employee.'),
+  li('Confidentiality','The Employee shall keep in strict confidence, during and after employment, all business information, records, prices, customer data and other confidential matters of the Employer learned in the course of the work, and shall not use them for any purpose other than the Employer’s business.'),
+  li('Company property','The Employee shall take care of, and return upon request or upon separation, all property, tools, documents and equipment entrusted by the Employer. Unsettled accountabilities may be deducted from amounts due to the Employee only to the extent allowed by law and with the Employee’s written authorization.'),
+  li('Termination','The Employer may end this employment for a just or authorized cause under Articles 297 to 299 of the Labor Code'+(F.type==='prob'?', or for failure to meet the standards for regularization stated above,':'')+' observing due process. The Employee may resign by serving written notice on the Employer at least thirty (30) days in advance, as provided in Article 300 of the Labor Code. Upon separation the Employee shall receive the final pay due and a certificate of employment.'),
+  li('Data privacy','The Employee consents to the collection and processing of personal information by the Employer for employment, payroll, benefits and government reporting purposes, in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173).'),
+  li('Entire agreement','This Contract contains the whole agreement of the parties on its subject. Changes are valid only if made in writing and signed by both parties. If any provision is held invalid, the other provisions remain in force. This Contract is governed by the laws of the Philippines.')];
+ const sig=F.useSig&&sgn.sig?sgn.sig:'';
+ return letterhead(e.business)+'<h1>EMPLOYMENT CONTRACT</h1><h2>'+head+'</h2>'
+  +'<p>This Employment Contract is entered into on the '+dayOf(F.signed)+' at '+esc(F.city||'________________')+', Philippines, by and between:</p>'
+  +'<p><b>'+esc(B.name||'________________')+'</b>, a business with principal office at '+esc(B.address||'________________')+(B.tin?' and Taxpayer Identification No. '+esc(B.tin):'')+', represented by <b>'+esc(sgn.name||'________________')+'</b>, '+esc(sgn.position||'________________')+' (the <b>“Employer”</b>);</p><p class="ctr">– and –</p>'
+  +'<p><b>'+esc(nm||'________________')+'</b>, of legal age, Filipino, residing at '+esc(e.address||'________________')+' (the <b>“Employee”</b>).</p>'
+  +'<p>The parties agree as follows:</p><ol class="cl">'+C.join('')+'</ol>'
+  +'<p>The Employee confirms that this Contract was explained in a language the Employee understands, that the Employee has read and understood it, and that the Employee signs it voluntarily.</p>'
+  +'<p>IN WITNESS WHEREOF, the parties have signed this Contract on the date and at the place first written above.</p>'
+  +'<div class="sg">'+sigBlock('For the Employer:',sgn.name,sgn.position,sig)+sigBlock('Conforme:',nm,'Employee')+'</div>'
+  +'<div style="break-inside:avoid;page-break-inside:avoid"><p style="margin-top:8mm">Signed in the presence of:</p><div class="wit"><div>'+esc(F.w1||'Witness')+'</div><div>'+esc(F.w2||'Witness')+'</div></div></div>'}
+function coeHtml(F){
+ const e=empById(F.emp)||{},B=bizInfo(e.business||''),nm=(F.title?F.title+' ':'')+(e.first?(e.first+' '+(e.mi?String(e.mi).replace(/\.?$/,'.')+' ':'')+e.last):'________________'),sgn=F.sgn||{};
+ const cur=!e.separated||e.separated>F.signed,R=rateAt(e,F.signed||today());
+ const pay=F.pay?(e.basis==='monthly'?' with a monthly salary of '+peso(R.monthly):' with a daily rate of '+peso(R.rate)):'';
+ const body=cur?'<p>This is to certify that <b>'+esc(nm.toUpperCase())+'</b> is employed by <b>'+esc(B.name)+'</b>'+(F.stat&&e.status?' as a '+esc(e.status.toLowerCase())+' employee':'')+' with the position of <b>'+esc(e.position||'________________')+'</b> from <b>'+longDate(e.hired)+'</b> up to the present'+pay+'.</p>'
+  :'<p>This is to certify that <b>'+esc(nm.toUpperCase())+'</b> was employed by <b>'+esc(B.name)+'</b>'+(F.stat&&e.status?' as a '+esc(e.status.toLowerCase())+' employee':'')+' with the position of <b>'+esc(e.position||'________________')+'</b> from <b>'+longDate(e.hired)+'</b> to <b>'+longDate(e.separated)+'</b>'+pay+'.</p>';
+ const sig=F.useSig&&sgn.sig?sgn.sig:'';
+ return '<div class="coe">'+letterhead(e.business)+'<h1>CERTIFICATE OF EMPLOYMENT</h1>'+body
+  +(F.extra?'<p>'+esc(F.extra)+'</p>':'')
+  +'<p>This certification is issued upon the request of '+esc(nm)+(F.cpurpose?' for '+esc(F.cpurpose):' for whatever legal purpose it may serve')+'.</p>'
+  +'<p>Issued this '+dayOf(F.signed)+' at '+esc(F.city||'________________')+', Philippines.</p>'
+  +'<div class="sg">'+sigBlock('',sgn.name,sgn.position,sig)+'</div></div>'}
+
+// ---------------------------------------------------------------- Documents page
+let docF={tab:'contract',emp:'',type:'prob',sub:'fixed',signer:'',useSig:true};
+const DEF_STD='Learns and performs the duties of the position correctly and on time\nCompletes work assignments with acceptable quality, with few or no errors\nReports for work regularly and on time, with no unauthorized absences\nFollows company rules, policies and instructions\nWorks well with co-workers and deals courteously with customers\nShows honesty and integrity, and takes good care of company property';
+const cityOf=b=>{const a=(bizInfo(b||'').address||'').split(',').map(x=>x.trim()).filter(Boolean);return a.length>1?a[a.length-2]:a[0]||''};
+function docDefaults(id){const e=empById(id)||{};const st=e.hired||today();
+ return{emp:id,position:e.position||'',start:st,months:6,end:addMonths(st,6),signed:today(),city:cityOf(e.business),place:bizInfo(e.business||'').address||'',hours:'eight (8) hours a day, from 8:00 a.m. to 5:00 p.m., six (6) days a week',rest:'Sunday',sched:'every 15th and last day of the month',
+  duties:'Perform the work of a '+(e.position||'[position]')+' as assigned by the Employer\nKeep the work area clean and orderly\nReport problems and incidents promptly to the supervisor',standards:DEF_STD,purpose:'',regz:e.status==='Probationary',w1:'',w2:'',title:'',pay:false,stat:true,extra:'',cpurpose:''}}
+PAGES.docs={title:'Documents',render(v,a){
+ const parts=(a||'').split('/');if(parts[0]==='contract'||parts[0]==='coe')docF.tab=parts[0];
+ if(parts[1]&&empById(parts[1])&&parts[1]!==docF.emp){Object.assign(docF,docDefaults(parts[1]));docF.signer=''}
+ if(parts[2]==='new'){docF.type='prob';docF.setStat=true;location.replace('#docs/contract/'+parts[1]);return}
+ if(!DB.employees.length){v.innerHTML='<div class="card empty">Add employees first in <a href="#emp">Employees</a>.</div>';return}
+ if(!docF.emp||!empById(docF.emp))Object.assign(docF,docDefaults(DB.employees.slice().sort(empCmp).filter(e=>e.active!==false)[0]?.id||DB.employees[0].id));
+ const e=empById(docF.emp),S=(DB.signers||[]).filter(s=>!s.biz||s.biz===e.business);
+ if(docF.signer!=='_'&&!S.some(s=>s.id===docF.signer))docF.signer=S[0]?S[0].id:'_';
+ const ct=docF.tab==='contract',T=docF.type;
+ const inp=(k,lbl,type,help,attrs)=>fg(lbl,'<input'+(type?' type="'+type+'"':'')+' data-f="'+k+'" value="'+esc(docF[k]==null?'':docF[k])+'"'+(attrs||'')+'>',help);
+ const ta=(k,lbl,help,rows)=>fg(lbl,'<textarea data-f="'+k+'" rows="'+(rows||4)+'" style="width:100%">'+esc(docF[k]||'')+'</textarea>',help);
+ const ck=(k,lbl)=>'<label class="ck"><input type="checkbox" data-c="'+k+'"'+(docF[k]?' checked':'')+'> '+lbl+'</label>';
+ const log=(e.docs||[]).slice(-4).reverse();
+ v.innerHTML='<div class="tabs"><a href="#docs/contract" class="'+(ct?'on':'')+'">Employment contract</a><a href="#docs/coe" class="'+(ct?'':'on')+'">Certificate of employment</a><a href="#set/sign">Signatories</a></div>'
+  +'<div class="card"><div class="grid3">'+fg('Employee','<select id="dE">'+opt(DB.employees.slice().sort(empCmp).map(x=>[x.id,fullName(x)+' – '+x.business+(x.active===false?' (separated)':'')]),docF.emp)+'</select>','<span class="note">'+esc(e.business)+(e.status?' · '+esc(e.status):'')+(e.hired?' · hired '+esc(fd(e.hired)):'')+(log.length?' · printed: '+log.map(d=>esc((d.kind==='coe'?'COE':CT_STATUS[d.type]+' contract')+' '+fd(d.at.slice(0,10)))).join(', '):'')+'</span>')
+  +(ct?fg('Contract','<select id="dT">'+opt(CTYPES,T)+'</select>'):fg('Title before the name','<select data-f="title">'+opt([['','None'],['Mr.','Mr.'],['Ms.','Ms.'],['Mrs.','Mrs.']],docF.title)+'</select>'))
+  +fg('Signed for the business by','<select id="dS">'+opt(S.map(s=>[s.id,s.name+' – '+s.position]).concat([['_','Type a name…']]),docF.signer)+'</select>',(DB.signers||[]).length?'':'Save signatories with their digital signature in <a href="#set/sign">Settings › Signatories</a>.')+'</div>'
+  +(docF.signer==='_'?'<div class="grid3">'+inp('sgName','Name of the authorized person')+inp('sgPos','Position')+fg('Digital signature','<div class="row mid"><button type="button" class="btn o s" id="dDraw">'+(docF.sgSig?'Redraw signature…':'Draw or upload signature…')+'</button>'+(docF.sgSig?'<img src="'+docF.sgSig+'" alt="Signature" style="height:30px;max-width:120px;object-fit:contain">':'')+'</div>','Used for this document only')+'</div>':'')
+  +'<div class="grid3" style="margin-top:6px">'
+  +(ct?inp('position','Position')+inp('start','Start date','date')
+    +(T==='prob'?inp('months','Probationary period (months)','number','At most 6 months, unless covered by an apprenticeship agreement',' min="1" max="6"')+inp('end','Probation ends','date'):'')
+    +(T==='cont'?fg('Kind','<select data-f="sub">'+opt([['fixed','Fixed term'],['proj','Project']],docF.sub)+'</select>')+inp('end',docF.sub==='proj'?'Expected completion':'End date','date'):'')
+    +(T==='cas'?inp('end','End date (blank = until the work is done)','date'):'')
+    +(T==='reg'?'':'')
+    +inp('place','Place of work')+inp('hours','Working hours')+inp('rest','Rest day')+inp('sched','Pay schedule')+inp('signed','Date of signing','date')+inp('city','City or municipality of signing')+inp('w1','Witness 1 (optional)')+inp('w2','Witness 2 (optional)')
+   :inp('signed','Date issued','date')+inp('city','Place issued (city or municipality)')+inp('cpurpose','Purpose (blank = “whatever legal purpose it may serve”)','','',' placeholder="e.g. a bank loan application"'))+'</div>'
+  +(ct?'<div class="grid2">'+ta('duties','Duties (one per line)')+(T==='prob'?ta('standards','Standards for regularization (one per line)','Make them known to the employee at the start (Article 296).',6):T==='cont'?ta('purpose',docF.sub==='proj'?'Project':'Purpose of the fixed term','e.g. Christmas season peak, covering a staff member on leave',3):T==='cas'?ta('purpose','Work to be done','Work not usually necessary or desirable in the usual business',3):'<div>'+ck('regz','Regularization of a probationary employee (mentions the probation that began on the date hired)')+'</div>')+'</div>'
+   :ta('extra','Additional sentence (optional)','e.g. a note on the employee’s performance or conduct',2))
+  +'<div class="row mid" style="margin-top:8px">'+ck('useSig','Put the digital signature on the document')+(ct?ck('setStat','Set the employee’s status to “'+CT_STATUS[T]+'” when printing'):ck('pay','Include the pay rate')+ck('stat','Include the employment status'))
+  +'<span class="sp"></span><button class="btn o" id="dReset">Reset wording</button><button class="btn" id="dPrint">Print / Save as PDF</button></div>'
+  +'<p class="note" style="margin-bottom:0">You can click into the preview and change any wording before printing. Changing a field above redraws the preview, so make those edits last. This is a template based on the Labor Code; have a lawyer review it for your business.</p></div><div id="dPv"></div>';
+ if(docF.setStat==null)docF.setStat=true;$('[data-c="setStat"]')&&($('[data-c="setStat"]').checked=docF.setStat);
+ combo($('#dE'));
+ const sg=()=>docF.signer==='_'?{name:docF.sgName||'',position:docF.sgPos||'',sig:docF.sgSig||''}:(signerById(docF.signer)||{});
+ const paint=()=>{const F=Object.assign({},docF,{sgn:sg()});previewDoc($('#dPv'),ct?contractHtml(F):coeHtml(F))};
+ const redraw=()=>PAGES.docs.render(v,'');
+ $('#dE').onchange=e2=>{Object.assign(docF,docDefaults(e2.target.value));docF.signer='';redraw()};
+ if($('#dT'))$('#dT').onchange=e2=>{docF.type=e2.target.value;docF.setStat=true;redraw()};
+ $('#dS').onchange=e2=>{docF.signer=e2.target.value;redraw()};
+ $$('[data-f]',v).forEach(el=>el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const k=el.dataset.f;docF[k]=el.type==='number'?+el.value:el.value;
+  if(k==='start'||k==='months'){if(docF.type==='prob'){docF.end=addMonths(docF.start,docF.months);const en=$('[data-f="end"]',v);if(en)en.value=docF.end}}
+  if(k==='sub')return redraw();paint()}));
+ $$('[data-c]',v).forEach(el=>el.onchange=()=>{docF[el.dataset.c]=el.checked;paint()});
+ const dr=$('#dDraw');if(dr)dr.onclick=()=>{const m=modal('<h2>Signature for this document</h2><div id="ddPad"></div><div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="ddGo">Use</button></div>',720);const pad=sigPad($('#ddPad',m),docF.sgSig);$('#ddGo',m).onclick=()=>{docF.sgSig=pad.get();m.close();redraw()}};
+ $('#dReset').onclick=()=>{const keep={tab:docF.tab,type:docF.type,signer:docF.signer,useSig:docF.useSig,sub:docF.sub};Object.assign(docF,docDefaults(docF.emp),keep);redraw()};
+ $('#dPrint').onclick=()=>{const s=sg();if(!s.name)return toast('Choose or type the authorized person who signs.','bad');
+  if(ct&&(T==='cont'||T==='prob')&&!docF.end)return toast('Enter the end date.','bad');if(ct&&T==='prob'&&(+docF.months<1||+docF.months>6))return toast('A probationary period is at most 6 months.','bad');
+  printDocFrom($('#dPv'),(ct?'Contract ':'COE ')+fullName(e));
+  e.docs=(e.docs||[]).concat({kind:ct?'contract':'coe',type:ct?T:'',start:ct?docF.start:'',end:ct?docF.end||'':'',by:s.name,at:new Date().toISOString()}).slice(-30);
+  if(ct&&docF.setStat&&e.status!==CT_STATUS[T]){e.status=CT_STATUS[T];toast('Status of '+fullName(e)+' set to '+CT_STATUS[T]+'.','ok')}
+  if(ct&&!e.hired&&docF.start)e.hired=docF.start;save()};
+ paint();
+}};
+// contracts and probation ending soon (Dashboard)
+function contractAlerts(){const t=today(),lim=(()=>{const d=new Date();d.setDate(d.getDate()+30);return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())})(),L=[];
+ DB.employees.filter(e=>e.active!==false).forEach(e=>{const c=(e.docs||[]).filter(d=>d.kind==='contract').slice(-1)[0];if(!c||!c.end||c.type==='reg')return;if(c.end<=lim&&CT_STATUS[c.type]===e.status)L.push({e,c,late:c.end<t})});
+ return L.sort((a,b)=>cmp(a.c.end,b.c.end))}
+
+
+// =====================================================================================
 // Backups: date-and-time file names, warning when leaving, reminders every few minutes, copies kept in this browser
 // =====================================================================================
 function stampNow(){const d=new Date();return today()+'_'+pad(d.getHours())+'h'+pad(d.getMinutes())+'m'+pad(d.getSeconds())+'s'}
@@ -1476,7 +1662,7 @@ function paintFold(el,after){
 // =====================================================================================
 // Settings
 // =====================================================================================
-const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['data','Backup & data']];
+const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['sign','Signatories'],['data','Backup & data']];
 PAGES.set={title:'Settings',render(v,a){
  const id=SETS.some(x=>x[0]===a)?a:'company';
  v.innerHTML='<div class="tabs">'+SETS.map(x=>'<a href="#set/'+x[0]+'" class="'+(x[0]===id?'on':'')+'">'+x[1]+'</a>').join('')+'</div><div id="setB"></div>';
@@ -1484,6 +1670,7 @@ PAGES.set={title:'Settings',render(v,a){
 }};
 const num=(id,v,step)=>'<input type="number" id="'+id+'" step="'+(step||'any')+'" value="'+esc(v)+'">';
 const SET={
+ sign(B){paintSigners(B)},
  company(B){
   const paint=()=>{B.innerHTML='<div class="card"><h2>Company</h2><div class="grid2">'+fg('Name shown in the app and on reports for “All businesses”','<input id="cN" value="'+esc(DB.company.name||'')+'" placeholder="e.g. GSVC Group">')+'</div></div>'
    +'<div class="card"><div class="row mid"><h2 style="margin:0">Businesses (employers)</h2><span class="sp"></span><button class="btn" id="bAdd">+ Add business</button></div><p class="note">Each business prints its own name on payslips and registers. Its TIN and employer numbers appear on the contribution, 1601-C and 2316 reports.</p>'
@@ -1598,7 +1785,7 @@ function itemForm(id,after){
 // start
 // =====================================================================================
 (async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':'';startAutoBackup()})();
-window.AJPAY={ledgerCharged,ledgerBalAfter,ledgerDeducted,refreshLedgerDrafts,FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+window.AJPAY={contractHtml,coeHtml,ledgerCharged,ledgerBalAfter,ledgerDeducted,refreshLedgerDrafts,FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
 
 </script>
 </body>
