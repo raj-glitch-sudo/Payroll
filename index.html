@@ -112,6 +112,7 @@ details>summary{cursor:pointer;font-weight:700}
 @media print{body{display:block}.side,.top{display:none}}
 
 [hidden]{display:none!important}
+.grid .nm small .nocon{color:#9a6400}
 /* view switch, copy box, checks */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}.seg button{border:0;background:none;padding:7px 14px;font:inherit;font-size:.86rem;font-weight:600;color:var(--muted);cursor:pointer}.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--brand2);color:var(--ink)}
 .copybox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0 12px;background:#fafcfb}
@@ -198,7 +199,7 @@ const TAXK={T:'Taxable',N:'Non-taxable',DM:'De minimis (tax-free up to a limit)'
 
 // ---------------------------------------------------------------- data
 let DB=null;
-function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
+function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',contribFor:'reg',mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
  items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
 function migrate(d){
  const b=blank();if(!d||typeof d!=='object')return b;
@@ -297,7 +298,13 @@ function hdmfOf(mo){const R=S().rates.hdmf;if(mo<=0)return{ee:0,er:0};const m=mo
 const sssBase=r=>r.basic+r.hol+r.ot+earn(r).xS+(S().mealNT?0:r.allow);
 const phBase=r=>r.basic;
 function otherRow(run,empId){const o=runOf(run.year,run.month,3-run.q);return o?o.rows.find(x=>x.empId===empId):null}
-function contrib(run,r){
+// which contributions are skipped: employees who are not Regular (when Settings say Regular only), and agencies the employee is not registered with yet
+function skipOf(r){const e=empById(r.empId)||{},st=String(e.status||r.status||'Regular'),nr=S().contribFor!=='all'&&st!=='Regular';
+ return{sss:nr||!!e.noSss,ph:nr||!!e.noPh,pg:nr||!!e.noPg,nr}}
+const skipLabel=r=>{const k=skipOf(r);if(k.nr)return 'no SSS/PhilHealth/Pag-IBIG (not Regular)';const L=[k.sss&&'SSS',k.ph&&'PhilHealth',k.pg&&'Pag-IBIG'].filter(Boolean);return L.length?'no '+L.join('/')+' yet':''};
+function contrib(run,r){const D=contrib0(run,r),k=skipOf(r);
+ if(k.sss){D.sss=0;D.erSss=0;D.erEc=0}if(k.ph){D.ph=0;D.erPh=0}if(k.pg){D.pg=0;D.erPg=0}return D}
+function contrib0(run,r){
  const cfg=S(),D={sss:0,ph:0,pg:0,erSss:0,erEc:0,erPh:0,erPg:0};
  if(!(r.basic+r.hol+r.ot+r.allow+earn(r).xe))return D;
  if(run.q===1&&cfg.sched==='second')return D;
@@ -536,7 +543,7 @@ PAGES.emp={title:'Employees',render(v){
   $('#eCnt').textContent=L.length+' of '+DB.employees.length+' employee'+(DB.employees.length===1?'':'s');
   [...empSel].forEach(id=>{if(!empById(id))empSel.delete(id)});const allOn=L.length&&L.every(e=>empSel.has(e.id));
   $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th class="cbc"><input type="checkbox" id="eAll" aria-label="Select all shown"'+(allOn?' checked':'')+'></th><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th></th></tr></thead><tbody>'
-   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
+   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.noSss||e.noPh||e.noPg?' <span class="chip warn" title="Not registered yet – no deduction">no '+[e.noSss&&'SSS',e.noPh&&'PH',e.noPg&&'HDMF'].filter(Boolean).join('/')+' yet</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
    ||'<tr><td colspan="15" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
   $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint));
   $$('[data-es]').forEach(c=>c.onchange=()=>{c.checked?empSel.add(c.dataset.es):empSel.delete(c.dataset.es);c.closest('tr').classList.toggle('sel',c.checked);selN()});
@@ -570,6 +577,7 @@ function empForm(id,after){
   +fg('Minimum wage earner','<label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="fMwe"'+(v.mwe?' checked':'')+'> Basic, holiday and overtime pay not taxed</label>')+'</div>'
   +'<h3 style="margin-top:14px">Government numbers</h3><div class="grid3">'
   +fg('TIN','<input id="fTin" value="'+esc(v.tin||'')+'">')+fg('SSS no.','<input id="fSss" value="'+esc(v.sss||'')+'">')+fg('PhilHealth no.','<input id="fPh" value="'+esc(v.ph||'')+'">')+fg('Pag-IBIG no.','<input id="fHdmf" value="'+esc(v.hdmf||'')+'">')
+  +fg('Not registered yet (no deduction)','<div class="row" style="gap:12px"><label class="ck" style="margin:0"><input type="checkbox" id="fNoS"'+(v.noSss?' checked':'')+'> SSS</label><label class="ck" style="margin:0"><input type="checkbox" id="fNoP"'+(v.noPh?' checked':'')+'> PhilHealth</label><label class="ck" style="margin:0"><input type="checkbox" id="fNoH"'+(v.noPg?' checked':'')+'> Pag-IBIG</label></div>','Untick when they register. Typing the number in also unticks it.')
   +fg('Address','<input id="fAddr" value="'+esc(v.address||'')+'">')+fg('Contact no.','<input id="fCon" value="'+esc(v.contact||'')+'">')+'</div>'
   +'<h3 style="margin-top:14px">Recurring pay or deductions every cutoff</h3><p class="note">For example a fixed rice subsidy or a uniform deduction. They are filled in when a new payroll is created; you can still change them per cutoff. For loans and cash advances with a balance, use Loans & Advances instead.</p><div id="fRec"></div><button type="button" class="btn o s" id="fRecAdd">+ Add recurring item</button>'
   +(e?'<h3 style="margin-top:14px">Rate history</h3><div id="fHist">'+histHtml(e)+'</div>':'')
@@ -585,7 +593,8 @@ function empForm(id,after){
  $('#fRecAdd',m).onclick=()=>{recur.push({item:(DB.items.find(i=>i.id==='rice')||DB.items[0]).id,amt:0});rec()};rec();
  $('#fSave',m).onclick=()=>{
   const g=k=>$(k,m).value.trim(),o={last:g('#fLast'),first:g('#fFirst'),mi:g('#fMi'),business:g('#fBiz'),position:g('#fPos'),status:g('#fStat'),hired:g('#fHired'),separated:g('#fSep'),birth:g('#fBirth'),
-   basis:g('#fBasis'),rate:c100(g('#fRate')),monthly:c100(g('#fMon')),factor:+g('#fFac'),allowance:c100(g('#fAllow')),mwe:$('#fMwe',m).checked,tin:g('#fTin'),sss:g('#fSss'),ph:g('#fPh'),hdmf:g('#fHdmf'),address:g('#fAddr'),contact:g('#fCon'),active:$('#fAct',m).checked,recur:recur.filter(x=>x.amt>0)};
+   basis:g('#fBasis'),rate:c100(g('#fRate')),monthly:c100(g('#fMon')),factor:+g('#fFac'),allowance:c100(g('#fAllow')),mwe:$('#fMwe',m).checked,tin:g('#fTin'),sss:g('#fSss'),ph:g('#fPh'),hdmf:g('#fHdmf'),address:g('#fAddr'),contact:g('#fCon'),active:$('#fAct',m).checked,recur:recur.filter(x=>x.amt>0),noSss:$('#fNoS',m).checked,noPh:$('#fNoP',m).checked,noPg:$('#fNoH',m).checked};
+  const started=[];[['noSss','sss','SSS'],['noPh','ph','PhilHealth'],['noPg','hdmf','Pag-IBIG']].forEach(([f,n,l])=>{if(o[f]&&o[n]&&!(v[n]||'').trim()){o[f]=false;started.push(l)}});
   if(!o.last||!o.first)return toast('Enter the last and first name.','bad');if(!o.business)return toast('Enter the business.','bad');
   if(o.basis==='monthly'?!o.monthly:!o.rate)return toast('Enter the '+(o.basis==='monthly'?'monthly':'daily')+' rate.','bad');
   if(o.basis!=='monthly'){o.monthly=0}else o.rate=0;
@@ -594,7 +603,7 @@ function empForm(id,after){
   if(dup&&!e)return toast('There is already an employee named '+fullName(dup)+' in '+dup.business+'.','bad');
   if(e)Object.assign(e,o);else DB.employees.push(Object.assign({id:'e'+uid()},o));
   if(!DB.biz.some(b=>b.name===o.business))DB.biz.push({name:o.business});
-  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.','ok')};
+  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.'+(started.length?' '+started.join(', ')+' deductions start now that the number is entered. Open draft payrolls pick this up.':''),'ok',started.length?7000:3500)};
  const del=$('#fDel',m);if(del)del.onclick=async()=>{if(used){e.active=false;save();m.close();after&&after();toast('Marked inactive. Past payrolls keep this employee.','ok');return}
   if(!(await confirmBox('Delete '+esc(fullName(e))+'? This cannot be undone.','Delete',1)))return;DB.employees=DB.employees.filter(x=>x!==e);DB.ledger=DB.ledger.filter(l=>l.empId!==e.id);save();m.close();after&&after()};
 }
@@ -696,7 +705,7 @@ function drawRun(B,run){
  const TV=runUI.view==='time';
  if(TV)h+=timeGridHtml(run,rows,fin);else{
  h+='<div class="tw" style="max-height:66vh"><table class="t grid'+(fin?' locked':'')+'" id="rGrid"><thead><tr><th>Employee</th>'+cols.map(c=>'<th class="'+(c.grp==='E'?'grpE':c.grp==='D'?'grpD':'')+'">'+esc(c.h)+'</th>').join('')+'</tr></thead><tbody>';
- rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+(isMwe(empById(r.empId),r)?' · MWE':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
+ rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+(isMwe(empById(r.empId),r)?' · MWE':'')+(skipLabel(r)?' · <span class="nocon">'+esc(skipLabel(r))+'</span>':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
   +cols.map(c=>{if(c.calc)return '<td class="calc'+(c.net?' net':'')+'" data-c="'+c.k+'"></td>';return '<td><input data-k="'+c.k+'" class="'+(c.cls||'')+'" inputmode="decimal" aria-label="'+esc(c.h+' – '+r.name)+'"'+(fin?' disabled':'')+'></td>'}).join('')+'</tr>'});
  if(!rows.length)h+='<tr><td colspan="'+(cols.length+1)+'" class="empty">No employees match.</td></tr>';
  h+='</tbody><tfoot><tr><td>TOTAL</td>'+cols.map(c=>'<td class="calc" data-t="'+c.k+'"></td>').join('')+'</tr></tfoot></table></div>';
@@ -1155,6 +1164,7 @@ function runChecks(run){
   add('chg','warn','Net pay changed by 30% or more from '+perShort(pv.year,pv.month,pv.q)+'. Make sure it is expected.',big)}
  add('new','warn','Active employees who are not in this payroll (new hires?). Use “Add employee” if they should be paid.',DB.employees.filter(e=>e.active!==false&&employedIn(e,run.year,run.month,run.q)&&!run.rows.some(r=>r.empId===e.id)).sort(empCmp).map(fullName));
  add('sep','warn','Separated before this cutoff or marked inactive, but still in this payroll.',run.rows.filter(r=>{const e=E(r);return!r.fp&&((e.separated&&e.separated<a)||e.active===false)}).map(r=>r.name));
+ add('noreg','info','No SSS, PhilHealth or Pag-IBIG deducted (not Regular, or not registered yet).',run.rows.filter(r=>r.gross&&skipLabel(r)&&!(r.man.sss||r.man.ph||r.man.pg)).map(r=>r.name+' ('+skipLabel(r)+')'));
  add('rate','info','Pay rates are different from the employee records. Use “Update rates” if the records are right.',rateDiff(run).map(r=>r.name));
  const ML={allow:'meal allowance',hol:'holiday pay',ot:'OT',sss:'SSS',ph:'PhilHealth',pg:'Pag-IBIG',tax:'tax'};
  add('man','info','Amounts typed over the automatic amount (yellow boxes).',run.rows.filter(r=>Object.keys(r.man||{}).length).map(r=>r.name+' ('+Object.keys(r.man).map(k=>ML[k]||k).join(', ')+')'));
@@ -1176,7 +1186,7 @@ function timeGridHtml(run,rows,fin){const hs=holsIn(run.year,run.month,run.q),di
   +hs.map(x=>'<th class="hcol'+(x.type==='R'?' grpE':'')+'">'+esc(fdw(x.date))+'<small>'+esc(x.name)+' · '+(x.type==='R'?'regular':'special')+'</small></th>').join('')
   +'<th>Basic pay</th><th>Holiday pay</th><th>OT & premium</th><th>Gross pay</th></tr></thead><tbody>';
  rows.forEach(({r,i})=>{const mo=r.basis==='monthly',tm=r.tm||{};
-  h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(mo?'monthly-paid':'daily-paid')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Full time window (fewer hours on a holiday, etc.)">⏱</button></div></td>'
+  h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(mo?'monthly-paid':'daily-paid')+(skipLabel(r)?' · '+esc(skipLabel(r)):'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Full time window (fewer hours on a holiday, etc.)">⏱</button></div></td>'
    +TCOLS.map(c=>{const na=(c[3]==='d'&&mo)||(c[3]==='m'&&!mo);return '<td>'+(na?'<input data-t="'+c[0]+'" class="na" value="–" disabled tabindex="-1" aria-hidden="true">':'<input data-t="'+c[0]+'" inputmode="decimal" value="'+(+tm[c[0]]||'')+'" aria-label="'+esc(c[1]+' – '+r.name)+'"'+dis+'>')+'</td>'}).join('')
    +hs.map(x=>{const o=(tm.hol||{})[x.date]||{};return '<td class="hc"><select data-hs="'+x.date+'" aria-label="'+esc(x.name+' – '+r.name)+'"'+dis+'>'+holOpts(x,o)+'</select><input data-ho="'+x.date+'" inputmode="decimal" placeholder="OT h" title="Overtime hours on '+esc(x.name)+'" aria-label="'+esc('Overtime on '+x.name+' – '+r.name)+'" value="'+(+o.ot||'')+'"'+dis+'></td>'}).join('')
    +['basic','hol','ot','gross'].map(k=>'<td class="calc" data-c="'+k+'"></td>').join('')+'</tr>'});
@@ -1252,7 +1262,8 @@ function bulkModal(ids,after){
   +fg('Employment status','<select id="bStat">'+opt([['',nc]].concat(STATUSES),'')+'</select>')
   +fg('Days factor (monthly-paid)','<select id="bFac">'+opt([['',nc],[261,'261 – 5-day week'],[313,'313 – 6-day week'],[365,'365 – paid every day']],'')+'</select>')
   +fg('Minimum wage earner','<select id="bMwe">'+opt([['',nc],['1','Yes'],['0','No']],'')+'</select>')
-  +fg('Included in new payrolls','<select id="bAct">'+opt([['',nc],['1','Active'],['0','Inactive']],'')+'</select>')+'</div>'
+  +fg('Included in new payrolls','<select id="bAct">'+opt([['',nc],['1','Active'],['0','Inactive']],'')+'</select>')
+  +fg('SSS, PhilHealth, Pag-IBIG','<select id="bReg">'+opt([['',nc],['none','Not registered yet with any – no deductions'],['all','Registered with all three – deduct']],'')+'</select>','For one agency only, use the employee’s own record.')+'</div>'
   +'<h3 style="margin-top:12px">Recurring pay or deduction every cutoff</h3><div class="row">'+fg('Item','<select id="bItem">'+opt([['',nc]].concat(DB.items.filter(i=>i.active!==false).map(i=>[i.id,i.name+(i.kind==='D'?' (deduction)':'')])),'')+'</select>')
   +fg('Action','<select id="bIA">'+opt([['set','Set the amount per cutoff'],['rm','Remove it']],'set')+'</select>')+fg('Amount per cutoff (₱)','<input type="number" step="0.01" min="0" id="bIV">')+'</div>'
   +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="bGo">Apply to '+L.length+'</button></div>',820);
@@ -1260,7 +1271,7 @@ function bulkModal(ids,after){
   if(it&&ia==='set'&&!iv)return toast('Enter the amount per cutoff, or choose “Remove it”.','bad');
   L.forEach(e=>{const b=JSON.stringify(e);
    if(g('#bBiz'))e.business=g('#bBiz');if(g('#bPos'))e.position=g('#bPos');if(g('#bStat'))e.status=g('#bStat');if(g('#bFac')&&e.basis==='monthly')e.factor=+g('#bFac');
-   if(g('#bMwe'))e.mwe=g('#bMwe')==='1';if(g('#bAct'))e.active=g('#bAct')==='1';
+   if(g('#bMwe'))e.mwe=g('#bMwe')==='1';if(g('#bReg')){const x=g('#bReg')==='none';e.noSss=x;e.noPh=x;e.noPg=x}if(g('#bAct'))e.active=g('#bAct')==='1';
    if(it){e.recur=(e.recur||[]).filter(x=>x.item!==it);if(ia==='set')e.recur.push({item:it,amt:iv})}
    if(JSON.stringify(e)!==b)n++});
   if(g('#bBiz')&&!DB.biz.some(x=>x.name===g('#bBiz')))DB.biz.push({name:g('#bBiz')});
@@ -1428,13 +1439,14 @@ const SET={
  rules(B){const s=S();
   B.innerHTML='<div class="card"><h2>Payroll rules</h2><div class="grid2">'
    +fg('When to deduct SSS, PhilHealth and Pag-IBIG','<select id="sSch">'+opt([['split','Half on each cutoff'],['second','Whole month on the 2nd cutoff']],s.sched)+'</select>','Contributions are always based on the month’s total pay.')
+   +fg('Who has SSS, PhilHealth and Pag-IBIG deducted','<select id="sCF">'+opt([['reg','Regular employees only'],['all','All employees']],s.contribFor||'reg')+'</select>','Employees can also be marked “not registered yet” per agency in their record.')
    +fg('Meal allowance','<select id="sMeal">'+opt([['1','Not taxable, not in the SSS base'],['0','Taxable and part of the SSS base']],s.mealNT?'1':'0')+'</select>')
    +fg('Year-end tax','<select id="sAnn">'+opt([['1','Annualize in the December 16–31 payroll'],['0','Do not annualize (semi-monthly table only)']],s.annualize?'1':'0')+'</select>','Annualizing adjusts the last payroll of the year so total tax withheld equals the tax due for the year.')
    +fg('Minimum wage (daily, ₱)','<input type="number" step="0.01" min="0" id="sMwe" value="'+pe(s.mweRate)+'">','Employees paid at or below this daily rate are minimum wage earners (basic, holiday and overtime pay not taxed). 0 = mark them one by one in Employees.')
    +fg('Service incentive leave (days a year)','<input type="number" step="0.5" min="0" id="sSil" value="'+s.silDays+'">')
    +fg('Tax-free ceiling for 13th month and other benefits (₱)','<input type="number" step="0.01" min="0" id="sBen" value="'+pe(s.benCap)+'">')+'</div><p class="note">Changes apply to draft payrolls when you open them. Final payrolls keep their amounts.</p></div>';
   const bind=(id,f)=>$(id).onchange=e=>{f(e.target.value);save();toast('Saved.','ok')};
-  bind('#sSch',v=>s.sched=v);bind('#sMeal',v=>s.mealNT=v==='1');bind('#sAnn',v=>s.annualize=v==='1');bind('#sMwe',v=>s.mweRate=c100(v));bind('#sSil',v=>s.silDays=Math.max(0,+v||0));bind('#sBen',v=>s.benCap=c100(v))},
+  bind('#sSch',v=>s.sched=v);bind('#sCF',v=>s.contribFor=v);bind('#sMeal',v=>s.mealNT=v==='1');bind('#sAnn',v=>s.annualize=v==='1');bind('#sMwe',v=>s.mweRate=c100(v));bind('#sSil',v=>s.silDays=Math.max(0,+v||0));bind('#sBen',v=>s.benCap=c100(v))},
  rates(B){const R=S().rates,P=S().prem;
   B.innerHTML='<div class="card"><h2>Government contributions ('+esc(R.asOf||'')+')</h2><div class="grid3">'
    +fg('SSS employee %',num('r_sss_ee',R.sss.ee))+fg('SSS employer %',num('r_sss_er',R.sss.er))+fg('SSS minimum salary credit',num('r_sss_min',R.sss.min))+fg('SSS maximum salary credit',num('r_sss_max',R.sss.max))+fg('SSS salary credit step',num('r_sss_step',R.sss.step))
