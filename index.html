@@ -74,6 +74,7 @@ table.t td.wrap{white-space:normal;min-width:180px}
 .grid tfoot td:first-child{z-index:3;background:#f7faf9}
 .grid input{width:92px;text-align:right;padding:4px 6px;border-radius:6px;font-variant-numeric:tabular-nums}
 .grid input.days{width:62px}
+.grid input.over{box-shadow:inset 0 0 0 2px #e7a19a}
 .grid input.man{background:#fff8e6;border-color:#e8c46a}
 .grid input.auto{color:#3f6a5e;background:#f7fbf9}
 .grid td.calc{color:#33433e;text-align:right;font-variant-numeric:tabular-nums;padding-right:8px}
@@ -356,15 +357,29 @@ function calcRun(run){run.rows.forEach(r=>calcRow(run,r))}
 function recalcFrom(run){const k=pkey(run.year,run.month,run.q);DB.runs.filter(x=>x.year===run.year&&pkey(x.year,x.month,x.q)>=k&&x.status!=='final').sort((a,b)=>pkey(a.year,a.month,a.q)-pkey(b.year,b.month,b.q)).forEach(calcRun)}
 
 // ---------------------------------------------------------------- loans, advances and other charges per employee
-function ledgerDeducted(empId,type,exceptRun){let t=0;DB.runs.forEach(x=>{if(x===exceptRun)return;const r=x.rows.find(y=>y.empId===empId);if(r)t+=(r.ded||{})[type]||0});return t}
-function ledgerBal(empId,type,exceptRun){let c=0;DB.ledger.forEach(l=>{if(l.empId===empId&&l.type===type)c+=l.amount});return c-ledgerDeducted(empId,type,exceptRun)}
+// An opening balance (l.open) is what the employee still owed as of its date, for loans that started before this app.
+// Payrolls ending on or before that date are already included in it, and other records dated on or before it are too.
+const ledOpen=(empId,type)=>DB.ledger.filter(l=>l.empId===empId&&l.type===type&&l.open).sort((a,b)=>cmp(b.date,a.date))[0]||null;
+const ledCounts=(l,o)=>!o||l===o||(!l.open&&l.date>o.date);
+const ledRecs=(empId,type)=>{const o=ledOpen(empId,type);return DB.ledger.filter(l=>l.empId===empId&&l.type===type&&ledCounts(l,o))};
+const ledgerCharged=(empId,type)=>ledRecs(empId,type).reduce((s,l)=>s+l.amount,0);
+// deductions in payroll that count against the records; before=a run: only payrolls before it; upto=a run: up to and including it
+function ledgerDeducted(empId,type,exceptRun,before,upto){const o=ledOpen(empId,type),kb=before&&pkey(before.year,before.month,before.q),ku=upto&&pkey(upto.year,upto.month,upto.q);let t=0;
+ DB.runs.forEach(x=>{if(x===exceptRun)return;const k=pkey(x.year,x.month,x.q);if(before&&k>=kb)return;if(upto&&k>ku)return;if(o&&cutoff(x.year,x.month,x.q)[1]<=o.date)return;const r=x.rows.find(y=>y.empId===empId);if(r)t+=(r.ded||{})[type]||0});return t}
+function ledgerBal(empId,type,exceptRun){return ledgerCharged(empId,type)-ledgerDeducted(empId,type,exceptRun)}
+function ledgerBalAfter(empId,type,run){return ledgerCharged(empId,type)-ledgerDeducted(empId,type,null,null,run)}
 // amount to deduct this cutoff: each open charge (oldest first) contributes its installment, or its whole balance when no installment was set
 function ledgerSuggest(empId,type,run){
- const L=DB.ledger.filter(l=>l.empId===empId&&l.type===type&&(!run||!l.start||l.start<=cutoff(run.year,run.month,run.q)[1])).sort((a,b)=>cmp(a.date,b.date));
- let used=ledgerDeducted(empId,type,run),s=0;
+ const op=ledOpen(empId,type);if(run&&op&&cutoff(run.year,run.month,run.q)[1]<=op.date)return 0; // that payroll is already in the opening balance
+ const L=ledRecs(empId,type).filter(l=>!run||!l.start||l.start<=cutoff(run.year,run.month,run.q)[1]).sort((a,b)=>(b.open?1:0)-(a.open?1:0)||cmp(a.date,b.date));
+ const prior=ledgerDeducted(empId,type,null,run);let used=prior,s=0;
  L.forEach(l=>{const take=Math.min(used,l.amount);used-=take;const left=l.amount-take;if(left>0)s+=l.inst>0?Math.min(l.inst,left):left});
- return Math.min(s,pos(ledgerBal(empId,type,run)));
+ return Math.min(s,pos(ledgerCharged(empId,type)-prior));
 }
+// after a loan record changes: draft payrolls take the new amounts, except deductions typed by hand (yellow)
+function refreshLedgerDrafts(empId,type){let n=0;
+ DB.runs.filter(r=>r.status!=='final').sort((a,b)=>pkey(a.year,a.month,a.q)-pkey(b.year,b.month,b.q)).forEach(run=>{const r=run.rows.find(x=>x.empId===empId);if(!r||(r.man||{})['d:'+type])return;
+  const v=ledgerSuggest(empId,type,run);if(((r.ded||{})[type]||0)===v)return;if(v)r.ded[type]=v;else delete r.ded[type];calcRow(run,r);n++});return n}
 function rowFromEmp(e,run){
  const R=rateAt(e,cutoff(run.year,run.month,run.q)[0]),E2=Object.assign({},e,R);
  const r={empId:e.id,name:fullName(e),business:e.business||'',position:e.position||'',status:e.status||'',basis:e.basis||'daily',rate:R.rate,monthly:R.monthly,factor:+e.factor||261,daily:dailyOf(E2),allowance:R.allowance,
@@ -648,7 +663,7 @@ function gridCols(run){
  itemsE().forEach(it=>{if(vis('i:'+it.id))C.push({k:'i:'+it.id,h:it.name,inp:1,grp:'E'})});
  C.push({k:'gross',h:'Gross pay',calc:1});
  C.push({k:'sss',h:'SSS',inp:1,man:1,grp:'D'},{k:'ph',h:'PhilHealth',inp:1,man:1,grp:'D'},{k:'pg',h:'Pag-IBIG',inp:1,man:1,grp:'D'},{k:'tax',h:'Withholding tax',inp:1,man:1,grp:'D',neg:1});
- DB.dtypes.forEach(d=>{if(vis('d:'+d.id))C.push({k:'d:'+d.id,h:d.name,inp:1,grp:'D'})});
+ DB.dtypes.forEach(d=>{if(vis('d:'+d.id))C.push({k:'d:'+d.id,h:d.name,inp:1,grp:'D',man:1,led:1})});
  itemsD().forEach(it=>{if(vis('i:'+it.id))C.push({k:'i:'+it.id,h:it.name,inp:1,grp:'D'})});
  C.push({k:'totDed',h:'Total deductions',calc:1},{k:'net',h:'Net pay',calc:1,net:1});
  return C;
@@ -729,8 +744,8 @@ function drawRun(B,run){
  grid.addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i,r=run.rows[i],k=t.dataset.k,raw=t.value.trim();
   if(k==='days'){const d=Math.max(0,parseFloat(raw)||0);if(r.basis==='monthly'){r.tm.abs=r4(Math.max(0,(r.factor||261)/24-d-(+r.tm.late||0)/480))}else r.tm.days=d}
   else{const c=k==='tax'?c100(raw):pos(c100(raw));const C=gridCols(run).find(x=>x.k===k);
-   if(C&&C.man){if(raw===''){delete r.man[k]}else{r.man[k]=true;setV(r,k,c)}}else setV(r,k,c)}
-  calcRow(run,r);t.classList.toggle('man',!!r.man[k]);paintRow(run,i,t);paintFoot(run);save()});
+   if(C&&C.man){if(raw===''){delete r.man[k];if(C.led)setV(r,k,ledgerSuggest(r.empId,k.slice(2),run))}else{r.man[k]=true;setV(r,k,c)}}else setV(r,k,c)}
+  calcRow(run,r);t.classList.toggle('man',!!r.man[k]);if(k.startsWith('d:'))markOver(t,r,k,run);paintRow(run,i,t);paintFoot(run);save()});
  grid.addEventListener('keydown',e=>{const t=e.target;if(!t.dataset.k||!['Enter','ArrowDown','ArrowUp'].includes(e.key))return;e.preventDefault();
   const tr=t.closest('tr'),nx=(e.key==='ArrowUp'?tr.previousElementSibling:tr.nextElementSibling);const inp=nx&&$('input[data-k="'+t.dataset.k+'"]',nx);if(inp){inp.focus();inp.select()}});
  grid.addEventListener('focusin',e=>{if(e.target.tagName==='INPUT')setTimeout(()=>e.target.select(),0)});
@@ -752,7 +767,7 @@ function drawRun(B,run){
   ch.forEach(r=>syncRowRate(run,r));
   recalcFrom(run);save();redraw();toast('Rates updated.','ok')};
  $('#rLoans').onclick=async()=>{if(!(await confirmBox('Fill in the cash advance and loan deductions again from Loans & Advances? Amounts typed in those columns for this cutoff are replaced.','Refresh')))return;
-  run.rows.forEach(r=>{DB.dtypes.forEach(d=>{const s=ledgerSuggest(r.empId,d.id,run);if(s)r.ded[d.id]=s;else delete r.ded[d.id]})});calcRun(run);save();redraw();toast('Loan and advance deductions refreshed.','ok')};
+  run.rows.forEach(r=>{DB.dtypes.forEach(d=>{delete r.man['d:'+d.id];const s=ledgerSuggest(r.empId,d.id,run);if(s)r.ded[d.id]=s;else delete r.ded[d.id]})});calcRun(run);save();redraw();toast('Loan and advance deductions refreshed.','ok')};
  $('#rDays').onclick=()=>{const m=modal('<h2>Set days worked</h2><p class="note">For daily-paid employees. Monthly-paid employees start with a full half-month; record their absences with ⏱.</p>'+fg('Days worked in this cutoff','<input type="number" step="0.5" min="0" max="16" id="sdN" value="'+(run.q===1?13:13)+'">')
    +'<div style="margin-top:10px"><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="sdW" value="zero" checked> Only employees with no days yet</label><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="sdW" value="all"> All daily-paid employees'+(runUI.biz!=='ALL'?' in '+esc(runUI.biz):'')+'</label></div>'
    +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="sdGo">Apply</button></div>',460);
@@ -764,11 +779,13 @@ function drawRun(B,run){
   combo($('#aeS',m));$('#aeS_q',m).focus();
   $('#aeGo',m).onclick=()=>{const e=empById($('#aeS',m).value);run.rows.push(rowFromEmp(e,run));calcRun(run);save();m.close();redraw()}};
 }
+function markOver(inp,r,k,run){const av=ledAvail(r.empId,k.slice(2),run),ov=getV(r,k)>av;inp.classList.toggle('over',ov);inp.title=ov?'More than the balance in Loans & Advances (₱'+n2(av)+'). Use Check › Add to loan records.':''}
 function paintRow(run,i,skip){
  const r=run.rows[i],tr=$('#rGrid tr[data-i="'+i+'"]');if(!tr)return;
  $$('input[data-k]',tr).forEach(inp=>{if(inp===skip||inp===document.activeElement&&inp!==skip&&skip)return;const k=inp.dataset.k;
   if(k==='days')inp.value=r.basis==='monthly'?r4(r.days):(+r.tm.days||'');else{const v=getV(r,k);inp.value=v?(v<0?'-':'')+(Math.abs(v)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''}
-  inp.classList.toggle('man',!!(r.man||{})[k]);inp.classList.toggle('auto',!(r.man||{})[k]&&['allow','hol','ot','sss','ph','pg','tax'].includes(k)&&!!getV(r,k))});
+  inp.classList.toggle('man',!!(r.man||{})[k]);inp.classList.toggle('auto',!(r.man||{})[k]&&(['allow','hol','ot','sss','ph','pg','tax'].includes(k)||k.startsWith('d:'))&&!!getV(r,k));
+  if(k.startsWith('d:'))markOver(inp,r,k,run)});
  $$('td[data-c]',tr).forEach(td=>{const v=r[td.dataset.c]||0;td.textContent=m2(v);td.classList.toggle('neg',v<0)});
  const b=$('[data-tm]',tr);if(b)b.classList.toggle('on',hasTime(r));
 }
@@ -783,7 +800,8 @@ async function finalizeRun(run,after){
  const m=modal('<h2>Finalize '+esc(perLabel(run.year,run.month,run.q))+'</h2><p>Finalizing locks this payroll. Cash advances and loans are reduced by what it deducts, and it is used for reports, 13th month pay and year-end tax.</p>'
   +(zero.length?'<div class="alert">'+zero.length+' employee'+(zero.length===1?' has':'s have')+' no pay in this cutoff ('+zero.slice(0,6).map(r=>esc(r.name)).join(', ')+(zero.length>6?'…':'')+'). They will be removed from this payroll.</div>':'')
   +(CK.length?'<h3>Before you finalize, please check</h3>'+checksHtml(CK):'<p class="chip ok">No issues found by the checks.</p>')
-  +fg('Pay date','<input type="date" id="fnD" value="'+(run.payDate||cutoff(run.year,run.month,run.q)[1])+'">')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="fnGo">Finalize</button></div>',CK.length?720:520);
+  +fg('Pay date','<input type="date" id="fnD" value="'+(run.payDate||cutoff(run.year,run.month,run.q)[1])+'">')+'<div class="acts">'+(CK.some(c=>c.id==='nobal')?'<button class="btn o" id="fnLed" style="margin-right:auto">Add to loan records…</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fnGo">Finalize</button></div>',CK.length?720:520);
+ const fl=$('#fnLed',m);if(fl)fl.onclick=()=>{m.close();ledFromRun(run,after)};
  $('#fnGo',m).onclick=()=>{run.rows=run.rows.filter(r=>r.gross);run.payDate=$('#fnD',m).value;recalcFrom(run);run.status='final';run.finalAt=new Date().toISOString();
   // later drafts depend on this one
   const k=pkey(run.year,run.month,run.q);DB.runs.filter(x=>x.status!=='final'&&x.year===run.year&&pkey(x.year,x.month,x.q)>k).forEach(calcRun);
@@ -842,39 +860,45 @@ PAGES.loans={title:'Loans & Advances',render(v){
  v.innerHTML='<div class="card"><p class="note" style="margin-top:0">Record cash advances, store credit, SSS and Pag-IBIG loans and other amounts to collect through payroll. Each new payroll deducts the installment (or the whole balance when no installment is set) until the balance is zero. Change the deduction in the payroll itself whenever needed.</p>'
   +'<div class="row">'+fg('Employee','<select id="lE">'+opt([['ALL','All employees']].concat(emps.map(e=>[e.id,fullName(e)])),lnF.emp)+'</select>')
   +fg('Type','<select id="lT">'+opt([['ALL','All types']].concat(DB.dtypes.map(d=>[d.id,d.name])),lnF.type)+'</select>')
-  +fg('Show','<select id="lS">'+opt([['open','With a balance'],['all','All']],lnF.show)+'</select>')+'<span class="sp"></span><button class="btn o" id="lCsv">Export CSV</button><button class="btn" id="lAdd">+ Record a cash advance / loan</button></div></div>'
+  +fg('Show','<select id="lS">'+opt([['open','With a balance'],['all','All']],lnF.show)+'</select>')+'<span class="sp"></span><button class="btn o" id="lCsv">Export CSV</button><button class="btn o" id="lOpen">Paste opening balances…</button><button class="btn" id="lAdd">+ Record a cash advance / loan</button></div>'
+  +'<p class="note" style="margin-bottom:0">Loans from before you started using this app: record each one as an <b>opening balance</b> — what the employee still owes as of a date. Payrolls up to that date are treated as already included. Changing a record updates the deductions in draft payrolls (except amounts typed by hand).</p></div>'
   +'<h2>Balances</h2><div id="lBal"></div><h2 style="margin-top:18px">Records</h2><div id="lRec"></div>';
  const paint=()=>{
   const keys=new Map();DB.ledger.forEach(l=>{if((lnF.emp!=='ALL'&&l.empId!==lnF.emp)||(lnF.type!=='ALL'&&l.type!==lnF.type))return;keys.set(l.empId+'|'+l.type,{empId:l.empId,type:l.type})});
-  const B=[...keys.values()].map(k=>{const e=empById(k.empId)||{last:'(deleted)',first:''};let c=0;DB.ledger.forEach(l=>{if(l.empId===k.empId&&l.type===k.type)c+=l.amount});const d=ledgerDeducted(k.empId,k.type);return{...k,name:fullName(e),business:e.business,type:dtName(k.type),charged:c,deducted:d,bal:c-d}}).filter(x=>lnF.show==='all'||x.bal>0).sort((a,b)=>cmp(a.name,b.name)||cmp(a.type,b.type));
+  const B=[...keys.values()].map(k=>{const e=empById(k.empId)||{last:'(deleted)',first:''};const c=ledgerCharged(k.empId,k.type),d=ledgerDeducted(k.empId,k.type);return{...k,name:fullName(e),business:e.business,type:dtName(k.type),charged:c,deducted:d,bal:c-d}}).filter(x=>lnF.show==='all'||x.bal>0).sort((a,b)=>cmp(a.name,b.name)||cmp(a.type,b.type));
   const T=rptTable({cols:[{h:'Employee',k:'name'},{h:'Business',k:'business'},{h:'Type',k:'type'},{h:'Total charged',k:'charged',n:1},{h:'Deducted in payroll',k:'deducted',n:1},{h:'Balance',k:'bal',n:1}],rows:B,empty:'No balances.'});
   $('#lBal').innerHTML=T.screen;
   const R=DB.ledger.filter(l=>(lnF.emp==='ALL'||l.empId===lnF.emp)&&(lnF.type==='ALL'||l.type===lnF.type)).sort((a,b)=>cmp(b.date,a.date));
   $('#lRec').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Date</th><th>Employee</th><th>Type</th><th class="n">Amount</th><th class="n">Per cutoff</th><th>Start deducting</th><th>Note</th><th></th></tr></thead><tbody>'
-   +(R.map(l=>{const e=empById(l.empId);return '<tr><td>'+esc(fd(l.date))+'</td><td>'+esc(e?fullName(e):'(deleted)')+'</td><td>'+esc(dtName(l.type))+'</td><td class="n">'+n2(l.amount)+'</td><td class="n">'+(l.inst?n2(l.inst):'whole balance')+'</td><td>'+esc(l.start?fd(l.start):'next payroll')+'</td><td class="wrap">'+esc(l.note)+'</td><td><button class="btn o s" data-le="'+l.id+'">Edit</button></td></tr>'}).join('')||'<tr><td colspan="8" class="empty">No records yet.</td></tr>')+'</tbody></table></div>';
+   +(R.map(l=>{const e=empById(l.empId),o=ledOpen(l.empId,l.type),inc=!ledCounts(l,o);return '<tr'+(inc?' class="off" title="Included in the opening balance as of '+esc(fd(o.date))+'"':'')+'><td>'+esc(fd(l.date))+'</td><td>'+esc(e?fullName(e):'(deleted)')+'</td><td>'+esc(dtName(l.type))+(l.open?' <span class="chip">opening balance</span>':'')+(inc?' <span class="chip">in opening balance</span>':'')+(l.src?' <span class="chip">from payroll</span>':'')+'</td><td class="n">'+n2(l.amount)+'</td><td class="n">'+(l.inst?n2(l.inst):'whole balance')+'</td><td>'+esc(l.start?fd(l.start):'next payroll')+'</td><td class="wrap">'+esc(l.note)+'</td><td><button class="btn o s" data-le="'+l.id+'">Edit</button></td></tr>'}).join('')||'<tr><td colspan="8" class="empty">No records yet.</td></tr>')+'</tbody></table></div>';
   $$('[data-le]').forEach(b=>b.onclick=()=>ledgerForm(b.dataset.le,paint));
   $('#lCsv').onclick=()=>dl('loans_advances_'+today()+'.csv',T.csv())};
  combo($('#lE'),'All employees – type a name to search');
  $('#lE').onchange=e=>{lnF.emp=e.target.value;paint()};$('#lT').onchange=e=>{lnF.type=e.target.value;paint()};$('#lS').onchange=e=>{lnF.show=e.target.value;paint()};
- $('#lAdd').onclick=()=>ledgerForm(null,paint);paint();
+ $('#lAdd').onclick=()=>ledgerForm(null,paint);$('#lOpen').onclick=()=>openPaste(paint);paint();
 }};
 function ledgerForm(id,after){
  const l=id?DB.ledger.find(x=>x.id===id):null,v=l||{empId:lnF.emp!=='ALL'?lnF.emp:'',type:lnF.type!=='ALL'?lnF.type:DB.dtypes[0].id,date:today(),amount:0,inst:0,note:''};
  const emps=DB.employees.filter(e=>e.active!==false||e.id===v.empId).sort(empCmp);
  if(!emps.length)return toast('Add employees first.','bad');
- const m=modal('<h2>'+(l?'Edit record':'Record a cash advance or loan')+'</h2><div class="grid2">'
+ const m=modal('<h2>'+(l?'Edit record':'Record a cash advance or loan')+'</h2>'+fg('Kind','<div class="seg" id="lfK"><button type="button" data-k="new" class="'+(v.open?'':'on')+'">New loan, advance or charge</button><button type="button" data-k="open" class="'+(v.open?'on':'')+'">Opening balance (still owed as of a date)</button></div>')+'<div class="grid2" style="margin-top:12px">'
   +fg('Employee *','<select id="lfE">'+opt((v.empId?[]:[['','']]).concat(emps.map(e=>[e.id,fullName(e)+' – '+e.business])),v.empId)+'</select>')+fg('Type *','<select id="lfT">'+opt(DB.dtypes.map(d=>[d.id,d.name]),v.type)+'</select>','Add types in Settings › Deduction types')
-  +fg('Date','<input type="date" id="lfD" value="'+esc(v.date)+'">')+fg('Amount (₱) *','<input type="number" step="0.01" min="0" id="lfA" value="'+pe(v.amount)+'">','Total to collect, e.g. the cash advance or loan amount')
+  +fg('<span id="lfDL">Date</span>','<input type="date" id="lfD" value="'+esc(v.date)+'">','<span id="lfDH"></span>')+fg('<span id="lfAL">Amount (₱) *</span>','<input type="number" step="0.01" min="0" id="lfA" value="'+pe(v.amount)+'">','<span id="lfAH"></span>')
   +fg('Deduct per cutoff (₱)','<input type="number" step="0.01" min="0" id="lfI" value="'+pe(v.inst)+'">','Leave blank to deduct the whole amount in the next payroll')
   +fg('Start deducting on','<input type="date" id="lfS" value="'+esc(v.start||'')+'">','Optional')+'</div>'+fg('Note','<input id="lfN" value="'+esc(v.note)+'" placeholder="e.g. loan no., reason">')
   +'<div id="lfInfo" class="note"></div><div class="acts">'+(l?'<button class="btn d" id="lfDel" style="margin-right:auto">Delete</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="lfGo">Save</button></div>',640);
+ let open=!!v.open;const kind=()=>{$$('#lfK button',m).forEach(b=>b.classList.toggle('on',(b.dataset.k==='open')===open));$('#lfDL',m).textContent=open?'Balance as of *':'Date';$('#lfAL',m).textContent=open?'Balance still owed (₱) *':'Amount (₱) *';
+  $('#lfDH',m).textContent=open?'Payrolls in this app that end on or before this date are treated as already included.':'';$('#lfAH',m).textContent=open?'What the employee still owed on that date':'Total to collect, e.g. the cash advance or loan amount'};
+ $$('#lfK button',m).forEach(b=>b.onclick=()=>{open=b.dataset.k==='open';kind();info()});kind();
  combo($('#lfE',m));if(!v.empId)$('#lfE_q',m).focus();
- const info=()=>{if(!$('#lfE',m).value){$('#lfInfo',m).textContent='';return}const b=ledgerBal($('#lfE',m).value,$('#lfT',m).value);$('#lfInfo',m).textContent='Current balance of this type for this employee: ₱'+n2(b)+(l?' (including this record)':'')};
+ const info=()=>{if(!$('#lfE',m).value){$('#lfInfo',m).textContent='';return}const b=ledgerBal($('#lfE',m).value,$('#lfT',m).value),o=ledOpen($('#lfE',m).value,$('#lfT',m).value);$('#lfInfo',m).textContent='Current balance of this type for this employee: ₱'+n2(b)+(l?' (including this record)':'')+(o&&o!==l?'. It has an opening balance as of '+fd(o.date)+(open?'; the newest opening balance replaces older ones.':'.'):'')};
  $('#lfE',m).onchange=info;$('#lfT',m).onchange=info;info();
- $('#lfGo',m).onclick=()=>{if(!$('#lfE',m).value)return toast('Choose the employee.','bad');const o={empId:$('#lfE',m).value,type:$('#lfT',m).value,date:$('#lfD',m).value||today(),amount:c100($('#lfA',m).value),inst:c100($('#lfI',m).value),start:$('#lfS',m).value,note:$('#lfN',m).value.trim().slice(0,200)};
-  if(o.amount<=0)return toast('Enter the amount.','bad');if(o.inst>o.amount)return toast('The amount per cutoff is more than the total.','bad');
-  if(l)Object.assign(l,o);else DB.ledger.push(Object.assign({id:'l'+uid()},o));save();m.close();after();toast('Saved. Draft payrolls pick it up with “Refresh loan deductions”; new payrolls include it automatically.','ok',5000)};
- const d=$('#lfDel',m);if(d)d.onclick=async()=>{if(!(await confirmBox('Delete this record? Deductions already made in payroll stay in those payrolls.','Delete',1)))return;DB.ledger=DB.ledger.filter(x=>x!==l);save();m.close();after()};
+ $('#lfGo',m).onclick=()=>{if(!$('#lfE',m).value)return toast('Choose the employee.','bad');if(open&&!$('#lfD',m).value)return toast('Enter the date of the balance.','bad');const was=l?[l.empId,l.type]:null;const o={open:open||undefined,empId:$('#lfE',m).value,type:$('#lfT',m).value,date:$('#lfD',m).value||today(),amount:c100($('#lfA',m).value),inst:c100($('#lfI',m).value),start:$('#lfS',m).value,note:$('#lfN',m).value.trim().slice(0,200)};
+  if(o.amount<=0)return toast('Enter the amount.','bad');if(o.inst>=o.amount&&open)o.inst=0;if(o.inst>o.amount)return toast('The amount per cutoff is more than the total.','bad');
+  if(l){Object.assign(l,o);if(!open)delete l.open}else DB.ledger.push(Object.assign({id:'l'+uid()},o));
+  let n=refreshLedgerDrafts(o.empId,o.type);if(was&&(was[0]!==o.empId||was[1]!==o.type))n+=refreshLedgerDrafts(was[0],was[1]);
+  save();m.close();after();toast('Saved.'+(n?' Updated the deduction in '+n+' draft payroll'+(n===1?'':'s')+'.':' New payrolls include it automatically.'),'ok',5000)};
+ const d=$('#lfDel',m);if(d)d.onclick=async()=>{if(!(await confirmBox('Delete this record? Deductions already made in payroll stay in those payrolls.','Delete',1)))return;DB.ledger=DB.ledger.filter(x=>x!==l);const n=refreshLedgerDrafts(l.empId,l.type);save();m.close();after();if(n)toast('Deleted. Updated '+n+' draft payroll'+(n===1?'':'s')+'.','ok')};
 }
 
 // =====================================================================================
@@ -900,7 +924,7 @@ function slipHtml(run,r){
   +'<div class="net"><span>NET PAY</span><b>₱ '+n2(r.net)+'</b></div><div class="ssig"><span>Employee signature</span><span>Date received</span></div></div>';
 }
 // balance after this payroll: charges up to now less deductions in this and earlier payrolls
-function ledgerBalAfter(empId,type,run){const k=pkey(run.year,run.month,run.q);let c=0,d=0;DB.ledger.forEach(l=>{if(l.empId===empId&&l.type===type)c+=l.amount});DB.runs.forEach(x=>{if(pkey(x.year,x.month,x.q)>k)return;const r=x.rows.find(y=>y.empId===empId);if(r)d+=(r.ded||{})[type]||0});return c-d}
+// ledgerBalAfter: see p1_core
 PAGES.slips={title:'Payslips',render(v,a){
  if(!DB.runs.length){v.innerHTML='<div class="card empty">No payroll yet. Create one in <a href="#run">Payroll Run</a>.</div>';return}
  v.innerHTML='<div class="card"><div class="row">'+runPicker('sR')+fg('Business','<select id="sB"></select>')+fg('Employment status','<select id="sS"></select>')+fg('Employee','<select id="sE"></select>')+fg('Layout','<select id="sL">'+opt([['4','4 per A4 page'],['1','1 per page']],'4')+'</select>')+'<span class="sp"></span><button class="btn" id="sP">Print / Save as PDF</button></div><p class="note" id="sInfo"></p></div><div id="sPv"></div>';
@@ -1165,14 +1189,45 @@ function runChecks(run){
  add('new','warn','Active employees who are not in this payroll (new hires?). Use “Add employee” if they should be paid.',DB.employees.filter(e=>e.active!==false&&employedIn(e,run.year,run.month,run.q)&&!run.rows.some(r=>r.empId===e.id)).sort(empCmp).map(fullName));
  add('sep','warn','Separated before this cutoff or marked inactive, but still in this payroll.',run.rows.filter(r=>{const e=E(r);return!r.fp&&((e.separated&&e.separated<a)||e.active===false)}).map(r=>r.name));
  add('noreg','info','No SSS, PhilHealth or Pag-IBIG deducted (not Regular, or not registered yet).',run.rows.filter(r=>r.gross&&skipLabel(r)&&!(r.man.sss||r.man.ph||r.man.pg)).map(r=>r.name+' ('+skipLabel(r)+')'));
+ add('nobal','warn','Loan or advance deductions larger than the balance in Loans & Advances (for example loans from before this app). Use “Add to loan records”.',overLed(run).map(x=>x.r.name+': '+x.name+' '+n2(x.v)+(x.av?' (balance '+n2(x.av)+')':' (no record)')));
  add('rate','info','Pay rates are different from the employee records. Use “Update rates” if the records are right.',rateDiff(run).map(r=>r.name));
  const ML={allow:'meal allowance',hol:'holiday pay',ot:'OT',sss:'SSS',ph:'PhilHealth',pg:'Pag-IBIG',tax:'tax'};
  add('man','info','Amounts typed over the automatic amount (yellow boxes).',run.rows.filter(r=>Object.keys(r.man||{}).length).map(r=>r.name+' ('+Object.keys(r.man).map(k=>ML[k]||k).join(', ')+')'));
  add('draft','info','Earlier payrolls this year are still drafts.',DB.runs.filter(x=>x.year===run.year&&x.status!=='final'&&pkey(x.year,x.month,x.q)<pkey(run.year,run.month,run.q)).sort((x,y)=>pkey(x.year,x.month,x.q)-pkey(y.year,y.month,y.q)).map(x=>perShort(x.year,x.month,x.q)));
  return C}
 const checksHtml=C=>'<div class="checks">'+C.map(c=>'<div class="ckr '+c.lvl+'"><div><b>'+esc(c.msg)+'</b> <span class="chip'+(c.lvl==='bad'?' bad':c.lvl==='warn'?' warn':'')+'">'+c.names.length+'</span></div><div class="nl">'+c.names.slice(0,15).map(esc).join('; ')+(c.names.length>15?' … and '+(c.names.length-15)+' more':'')+'</div></div>').join('')+'</div>';
-function checkModal(run){const C=runChecks(run);
- modal('<h2>Checks · '+esc(perLabel(run.year,run.month,run.q))+'</h2>'+(C.length?checksHtml(C):'<p class="chip ok">No issues found.</p>')+'<div class="acts"><button class="btn" data-x>Close</button></div>',760)}
+function checkModal(run){const C=runChecks(run),nb=C.some(c=>c.id==='nobal')&&run.status!=='final';
+ const m=modal('<h2>Checks · '+esc(perLabel(run.year,run.month,run.q))+'</h2>'+(C.length?checksHtml(C):'<p class="chip ok">No issues found.</p>')+'<div class="acts">'+(nb?'<button class="btn o" id="ckLed">Add to loan records…</button>':'')+'<button class="btn" data-x>Close</button></div>',760);
+ if(nb)$('#ckLed',m).onclick=()=>{m.close();ledFromRun(run,()=>{const v=$('#view');if(route.p==='run')PAGES.run.render(v,route.a)})}}
+// balance in the records that is still available for this payroll (charges less deductions in earlier payrolls)
+const ledAvail=(empId,type,run)=>pos(ledgerCharged(empId,type)-ledgerDeducted(empId,type,null,run));
+const overLed=run=>{const L=[];run.rows.forEach(r=>DB.dtypes.forEach(t=>{const v=(r.ded||{})[t.id]||0;if(!v)return;const av=ledAvail(r.empId,t.id,run);if(v>av)L.push({r,type:t.id,name:t.name,v,av})}));return L};
+// loans typed into a payroll that are not in Loans & Advances yet: record what was owed before this payroll as an opening balance
+function ledFromRun(run,after){const L=overLed(run);if(!L.length)return toast('Every loan deduction in this payroll is covered by the records.','ok');
+ const asOf=(()=>{const d=new Date(run.year,run.month-1,run.q===1?1:16);d.setDate(d.getDate()-1);return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())})();
+ const m=modal('<h2>Add to loan records</h2><p class="note">For each deduction below, enter what the employee still owed <b>before</b> this payroll. It is saved as an opening balance as of '+esc(fd(asOf))+', so this payroll and the next ones reduce it. Leave the balance at the amount deducted if this payroll pays it off.</p>'
+  +'<div class="tw" style="max-height:50vh"><table class="t"><thead><tr><th></th><th>Employee</th><th>Type</th><th class="n">Deducted now</th><th class="n">In records</th><th>Balance owed before this payroll (₱)</th><th>Deduct per cutoff (₱)</th></tr></thead><tbody>'
+  +L.map((x,i)=>'<tr><td><input type="checkbox" data-lk="'+i+'" checked aria-label="Add '+esc(x.r.name)+'"></td><td>'+esc(x.r.name)+'</td><td>'+esc(x.name)+'</td><td class="n">'+n2(x.v)+'</td><td class="n">'+m2(x.av)+'</td><td><input type="number" step="0.01" min="0" data-lb="'+i+'" value="'+pe(Math.max(x.v,x.av))+'" style="width:130px"></td><td><input type="number" step="0.01" min="0" data-li="'+i+'" value="'+pe(x.v)+'" style="width:110px"></td></tr>').join('')+'</tbody></table></div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="lkGo">Add to records</button></div>',940);
+ $('#lkGo',m).onclick=()=>{let n=0,bad=null;L.forEach((x,i)=>{if(!$('[data-lk="'+i+'"]',m).checked)return;const b=c100($('[data-lb="'+i+'"]',m).value),ins=c100($('[data-li="'+i+'"]',m).value);if(b<x.v){bad=x;return}
+   DB.ledger.push({id:'l'+uid(),open:true,src:run.id,empId:x.r.empId,type:x.type,date:asOf,amount:b,inst:ins>=b?0:ins,note:'From payroll '+perShort(run.year,run.month,run.q),start:''});n++});
+  if(bad)return toast(bad.r.name+': the balance owed cannot be less than the '+n2(bad.v)+' deducted now.','bad',6000);
+  save();m.close();after&&after();toast(n+' opening balance'+(n===1?'':'s')+' added to Loans & Advances. Later payrolls continue the deductions.','ok',6000)}}
+// paste opening balances from a spreadsheet: Employee, Type, Balance, Per cutoff, As of
+function openPaste(after){
+ const m=modal('<h2>Paste opening balances</h2><p class="note">For loans, advances and credit from before you started using this app. Copy rows from Google Sheets or Excel with a header row: <b>Employee</b> (Last, First), <b>Type</b> ('+DB.dtypes.map(d=>esc(d.name)).join(', ')+'), <b>Balance</b> (still owed), <b>Per cutoff</b> (blank = whole balance next payroll), <b>As of</b> (date). Payrolls in this app up to that date are treated as already included.</p>'
+  +'<textarea id="opTx" rows="8" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:.8rem" placeholder="Paste here"></textarea><div class="row mid" style="margin-top:8px"><button class="btn o s" id="opTpl">Download template</button></div><div id="opPv"></div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="opGo">Add</button></div>',860);
+ $('#opTpl',m).onclick=()=>dl('opening_balances_loans.csv',toCsv([['Employee','Type','Balance','Per cutoff','As of']].concat(DB.employees.filter(e=>e.active!==false).sort(empCmp).map(e=>[fullName(e),DB.dtypes[0].name,'','',today()]))));
+ const parse=()=>{const rows=parseCsv($('#opTx',m).value);if(rows.length<2)return[];const H=rows[0].map(h=>h.trim().toLowerCase().replace(/[^a-z]/g,'')),ix=(...n)=>{for(const x of n){const i=H.indexOf(x);if(i>=0)return i}return -1};
+  const I={e:ix('employee','name','employeename'),t:ix('type','deductiontype','loantype'),b:ix('balance','amount','balanceowed','outstanding'),p:ix('percutoff','installment','deduction'),d:ix('asof','date','balanceasof')};
+  const nm=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
+  return rows.slice(1).map(r=>{const g=k=>I[k]>=0?String(r[I[k]]||'').trim():'';const en=nm(g('e'));const e=DB.employees.find(x=>nm(fullName(x))===en||nm(x.last+x.first)===en||nm(x.first+x.last)===en||nm(x.last+', '+x.first)===en);
+   const t=DB.dtypes.find(d=>nm(d.name)===nm(g('t')));const o={raw:g('e'),e,t,amount:c100(g('b')),inst:c100(g('p')),date:parseDate(g('d'))||today()};o.err=!e?'employee not found':!t?'type not found':o.amount<=0?'no balance':'';return o})};
+ $('#opTx',m).oninput=()=>{const P=parse();$('#opPv',m).innerHTML=P.length?'<div class="tw" style="max-height:34vh;margin-top:8px"><table class="t"><thead><tr><th>Employee</th><th>Type</th><th class="n">Balance</th><th class="n">Per cutoff</th><th>As of</th><th></th></tr></thead><tbody>'+P.map(o=>'<tr><td>'+esc(o.e?fullName(o.e):o.raw)+'</td><td>'+esc(o.t?o.t.name:'')+'</td><td class="n">'+n2(o.amount)+'</td><td class="n">'+(o.inst?n2(o.inst):'whole')+'</td><td>'+esc(fd(o.date))+'</td><td>'+(o.err?'<span class="chip bad">'+o.err+'</span>':'<span class="chip ok">ok</span>')+'</td></tr>').join('')+'</tbody></table></div>':''};
+ $('#opGo',m).onclick=()=>{const P=parse().filter(o=>!o.err);if(!P.length)return toast('Nothing to add. Check the header row and names.','bad');const touched=new Set();
+  P.forEach(o=>{DB.ledger.push({id:'l'+uid(),open:true,empId:o.e.id,type:o.t.id,date:o.date,amount:o.amount,inst:o.inst>=o.amount?0:o.inst,note:'Opening balance',start:''});touched.add(o.e.id+'|'+o.t.id)});
+  let n=0;touched.forEach(k=>{const [a,b]=k.split('|');n+=refreshLedgerDrafts(a,b)});save();m.close();after&&after();toast(P.length+' opening balance'+(P.length===1?'':'s')+' added.'+(n?' '+n+' draft payroll deduction'+(n===1?'':'s')+' updated.':''),'ok',6000)}}
 
 // =====================================================================================
 // Payroll Run: time sheet for everyone (hours, absences, lates, holidays) on one screen
@@ -1543,7 +1598,7 @@ function itemForm(id,after){
 // start
 // =====================================================================================
 (async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':'';startAutoBackup()})();
-window.AJPAY={FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+window.AJPAY={ledgerCharged,ledgerBalAfter,ledgerDeducted,refreshLedgerDrafts,FB,runChecks,fpCalc,rateAt,copyInto,prevRun,autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
 
 </script>
 </body>
