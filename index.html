@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AJ Payroll</title>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--ink:#14231e;--muted:#5b6b66;--line:#d9e3df;--line2:#eef3f1;--brand:#016351;--brand2:#e6f3ef;--brand-ink:#fff;--danger:#b42318;--danger2:#fde8e6;--warn:#9a5b00;--warn2:#fff4dc;--ok:#13795b;--ok2:#dcf3e8;--side:#0f2a24;--side-ink:#cfe3dc;--focus:0 0 0 3px rgba(1,99,81,.25);--r:10px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;display:flex}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand)}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.25}h1{font-size:1.35rem}h2{font-size:1.1rem}h3{font-size:.98rem}
+.side{width:236px;flex:0 0 236px;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 14px;color:#fff}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:#18a383;display:grid;place-items:center;font-weight:800;color:#06221c;letter-spacing:-.5px}
+.brand b{display:block;font-size:1rem}.brand small{display:block;color:#8fb3a8;font-size:.75rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{list-style:none;margin:0;padding:6px 8px 16px}
+.nav .sec{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#7fa196;padding:14px 10px 4px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--side-ink);text-decoration:none;font-weight:500}
+.nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav a.on{background:#18a383;color:#06221c;font-weight:700}
+.nav a.sub{padding-left:28px;font-size:.92rem}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:auto}
+.top{display:flex;align-items:center;gap:12px;padding:12px 22px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top h1{margin:0;font-size:1.15rem;flex:1;min-width:0}
+.top .st{font-size:.8rem;color:var(--muted)}
+.menu{display:none;border:0;background:none;font-size:1.3rem;padding:2px 6px;cursor:pointer}
+#view{padding:20px 22px 60px;max-width:1500px;width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.row.mid{align-items:center}
+.sp{flex:1}
+.fg{display:flex;flex-direction:column;gap:4px;min-width:120px}
+.fg label{font-size:.78rem;font-weight:600;color:var(--muted)}
+.fg small{color:var(--muted);font-size:.76rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}
+input,select,textarea{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;min-width:0}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:none;box-shadow:var(--focus);border-color:var(--brand)}
+input[type=checkbox]{width:auto}
+.btn{display:inline-block;text-decoration:none;border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.o{background:#fff;color:var(--brand)}
+.btn.d{background:#fff;color:var(--danger);border-color:#e7b4ae}
+.btn.s{padding:4px 9px;font-size:.82rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{color:var(--muted);font-size:.85rem;margin:.3rem 0 .6rem}
+.chip{display:inline-block;border-radius:99px;padding:1px 8px;font-size:.74rem;font-weight:700;background:var(--line2);color:var(--muted)}
+.chip.ok{background:var(--ok2);color:var(--ok)}.chip.warn{background:var(--warn2);color:var(--warn)}.chip.bad{background:var(--danger2);color:var(--danger)}
+.alert{border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--warn2);color:#5c3a00;border:1px solid #f1d49b}
+.alert.info{background:var(--brand2);color:#0b3d32;border-color:#bfe0d6}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi>span{display:block;font-size:.78rem;color:var(--muted);font-weight:600}.kpi b{display:block;font-size:1.3rem;margin:.15rem 0}.kpi small{color:var(--muted)}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:70vh}
+table.t{border-collapse:separate;border-spacing:0;width:100%;font-size:.88rem}
+table.t th,table.t td{padding:6px 9px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:middle;white-space:nowrap}
+table.t thead th{position:sticky;top:0;background:#f7faf9;z-index:2;font-size:.76rem;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line)}
+table.t tfoot td{position:sticky;bottom:0;background:#f7faf9;font-weight:700;border-top:1px solid var(--line);z-index:2}
+table.t .n{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr.off td{opacity:.55}
+table.t tr.g td{background:#f2f8f6;font-weight:700}
+table.t tbody tr:hover td{background:#fafcfb}
+table.t td.wrap{white-space:normal;min-width:180px}
+.grid td,.grid th{padding:3px 4px}
+.grid th{text-align:center!important;white-space:normal!important;min-width:76px;line-height:1.15}
+.grid th:first-child,.grid td:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:210px;max-width:260px;white-space:normal;text-align:left!important}
+.grid thead th:first-child{z-index:3;background:#f7faf9}
+.grid tfoot td:first-child{z-index:3;background:#f7faf9}
+.grid input{width:92px;text-align:right;padding:4px 6px;border-radius:6px;font-variant-numeric:tabular-nums}
+.grid input.days{width:62px}
+.grid input.man{background:#fff8e6;border-color:#e8c46a}
+.grid input.auto{color:#3f6a5e;background:#f7fbf9}
+.grid td.calc{color:#33433e;text-align:right;font-variant-numeric:tabular-nums;padding-right:8px}
+.grid td.net{font-weight:700}
+.grid .neg{color:var(--danger)}
+.grid .nm b{display:block}.grid .nm small{color:var(--muted)}
+.grid th.grpE{background:#eef8f4}.grid th.grpD{background:#fbf1ef}
+.grid .tm{border:1px solid var(--line);background:#fff;border-radius:6px;padding:2px 6px;cursor:pointer;margin-left:4px}
+.grid .tm.on{background:var(--brand2);border-color:#9fd2c4}
+.grid.locked input{background:transparent;border-color:transparent;pointer-events:none;color:var(--ink)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs a,.tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;text-decoration:none;color:var(--ink);font-weight:600;cursor:pointer}
+.tabs .on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.ov{position:fixed;inset:0;background:rgba(10,25,20,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;z-index:100;overflow:auto}
+.md{background:#fff;border-radius:14px;width:100%;max-width:640px;padding:18px 20px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.md h2{margin-top:0}
+.md .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+#toasts{position:fixed;left:252px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+#toasts .toast{pointer-events:auto;cursor:pointer}
+.toast{background:#13241f;color:#fff;border-radius:10px;padding:10px 14px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:.9rem}
+.toast.ok{background:var(--ok)}.toast.bad{background:var(--danger)}
+.pv{width:100%;height:72vh;border:1px solid var(--line);border-radius:10px;background:#fff}
+.hl{display:grid;gap:6px}
+.hl .h{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.6fr) 70px 70px auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line2);border-radius:8px}
+.hl .h small{color:var(--muted)}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.out div{background:var(--brand2);border-radius:8px;padding:8px 10px}.out span{display:block;font-size:.75rem;color:#2c5348}.out b{font-size:1.05rem}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+details>summary{cursor:pointer;font-weight:700}
+.kbd{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;background:var(--line2);border-radius:4px;padding:0 4px}
+@media(max-width:900px){#toasts{left:12px;right:12px}.side{position:fixed;left:-250px;z-index:90;transition:left .2s}.side.open{left:0}.menu{display:block}#view{padding:14px}}
+@media print{body{display:block}.side,.top{display:none}}
+</style>
+</head>
+<body>
+<aside class="side" id="side">
+ <div class="brand"><div class="logo">AJ</div><div><b>AJ Payroll</b><small id="brandSub">Offline payroll</small></div></div>
+ <ul class="nav" id="nav"></ul>
+</aside>
+<div class="main">
+ <header class="top"><button class="menu" id="menuBtn" aria-label="Menu">☰</button><h1 id="ttl">AJ Payroll</h1><span class="st" id="saveSt"></span><button class="btn o s" id="bkBtn" title="Download a backup of all payroll data">Backup</button></header>
+ <div id="view"></div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<script>
+'use strict';
+// =====================================================================================
+// AJ Payroll – standalone offline payroll (Philippines). All money is kept in centavos.
+// =====================================================================================
+const KEY='ajpay_v1',VER='1.0';
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const c100=v=>{const n=parseFloat(String(v==null?'':v).replace(/[,₱\s]/g,''));return Number.isFinite(n)?Math.round(n*100):0};
+const n2=c=>{c=Math.round(c||0);const s=(Math.abs(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return c<0?'('+s+')':s};
+const m2=c=>c?n2(c):'–';
+const pe=c=>c?(c/100).toFixed(2):'';            // value for an <input>
+const p2=c=>((c||0)/100).toFixed(2);            // value for CSV
+const r4=n=>Math.round(n*10000)/10000;
+const fN=n=>{n=r4(n||0);return n?String(n):'–'};
+const pos=v=>Math.max(0,v);
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const pad=n=>String(n).padStart(2,'0'),ymd=(y,m,d)=>y+'-'+pad(m)+'-'+pad(d);
+const lastDay=(y,m)=>new Date(y,m,0).getDate();
+const today=()=>{const d=new Date();return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())};
+const cutoff=(y,m,q)=>[ymd(y,m,q===1?1:16),ymd(y,m,q===1?15:lastDay(y,m))];
+const perLabel=(y,m,q)=>MN[m-1]+' '+(q===1?'1–15':'16–'+lastDay(y,m))+', '+y;
+const perShort=(y,m,q)=>MN[m-1].slice(0,3)+' '+(q===1?'1–15':'16–'+lastDay(y,m))+' '+y;
+const pkey=(y,m,q)=>y*100+m*4+q;
+const fd=s=>s?new Date(s+'T00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+const fdw=s=>new Date(s+'T00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const cmp=(a,b)=>String(a==null?'':a).localeCompare(String(b==null?'':b),undefined,{numeric:true,sensitivity:'base'});
+const slug=s=>String(s||'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'file';
+
+// ---------------------------------------------------------------- built-in rules (editable in Settings)
+const DEF_RATES={sss:{ee:5,er:10,min:5000,max:35000,step:500,ecLow:10,ecHigh:30,ecAt:15000},ph:{rate:5,floor:10000,ceil:100000},hdmf:{eeLow:1,ee:2,er:2,low:1500,cap:10000},asOf:'2026'};
+const DEF_PREM={ot:125,nd:10,rd:130,rdot:169,sp:130,sprd:150,spot:169,sprdot:195,rh:200,rhrd:260,rhot:260,rhrdot:338};
+const PREM_LBL={ot:'Overtime, ordinary day',nd:'Night differential (added on top)',rd:'Rest day work',rdot:'Rest day overtime',sp:'Special non-working day worked',sprd:'Special day that is also a rest day',spot:'Special day overtime',sprdot:'Special day + rest day overtime',rh:'Regular holiday worked',rhrd:'Regular holiday that is also a rest day',rhot:'Regular holiday overtime',rhrdot:'Regular holiday + rest day overtime'};
+// BIR withholding tax on compensation, semi-monthly (RR 11-2018 Annex E, rates from Jan 1, 2023): [over, fixed tax, % of excess]
+const WT_SEMI=[[10417,0,15],[16667,937.5,20],[33333,4270.7,25],[83333,16770.7,30],[333333,91770.7,35]];
+// Annual graduated income tax (TRAIN, from 2023)
+const WT_YEAR=[[250000,0,15],[400000,22500,20],[800000,102500,25],[2000000,402500,30],[8000000,2202500,35]];
+const bracket=(t,x)=>{let v=0;for(const r of t)if(x>r[0])v=r[1]+(x-r[0])*r[2]/100;return v};
+const wtaxSemi=c=>Math.round(bracket(WT_SEMI,c/100)*100);
+const taxYear=c=>Math.round(bracket(WT_YEAR,c/100)*100);
+const STATUSES=['Regular','Probationary','Contractual','Casual','Project','Seasonal'];
+const DEF_ITEMS=[
+ {id:'m13',name:'13th Month Pay',kind:'E',tax:'B',fixed:1},
+ {id:'sil',name:'Service Incentive Leave Pay',kind:'E',tax:'T'},
+ {id:'com',name:'Commission',kind:'E',tax:'T',sss:1},
+ {id:'inc',name:'Incentive / Bonus',kind:'E',tax:'B'},
+ {id:'rice',name:'Rice Subsidy',kind:'E',tax:'DM',limit:200000,per:'M'},
+ {id:'adj',name:'Salary Adjustment',kind:'E',tax:'T',sss:1},
+ {id:'ntx',name:'Other Non-taxable Pay (reimbursement)',kind:'E',tax:'N'},
+ {id:'uni',name:'Uniform',kind:'D'},
+ {id:'odd',name:'Other Deduction',kind:'D'}];
+const DEF_DTYPES=['Cash Advance','Credit','Credit Balance','SSS Loan','Pag-IBIG Loan'];
+const TAXK={T:'Taxable',N:'Non-taxable',DM:'De minimis (tax-free up to a limit)',B:'13th month & other benefits (tax-free up to ₱90,000 a year)'};
+
+// ---------------------------------------------------------------- data
+let DB=null;
+function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',mealNT:true,annualize:true,mweRate:0,silDays:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
+ items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
+function migrate(d){
+ const b=blank();if(!d||typeof d!=='object')return b;
+ for(const k of Object.keys(b))if(d[k]==null||typeof d[k]!==typeof b[k]||Array.isArray(b[k])!==Array.isArray(d[k]))d[k]=b[k];
+ d.settings=Object.assign(b.settings,d.settings);d.settings.rates=Object.assign(clone(DEF_RATES),d.settings.rates||{});d.settings.prem=Object.assign(clone(DEF_PREM),d.settings.prem||{});
+ ['sss','ph','hdmf'].forEach(k=>d.settings.rates[k]=Object.assign(clone(DEF_RATES[k]),d.settings.rates[k]||{}));
+ if(!d.items.some(i=>i.id==='m13'))d.items.unshift(clone(DEF_ITEMS[0]));
+ d.hol=Object.assign({add:[],off:[]},d.hol);d.meta=Object.assign(b.meta,d.meta);
+ d.runs.forEach(r=>r.rows.forEach(x=>{x.items=x.items||{};x.ded=x.ded||{};x.man=x.man||{};x.tm=x.tm||{}}));
+ return d;
+}
+// storage: IndexedDB (room for many years of payroll), with a copy in localStorage while it fits
+const IDB={db:null,
+ open(){return new Promise(res=>{try{const r=indexedDB.open('ajpay',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{IDB.db=r.result;res(true)};r.onerror=()=>res(false);r.onblocked=()=>res(false)}catch(e){res(false)}})},
+ get(k){return new Promise(res=>{try{const q=IDB.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)}catch(e){res(null)}})},
+ put(k,v){return new Promise(res=>{try{const t=IDB.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>res(false);t.onabort=()=>res(false)}catch(e){res(false)}})}};
+async function load(){
+ let a=null,b=null;try{b=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+ if(await IDB.open()){try{a=JSON.parse(await IDB.get(KEY)||'null')}catch(e){}}
+ const t=d=>d&&d.meta&&d.meta.savedAt||'';DB=migrate(a&&b?(t(a)>=t(b)?a:b):(a||b))}
+let saveT=null,dirty=false;
+function save(now){dirty=true;$('#saveSt')&&($('#saveSt').textContent='Saving…');clearTimeout(saveT);
+ const go=async()=>{DB.meta.savedAt=new Date().toISOString();const s=JSON.stringify(DB);let ok=false,ls=false;
+  try{localStorage.setItem(KEY,s);ls=true}catch(e){try{localStorage.removeItem(KEY)}catch(x){}}
+  if(IDB.db)ok=await IDB.put(KEY,s);
+  if(ok||ls){dirty=false;$('#saveSt').textContent='All changes saved'}else{$('#saveSt').textContent='NOT SAVED';toast('Could not save: browser storage is full or blocked. Download a backup now (Settings › Backup & data).','bad',9000)}};
+ if(now)go();else saveT=setTimeout(go,300)}
+window.addEventListener('beforeunload',e=>{if(dirty)save(true)});
+const S=()=>DB.settings;
+const empById=id=>DB.employees.find(e=>e.id===id);
+const fullName=e=>(e.last+', '+e.first+(e.mi?' '+String(e.mi).replace(/\.?$/,'.'):'')).trim();
+const empCmp=(a,b)=>cmp(a.business,b.business)||cmp(a.last,b.last)||cmp(a.first,b.first);
+const rowCmp=(a,b)=>cmp(a.business,b.business)||cmp(a.name,b.name);
+const bizList=()=>[...new Set(DB.biz.map(b=>b.name).concat(DB.employees.map(e=>e.business)).filter(Boolean))].sort(cmp);
+const bizInfo=n=>DB.biz.find(b=>b.name===n)||{name:n};
+const dailyOf=e=>e.basis==='monthly'?Math.round((e.monthly||0)*12/(+e.factor||261)):(e.rate||0);
+const runOf=(y,m,q)=>DB.runs.find(r=>r.year===y&&r.month===m&&r.q===q);
+const itemsE=()=>DB.items.filter(i=>i.kind!=='D'&&i.active!==false),itemsD=()=>DB.items.filter(i=>i.kind==='D'&&i.active!==false);
+const isMwe=(e,r)=>!!(e&&e.mwe)||(S().mweRate>0&&(r?r.daily:dailyOf(e||{}))>0&&(r?r.daily:dailyOf(e||{}))<=S().mweRate);
+
+// ---------------------------------------------------------------- holidays (RA 9492 and yearly proclamations; edit in Settings)
+const HC={};
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31);return new Date(y,mo-1,((h+l-7*m+114)%31)+1)}
+function baseHol(y){if(HC[y])return HC[y];const o=[],R='R',SP='S',add=(k,n,t)=>o.push({date:k,name:n,type:t}),fx=(m,d,n,t)=>add(ymd(y,m,d),n,t),E=easter(y),eo=n=>{const d=new Date(E.getFullYear(),E.getMonth(),E.getDate()+n);return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())};
+ fx(1,1,"New Year's Day",R);add(eo(-3),'Maundy Thursday',R);add(eo(-2),'Good Friday',R);add(eo(-1),'Black Saturday',SP);fx(4,9,'Araw ng Kagitingan',R);fx(5,1,'Labor Day',R);fx(6,12,'Independence Day',R);fx(8,21,'Ninoy Aquino Day',SP);
+ let d=new Date(y,7,31);while(d.getDay()!==1)d.setDate(d.getDate()-1);fx(8,d.getDate(),'National Heroes Day',R);
+ fx(11,1,"All Saints' Day",SP);fx(11,30,'Bonifacio Day',R);fx(12,8,'Feast of the Immaculate Conception',SP);fx(12,24,'Christmas Eve',SP);fx(12,25,'Christmas Day',R);fx(12,30,'Rizal Day',R);fx(12,31,'Last Day of the Year',SP);
+ return HC[y]=o}
+function holidays(y){const off=new Set(DB.hol.off);return baseHol(y).filter(h=>!off.has(h.date+'|'+h.name)).concat(DB.hol.add.filter(h=>+h.date.slice(0,4)===y)).sort((a,b)=>a.date.localeCompare(b.date))}
+// one entry per date; a regular holiday wins over a special day on the same date
+function holsIn(y,m,q){const [a,b]=cutoff(y,m,q),by=new Map();holidays(y).forEach(h=>{if(h.date<a||h.date>b)return;const o=by.get(h.date);if(!o||(h.type==='R'&&o.type!=='R'))by.set(h.date,{date:h.date,name:o&&o.type===h.type?o.name+' / '+h.name:h.name,type:h.type});else if(o.type===h.type)o.name+=' / '+h.name});return [...by.values()].filter(h=>h.type==='R'||h.type==='S')}
+
+// ---------------------------------------------------------------- time, holidays and premiums -> basic, holiday pay, overtime & premium pay
+function timeCalc(r,run){
+ const P=S().prem,tm=r.tm||{},mo=r.basis==='monthly',daily=r.daily,H=daily/8,fac=+r.factor||261;
+ const L=[],late=pos(+tm.late||0),leave=pos(+tm.leave||0),lateAmt=Math.round(late/480*daily);
+ let basic,days,absAmt=0,wd;
+ if(mo){const abs=pos(+tm.abs||0);absAmt=Math.round(abs*daily);basic=pos(Math.round((r.monthly||0)/2)-absAmt-lateAmt);days=pos(fac/24-abs-late/480);wd=days}
+ else{wd=pos(+tm.days||0);basic=pos(Math.round((wd+leave)*daily)-lateAmt);days=pos(wd+leave-late/480)}
+ let hol=0,ot=0,whol=0;
+ const add=(k,label,hrs,pct)=>{hrs=pos(+hrs||0);if(!hrs||!pct)return;const a=Math.round(hrs*H*pct/100);if(k==='hol')hol+=a;else ot+=a;L.push({k,label,hrs,pct,amt:a})};
+ add('ot','Overtime (ordinary day)',tm.ot,P.ot);add('ot','Night differential',tm.nd,P.nd);add('ot','Rest day work',tm.rd,P.rd);add('ot','Rest day overtime',tm.rdot,P.rdot);
+ const present=mo||wd+leave>0;
+ holsIn(run.year,run.month,run.q).forEach(h=>{
+  const x=(tm.hol||{})[h.date]||{},s=x.s||(h.type==='R'?(present?'paid':'none'):'off'),dl=fd(h.date).replace(/, \d{4}$/,'');
+  if(h.type==='R'){
+   if(s==='paid'){if(!mo){hol+=daily;L.push({k:'hol',label:'Regular holiday, not worked ('+dl+')',hrs:8,pct:100,amt:daily})}}
+   else if(s==='worked'){whol++;const pct=x.rd?P.rhrd:P.rh;add('hol','Regular holiday worked'+(x.rd?' on rest day':'')+' ('+dl+')',x.h==null?8:x.h,mo?pct-100:pct);add('ot','Regular holiday overtime ('+dl+')',x.ot,x.rd?P.rhrdot:P.rhot)}
+  }else if(s==='worked'){whol++;const pct=x.rd?P.sprd:P.sp;add('hol','Special day worked'+(x.rd?' on rest day':'')+' ('+dl+')',x.h==null?8:x.h,mo?pct-100:pct);add('ot','Special day overtime ('+dl+')',x.ot,x.rd?P.sprdot:P.spot)}
+ });
+ const allowDays=mo?days:pos(wd+whol-late/480);
+ return{basic,days:r4(days),hol,ot,lateAmt,absAmt,leave,allowDays:r4(allowDays),allow:Math.round(allowDays*(r.allowance||0)),lines:L,whol};
+}
+
+// ---------------------------------------------------------------- earnings of a row
+function earn(r){
+ let xe=0,xT=0,xN=0,xDM=0,xB=0,xS=0,xd=0;
+ DB.items.forEach(it=>{const v=(r.items||{})[it.id]||0;if(!v)return;if(it.kind==='D'){xd+=v;return}xe+=v;if(it.tax==='T'){xT+=v;if(it.sss)xS+=v}else if(it.tax==='N')xN+=v;else if(it.tax==='DM')xDM+=v;else xB+=v});
+ const gross=r.basic+r.allow+r.hol+r.ot+xe;
+ let dt=0;Object.values(r.ded||{}).forEach(v=>dt+=v||0);
+ const ded=r.sss+r.ph+r.pg+r.tax+dt+xd;
+ return{xe,xT,xN,xDM,xB,xS,xd,dt,gross,ded,net:gross-ded};
+}
+
+// ---------------------------------------------------------------- government contributions (monthly, split by cutoff)
+function sssOf(mo){const R=S().rates.sss;if(mo<=0)return{msc:0,ee:0,er:0,ec:0};const m=mo/100,half=R.step/2;
+ const msc=m<R.min+half?R.min:Math.min(R.max,R.min+Math.floor((m-(R.min-half))/R.step)*R.step);
+ return{msc,ee:Math.round(msc*R.ee),er:Math.round(msc*R.er),ec:Math.round((msc<R.ecAt?R.ecLow:R.ecHigh)*100)}}
+function phOf(mo){const R=S().rates.ph;if(mo<=0)return{ee:0,er:0};const base=Math.min(R.ceil,Math.max(R.floor,mo/100)),tot=Math.round(base*R.rate),ee=Math.round(tot/2);return{ee,er:tot-ee}}
+function hdmfOf(mo){const R=S().rates.hdmf;if(mo<=0)return{ee:0,er:0};const m=mo/100,b=Math.min(m,R.cap);return{ee:Math.round(b*(m<=R.low?R.eeLow:R.ee)),er:Math.round(b*R.er)}}
+const sssBase=r=>r.basic+r.hol+r.ot+earn(r).xS+(S().mealNT?0:r.allow);
+const phBase=r=>r.basic;
+function otherRow(run,empId){const o=runOf(run.year,run.month,3-run.q);return o?o.rows.find(x=>x.empId===empId):null}
+function contrib(run,r){
+ const cfg=S(),D={sss:0,ph:0,pg:0,erSss:0,erEc:0,erPh:0,erPg:0};
+ if(!(r.basic+r.hol+r.ot+r.allow+earn(r).xe))return D;
+ if(run.q===1&&cfg.sched==='second')return D;
+ const o=otherRow(run,r.empId);let Sx,Px,Gx,frac=1,less=null;
+ if(run.q===1){Sx=sssOf(sssBase(r)*2);Px=phOf(phBase(r)*2);Gx=hdmfOf(phBase(r)*2);frac=.5}
+ else{Sx=sssOf(sssBase(r)+(o?sssBase(o):0));Px=phOf(phBase(r)+(o?phBase(o):0));Gx=hdmfOf(phBase(r)+(o?phBase(o):0));if(o&&cfg.sched==='split')less=o}
+ const part=(v,k)=>pos(Math.round(v*frac)-(less?(less[k]||0):0));
+ D.sss=part(Sx.ee,'sss');D.ph=part(Px.ee,'ph');D.pg=part(Gx.ee,'pg');D.erSss=part(Sx.er,'erSss');D.erEc=part(Sx.ec,'erEc');D.erPh=part(Px.er,'erPh');D.erPg=part(Gx.er,'erPg');
+ return D;
+}
+
+// ---------------------------------------------------------------- year-to-date (earlier payroll runs of the same year + opening balances)
+function ytd(run,empId,f){let t=0;const k=pkey(run.year,run.month,run.q);
+ DB.runs.forEach(x=>{if(x.year!==run.year||pkey(x.year,x.month,x.q)>=k)return;const r=x.rows.find(y=>y.empId===empId);if(r)t+=r[f]||0});
+ const o=((DB.ytd[run.year]||{})[empId]||{});return t+(o[f]||0)}
+function dmSplit(run,r){let inn=0,ex=0;
+ DB.items.filter(it=>it.kind!=='D'&&it.tax==='DM').forEach(it=>{const v=(r.items||{})[it.id]||0;if(!v)return;const lim=it.limit||0,per=it.per||'N';
+  if(per==='N'||!lim){inn+=v;return}
+  let prior=0;const k=pkey(run.year,run.month,run.q);
+  DB.runs.forEach(x=>{if(x.year!==run.year||pkey(x.year,x.month,x.q)>=k)return;if(per==='M'&&x.month!==run.month)return;if(per==='S'&&(x.month<=6)!==(run.month<=6))return;const o=x.rows.find(y=>y.empId===r.empId);if(o)prior+=(o.items||{})[it.id]||0});
+  const over=pos(prior+v-lim)-pos(prior-lim);ex+=over;inn+=v-over});
+ return{inn,ex}}
+function taxCalc(run,r){
+ const cfg=S(),E=earn(r),mwe=isMwe(empById(r.empId),r),dm=dmSplit(run,r);
+ const ben=E.xB+dm.ex,yb=ytd(run,r.empId,'ben'),benEx=pos(yb+ben-cfg.benCap)-pos(yb-cfg.benCap);
+ const reg=r.basic+r.hol+r.ot+(cfg.mealNT?0:r.allow),mweEx=mwe?r.basic+r.hol+r.ot:0,contr=r.sss+r.ph+r.pg;
+ const taxable=mwe?pos(reg-mweEx+E.xT+benEx):pos(reg+E.xT+benEx-contr);
+ let tax=wtaxSemi(taxable),annual=false;
+ if(cfg.annualize&&run.month===12&&run.q===2){tax=taxYear(ytd(run,r.empId,'taxable')+taxable)-ytd(run,r.empId,'tax');annual=true}
+ return{tax,taxable,ben,benEx,dmIn:dm.inn,mweEx,nItems:E.xN,mealNT:cfg.mealNT?r.allow:0,annual};
+}
+// recompute one row from its time sheet; manual amounts (r.man) are kept
+function calcRow(run,r){
+ const t=timeCalc(r,run),man=r.man||{};
+ r.basic=t.basic;r.days=t.days;r.leave=t.leave;r.lateAmt=t.lateAmt;r.absAmt=t.absAmt;r.lines=t.lines;r.allowDays=t.allowDays;
+ if(!man.allow)r.allow=t.allow;if(!man.hol)r.hol=t.hol;if(!man.ot)r.ot=t.ot;
+ const D=contrib(run,r);
+ if(!man.sss)r.sss=D.sss;if(!man.ph)r.ph=D.ph;if(!man.pg)r.pg=D.pg;
+ // employer shares follow the employee share when it was typed by hand
+ const R=S().rates.sss;r.erSss=man.sss?(r.sss?Math.round(r.sss*R.er/R.ee):0):D.erSss;r.erEc=man.sss?(r.sss?D.erEc:0):D.erEc;
+ r.erPh=man.ph?r.ph:D.erPh;r.erPg=man.pg?(r.pg?D.erPg:0):D.erPg;
+ const T=taxCalc(run,r);if(!man.tax)r.tax=T.tax;
+ Object.assign(r,{taxable:T.taxable,ben:T.ben,benEx:T.benEx,dmIn:T.dmIn,mweEx:T.mweEx,nItems:T.nItems,mealNT:T.mealNT,annual:T.annual});
+ const E=earn(r);r.gross=E.gross;r.totDed=E.ded;r.net=E.net;
+ return r;
+}
+function calcRun(run){run.rows.forEach(r=>calcRow(run,r))}
+// later runs of the same year depend on earlier ones (contributions of the month, de minimis and benefit limits, year-end tax)
+function recalcFrom(run){const k=pkey(run.year,run.month,run.q);DB.runs.filter(x=>x.year===run.year&&pkey(x.year,x.month,x.q)>=k&&x.status!=='final').sort((a,b)=>pkey(a.year,a.month,a.q)-pkey(b.year,b.month,b.q)).forEach(calcRun)}
+
+// ---------------------------------------------------------------- loans, advances and other charges per employee
+function ledgerDeducted(empId,type,exceptRun){let t=0;DB.runs.forEach(x=>{if(x===exceptRun)return;const r=x.rows.find(y=>y.empId===empId);if(r)t+=(r.ded||{})[type]||0});return t}
+function ledgerBal(empId,type,exceptRun){let c=0;DB.ledger.forEach(l=>{if(l.empId===empId&&l.type===type)c+=l.amount});return c-ledgerDeducted(empId,type,exceptRun)}
+// amount to deduct this cutoff: each open charge (oldest first) contributes its installment, or its whole balance when no installment was set
+function ledgerSuggest(empId,type,run){
+ const L=DB.ledger.filter(l=>l.empId===empId&&l.type===type&&(!run||!l.start||l.start<=cutoff(run.year,run.month,run.q)[1])).sort((a,b)=>cmp(a.date,b.date));
+ let used=ledgerDeducted(empId,type,run),s=0;
+ L.forEach(l=>{const take=Math.min(used,l.amount);used-=take;const left=l.amount-take;if(left>0)s+=l.inst>0?Math.min(l.inst,left):left});
+ return Math.min(s,pos(ledgerBal(empId,type,run)));
+}
+function rowFromEmp(e,run){
+ const r={empId:e.id,name:fullName(e),business:e.business||'',position:e.position||'',status:e.status||'',basis:e.basis||'daily',rate:e.rate||0,monthly:e.monthly||0,factor:+e.factor||261,daily:dailyOf(e),allowance:e.allowance||0,
+  tm:e.basis==='monthly'?{abs:0}:{days:0},items:{},ded:{},man:{},basic:0,allow:0,hol:0,ot:0,sss:0,ph:0,pg:0,tax:0};
+ DB.dtypes.forEach(d=>{const v=ledgerSuggest(e.id,d.id,run);if(v)r.ded[d.id]=v});
+ (e.recur||[]).forEach(x=>{if(x.amt&&DB.items.some(i=>i.id===x.item))r.items[x.item]=(r.items[x.item]||0)+x.amt});
+ return r;
+}
+const employedIn=(e,y,m,q)=>{const [a,b]=cutoff(y,m,q);return(!e.hired||e.hired<=b)&&(!e.separated||e.separated>=a)};
+
+
+// =====================================================================================
+// UI helpers
+// =====================================================================================
+function toast(msg,kind,ms){const box=$('#toasts'),t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.textContent=msg;t.onclick=()=>t.remove();box.appendChild(t);while(box.children.length>3)box.firstChild.remove();setTimeout(()=>t.remove(),ms||3500)}
+function modal(html,w){
+ const o=document.createElement('div');o.className='ov';o.innerHTML='<div class="md" role="dialog" aria-modal="true" style="max-width:'+(w||640)+'px">'+html+'</div>';
+ const close=()=>{o.remove();document.removeEventListener('keydown',k)},k=e=>{if(e.key==='Escape')close()};
+ o.addEventListener('mousedown',e=>{if(e.target===o)close()});document.addEventListener('keydown',k);
+ o.close=close;document.body.appendChild(o);$$('[data-x]',o).forEach(b=>b.onclick=close);
+ const f=$('input:not([type=hidden]):not([disabled]),select,textarea',o);if(f)f.focus();
+ return o}
+function confirmBox(msg,yes,danger){return new Promise(res=>{let done=false;const fin=v=>{if(!done){done=true;res(v)}};
+ const m=modal('<h2>Please confirm</h2><p>'+msg+'</p><div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn'+(danger?' d':'')+'" id="cfYes">'+esc(yes||'OK')+'</button></div>',480);
+ const oc=m.close;m.close=()=>{oc();fin(false)};$$('[data-x]',m).forEach(b=>b.onclick=m.close);$('#cfYes',m).onclick=()=>{fin(true);oc()}})}
+const opt=(arr,cur)=>arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return '<option value="'+esc(v)+'"'+(String(v)===String(cur)?' selected':'')+'>'+esc(l)+'</option>'}).join('');
+const fg=(label,inner,help,id)=>'<div class="fg"'+(id?' id="'+id+'"':'')+'><label>'+label+'</label>'+inner+(help?'<small>'+help+'</small>':'')+'</div>';
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type||'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+const csvCell=v=>{let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s)&&!/^-?\d+(\.\d+)?$/.test(s))s="'"+s;return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+const toCsv=rows=>'﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+function parseCsv(t){const rows=[];let r=[],f='',q=false;t=String(t).replace(/^﻿/,'');
+ const sep=(t.split(/\r?\n/)[0].match(/\t/g)||[]).length>(t.split(/\r?\n/)[0].match(/,/g)||[]).length?'\t':',';
+ for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===sep){r.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;r.push(f);rows.push(r);r=[];f=''}else f+=c}
+ if(f!==''||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>String(v).trim()!==''))}
+function parseDate(s){s=String(s||'').trim();if(!s)return '';let m;
+ if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s)))return ymd(+m[1],+m[2],+m[3]);
+ if((m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s))){let y=+m[3];if(y<100)y+=2000;return ymd(y,+m[1],+m[2])}
+ const d=new Date(s);return isNaN(d)?'':ymd(d.getFullYear(),d.getMonth()+1,d.getDate())}
+
+// ---------------------------------------------------------------- printing through an isolated frame (exact A4 layout)
+const PRINT_CSS=`*{box-sizing:border-box}body{margin:0;font:9pt/1.3 Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+table{border-collapse:collapse;width:100%}th,td{padding:0;text-align:left;vertical-align:top;font-weight:400}.r{text-align:right}.c{text-align:center}b{font-weight:700}
+.page{padding:9mm 10mm;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}
+.hd{text-align:center;margin-bottom:4mm}.hd .co{font-size:12.5pt;font-weight:700;text-transform:uppercase}.hd .tt{font-size:10.5pt;font-weight:700;letter-spacing:.12em;margin-top:.6mm}.hd .sb{font-size:8.5pt;margin-top:.6mm}
+.rt th,.rt td{border:.4pt solid #444;padding:1mm 1.2mm;font-size:7.6pt;vertical-align:middle}.rt th{background:#e4f3ee;font-weight:700;text-align:center}.rt thead{display:table-header-group}.rt tr{break-inside:avoid;page-break-inside:avoid}
+.rt td.r{text-align:right;white-space:nowrap}.rt tr.g td{background:#eef8f4;font-weight:700;text-transform:uppercase}.rt tr.st td{font-weight:700;background:#f7f7f7}.rt tr.gt td{font-weight:700;background:#e4f3ee;border-top:1.2pt solid #000}.rt td.sg{height:8mm;min-width:28mm}
+.sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:14mm;margin-top:12mm;font-size:8pt;break-inside:avoid}.sigs span{display:block;border-top:1px solid #000;padding-top:1mm;text-align:center}
+.sheet{width:210mm;height:296mm;padding:7mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4mm;break-after:page;page-break-after:always;overflow:hidden}.sheet:last-child{break-after:auto;page-break-after:auto}
+.sheet.one{grid-template-columns:1fr;grid-template-rows:auto;height:auto;min-height:140mm}
+.slip{border:1px dashed #777;border-radius:2mm;padding:4mm 4.5mm;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;font-size:7.8pt}
+.slip .bz{font-weight:700;font-size:9.5pt;text-align:center;text-transform:uppercase}.slip .tl{text-align:center;font-weight:700;letter-spacing:.14em;font-size:8pt;margin-top:1mm}.slip .pr{text-align:center;font-size:8pt;margin-bottom:2mm;padding-bottom:1.6mm;border-bottom:1px solid #000}
+.slip .info td{padding:.3mm 0}.slip .info td:first-child{width:18mm;color:#444}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm;margin-top:2mm}.box h4{margin:0 0 1mm;font-size:7.4pt;letter-spacing:.08em;border-bottom:1px solid #000;padding-bottom:.5mm}.box td{padding:.4mm 0}.box small{display:block;font-size:6.2pt;color:#555}.box tr.tot td{border-top:1px solid #000;font-weight:700;padding-top:.8mm}
+.net{margin-top:2.5mm;border:1.2px solid #000;padding:1.8mm 3mm;display:flex;justify-content:space-between;align-items:baseline;font-weight:700}.net b{font-size:12pt}
+.ssig{margin-top:auto;padding-top:7mm;display:grid;grid-template-columns:1.5fr 1fr;gap:5mm;font-size:7pt;color:#333}.ssig span{display:block;border-top:1px solid #000;padding-top:.8mm;text-align:center}
+.kv td{padding:.6mm 2mm;border:.4pt solid #888;font-size:8.5pt}.kv td:first-child{width:62%}.cert h3{font-size:9pt;margin:4mm 0 1.5mm;background:#e4f3ee;padding:1mm 2mm}
+.note{font-size:7.5pt;color:#333;margin-top:3mm}`;
+function docHtml(inner,land,title,preview){
+ return '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title||'Payroll')+'</title><style>'+(preview?'':'@page{size:A4 '+(land?'landscape':'portrait')+';margin:'+(land?'6mm':'0')+'}')+PRINT_CSS
+  +(preview?'body{background:#c9d1dd;padding:14px}.page,.sheet{background:#fff;margin:0 auto 14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}.page{width:'+(land?'297mm':'210mm')+';min-height:'+(land?'190mm':'270mm')+'}':'')+'</style></head><body>'+inner+'</body></html>'}
+function showPreview(el,inner,land,title){el.innerHTML='<iframe class="pv" title="Preview"></iframe>';el.firstChild.srcdoc=docHtml(inner,land,title,true)}
+function printHtml(inner,land,title){
+ const f=document.createElement('iframe');f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
+ const w=f.contentWindow,d=w.document;d.open();d.write(docHtml(inner,land,title));d.close();
+ setTimeout(()=>{try{w.focus();w.print()}catch(e){toast('Printing is blocked here. Open the file in Chrome or Edge.','bad')}},300);setTimeout(()=>f.remove(),120000)}
+const coName=b=>b&&b!=='ALL'?b:(DB.company.name||bizList()[0]||'');
+const hd=(co,title,sub)=>'<div class="hd"><div class="co">'+esc(co)+'</div><div class="tt">'+esc(title)+'</div>'+(sub?'<div class="sb">'+esc(sub)+'</div>':'')+'</div>';
+
+// ---------------------------------------------------------------- generic report table: screen, print and CSV from one definition
+// cols: [{h,k,n(number in cents),d(days),w}], rows: objects; groupBy optional
+function rptTable(def){
+ const cols=def.cols,rows=def.rows,G=def.groupBy,tot={};
+ const val=(c,r)=>typeof c.k==='function'?c.k(r):r[c.k];
+ const cell=(c,v)=>c.n?m2(v):c.d?fN(v):esc(v==null?'':v);
+ const sum=(L)=>{const t={};cols.forEach(c=>{if((c.n||c.d)&&!c.sumNo)t[c.h]=L.reduce((s,r)=>s+(+val(c,r)||0),0)});return t};
+ const line=(r,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'>'+cols.map(c=>'<td class="'+(c.n||c.d?'n r':'')+'">'+cell(c,val(c,r))+'</td>').join('')+'</tr>';
+ const LC=def.labelCol||0,totLine=(t,label,cls)=>'<tr class="'+cls+'">'+cols.map((c,i)=>'<td class="'+(c.n||c.d?'n r':'')+'">'+(i===LC?esc(label):c.sumNo?'':(c.n?m2(t[c.h]):c.d?fN(t[c.h]):''))+'</td>').join('')+'</tr>';
+ let body='';
+ if(G){const g=new Map();rows.forEach(r=>{const k=r[G]||'';if(!g.has(k))g.set(k,[]);g.get(k).push(r)});const multi=g.size>1;
+  [...g.keys()].sort(cmp).forEach(k=>{const L=g.get(k);if(multi)body+='<tr class="g"><td colspan="'+cols.length+'">'+esc(k||'(no business)')+'</td></tr>';body+=L.map(r=>line(r)).join('');if(multi)body+=totLine(sum(L),'Subtotal – '+(k||'(no business)'),'st')})}
+ else body=rows.map(r=>line(r)).join('');
+ const T=sum(rows),hasTot=def.total!==false&&cols.some(c=>c.n||c.d);
+ const thead='<tr>'+cols.map(c=>'<th class="'+(c.n||c.d?'n':'')+'">'+esc(c.h)+'</th>').join('')+'</tr>';
+ const screen='<div class="tw"><table class="t"><thead>'+thead+'</thead><tbody>'+(body||'<tr><td colspan="'+cols.length+'" class="empty">'+esc(def.empty||'Nothing to show.')+'</td></tr>')+'</tbody>'+(hasTot&&rows.length?'<tfoot>'+totLine(T,'TOTAL ('+rows.length+')','gt')+'</tfoot>':'')+'</table></div>';
+ const print='<table class="rt"><thead>'+thead+'</thead><tbody>'+body+(hasTot&&rows.length?totLine(T,'TOTAL ('+rows.length+')','gt'):'')+'</tbody></table>';
+ const csv=()=>{const out=[];(def.csvHead||[]).forEach(h=>out.push(h));out.push(cols.map(c=>c.h));rows.forEach(r=>out.push(cols.map(c=>{const v=val(c,r);return c.n?p2(v):c.d?r4(+v||0):v==null?'':v})));if(hasTot&&rows.length)out.push(cols.map((c,i)=>i===LC?'TOTAL':c.sumNo?'':c.n?p2(T[c.h]):c.d?r4(T[c.h]):''));return toCsv(out)};
+ return{screen,print,csv,T};
+}
+
+// =====================================================================================
+// navigation
+// =====================================================================================
+const NAV=[['Overview'],['dash','Dashboard'],['Payroll'],['run','Payroll Run'],['loans','Loans & Advances'],['slips','Payslips'],['reg','Payroll Register'],['Records'],['emp','Employees'],['rep','Reports'],['set','Settings']];
+const PAGES={};
+let route={p:'dash',a:''};
+function go(p,a){location.hash=p+(a?'/'+a:'')}
+function onRoute(){
+ const h=(location.hash||'#dash').slice(1).split('/');route={p:PAGES[h[0]]?h[0]:'dash',a:decodeURIComponent(h.slice(1).join('/')||'')};
+ $$('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===route.p));
+ $('#side').classList.remove('open');
+ const P=PAGES[route.p];$('#ttl').textContent=P.title;$('#view').innerHTML='';
+ try{P.render($('#view'),route.a)}catch(e){console.error(e);$('#view').innerHTML='<div class="alert">Something went wrong on this page: '+esc(e.message)+'</div>'}
+ $('.main').scrollTop=0;
+}
+function initNav(){
+ $('#nav').innerHTML=NAV.map(n=>n.length===1?'<li class="sec">'+n[0]+'</li>':'<li><a href="#'+n[0]+'" data-p="'+n[0]+'">'+n[1]+'</a></li>').join('');
+ $('#menuBtn').onclick=()=>$('#side').classList.toggle('open');
+ $('#bkBtn').onclick=backup;
+ window.addEventListener('hashchange',onRoute);
+}
+function brand(){$('#brandSub').textContent=DB.company.name||'Offline payroll'}
+function backup(){DB.meta.lastBackup=new Date().toISOString();save(true);dl('AJ-Payroll-backup_'+slug(DB.company.name||'payroll')+'_'+today()+'.json',JSON.stringify(DB),'application/json');toast('Backup downloaded. Keep it somewhere safe (a USB drive or Google Drive).','ok')}
+function backupAge(){const b=DB.meta.lastBackup;return b?Math.floor((Date.now()-new Date(b).getTime())/864e5):null}
+
+// =====================================================================================
+// Dashboard
+// =====================================================================================
+PAGES.dash={title:'Dashboard',render(v){
+ const act=DB.employees.filter(e=>e.active!==false),runs=DB.runs.slice().sort((a,b)=>pkey(b.year,b.month,b.q)-pkey(a.year,a.month,a.q)),last=runs[0],drafts=runs.filter(r=>r.status!=='final');
+ const age=backupAge(),n=new Date(),q=n.getDate()<=15?1:2;
+ let h='';
+ if(!DB.employees.length)h+='<div class="alert info"><b>Welcome.</b> Start in <a href="#set/company">Settings › Company</a> (business names and employer numbers), then add your people in <a href="#emp">Employees</a> or import them from a spreadsheet. After that, open <a href="#run">Payroll Run</a>.</div>';
+ if(age===null&&DB.employees.length)h+='<div class="alert">You have not downloaded a backup yet. Your data lives only in this browser on this computer. <button class="btn s" onclick="backup()">Download backup</button></div>';
+ else if(age>7)h+='<div class="alert">Last backup was '+age+' days ago. <button class="btn s" onclick="backup()">Download backup</button></div>';
+ const lt=last?last.rows.reduce((t,r)=>({g:t.g+r.gross,n:t.n+r.net,d:t.d+r.totDed}),{g:0,n:0,d:0}):null;
+ h+='<div class="kpis"><div class="kpi"><span>Active employees</span><b>'+act.length+'</b><small>'+bizList().length+' business'+(bizList().length===1?'':'es')+'</small></div>'
+  +'<div class="kpi"><span>Latest payroll</span><b>'+(last?esc(perShort(last.year,last.month,last.q)):'–')+'</b><small>'+(last?(last.status==='final'?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')+' · '+last.rows.length+' employees':'none yet')+'</small></div>'
+  +'<div class="kpi"><span>Latest net pay</span><b>₱'+(lt?n2(lt.n):'0.00')+'</b><small>gross ₱'+(lt?n2(lt.g):'0.00')+'</small></div>'
+  +'<div class="kpi"><span>Open loans & advances</span><b>₱'+n2(openLedgerTotal())+'</b><small><a href="#loans">see balances</a></small></div></div>';
+ h+='<div class="card"><div class="row mid"><h2 style="margin:0">Quick actions</h2></div><div class="row" style="margin-top:10px"><a class="btn" href="#run/'+n.getFullYear()+'-'+(n.getMonth()+1)+'-'+q+'">Payroll for '+esc(perShort(n.getFullYear(),n.getMonth()+1,q))+'</a><a class="btn o" href="#emp">Add or edit employees</a><a class="btn o" href="#loans">Record a cash advance or loan</a><a class="btn o" href="#slips">Print payslips</a><a class="btn o" href="#rep/contrib">SSS, PhilHealth, Pag-IBIG report</a></div></div>';
+ if(drafts.length)h+='<div class="card"><h2>Drafts not yet final</h2><p class="note">Finalize a payroll when it is paid. Final payrolls are locked, and loans are reduced by what they deducted.</p>'+drafts.map(r=>'<a class="btn o s" style="margin:0 6px 6px 0" href="#run/'+r.year+'-'+r.month+'-'+r.q+'">'+esc(perShort(r.year,r.month,r.q))+'</a>').join('')+'</div>';
+ // remittances due: previous month
+ const pm=n.getMonth()===0?[n.getFullYear()-1,12]:[n.getFullYear(),n.getMonth()];
+ const mr=DB.runs.filter(r=>r.year===pm[0]&&r.month===pm[1]);
+ if(mr.length){const T={sss:0,ph:0,pg:0,tax:0};mr.forEach(r=>r.rows.forEach(x=>{T.sss+=x.sss+x.erSss+x.erEc;T.ph+=x.ph+x.erPh;T.pg+=x.pg+x.erPg;T.tax+=x.tax}));
+  h+='<div class="card"><h2>To remit for '+MN[pm[1]-1]+' '+pm[0]+'</h2><div class="kpis" style="margin:8px 0 0"><div class="kpi"><span>SSS (employee + employer + EC)</span><b>₱'+n2(T.sss)+'</b></div><div class="kpi"><span>PhilHealth</span><b>₱'+n2(T.ph)+'</b></div><div class="kpi"><span>Pag-IBIG</span><b>₱'+n2(T.pg)+'</b></div><div class="kpi"><span>Withholding tax (1601-C)</span><b>₱'+n2(T.tax)+'</b><small>due on the 10th of '+MN[n.getMonth()]+' (manual filers)</small></div></div><p class="note"><a href="#rep/contrib">Contributions report</a> · <a href="#rep/wtax">Withholding tax report</a>. Follow each agency’s schedule for your employer number.</p></div>'}
+ const hs=holidays(n.getFullYear()).filter(x=>x.date>=today()).slice(0,4);
+ if(hs.length)h+='<div class="card"><h2>Coming holidays</h2>'+hs.map(x=>'<div>'+esc(fdw(x.date))+' – '+esc(x.name)+' <span class="chip">'+(x.type==='R'?'Regular':x.type==='S'?'Special non-working':'Special working')+'</span></div>').join('')+'<p class="note">Check new proclamations each year (Eid’l Fitr, Eid’l Adha, Chinese New Year, local holidays) and add them in <a href="#set/hol">Settings › Holidays</a>.</p></div>';
+ v.innerHTML=h;
+}};
+function openLedgerTotal(){let t=0;const seen=new Set();DB.ledger.forEach(l=>{const k=l.empId+'|'+l.type;if(seen.has(k))return;seen.add(k);t+=pos(ledgerBal(l.empId,l.type))});return t}
+
+// =====================================================================================
+// Employees
+// =====================================================================================
+let empF={q:'',biz:'ALL',show:'active'};
+PAGES.emp={title:'Employees',render(v){
+ v.innerHTML='<div class="card"><div class="row"><div class="fg sp"><label>Search</label><input id="eQ" placeholder="Name, position, TIN, SSS no." value="'+esc(empF.q)+'"></div>'
+  +fg('Business','<select id="eBiz">'+opt([['ALL','All businesses']].concat(bizList()),empF.biz)+'</select>')
+  +fg('Show','<select id="eShow">'+opt([['active','Active'],['inactive','Inactive / separated'],['all','All']],empF.show)+'</select>')
+  +'<button class="btn o" id="eImp">Import from spreadsheet</button><button class="btn o" id="eExp">Export CSV</button><button class="btn" id="eAdd">+ Add employee</button></div></div><p class="note" id="eCnt"></p><div id="eTbl"></div>';
+ const paint=()=>{const q=empF.q.trim().toLowerCase();
+  const L=DB.employees.filter(e=>(empF.biz==='ALL'||e.business===empF.biz)&&(empF.show==='all'||(empF.show==='active')===(e.active!==false))&&(!q||[fullName(e),e.position,e.tin,e.sss,e.ph,e.hdmf,e.business].join(' ').toLowerCase().includes(q))).sort(empCmp);
+  $('#eCnt').textContent=L.length+' of '+DB.employees.length+' employee'+(DB.employees.length===1?'':'s');
+  $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th><th></th></tr></thead><tbody>'
+   +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+'"><td><b>'+esc(fullName(e))+'</b>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td><td><button class="btn o s" data-ed="'+e.id+'">Edit</button></td></tr>').join('')
+   ||'<tr><td colspan="14" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
+  $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint))};
+ $('#eQ').oninput=e=>{empF.q=e.target.value;paint()};$('#eBiz').onchange=e=>{empF.biz=e.target.value;paint()};$('#eShow').onchange=e=>{empF.show=e.target.value;paint()};
+ $('#eAdd').onclick=()=>empForm(null,paint);$('#eImp').onclick=()=>empImport(paint);
+ $('#eExp').onclick=()=>dl('employees_'+today()+'.csv',toCsv([EMP_COLS.map(c=>c[1])].concat(DB.employees.slice().sort(empCmp).map(e=>EMP_COLS.map(c=>c[2]?c[2](e):e[c[0]]==null?'':e[c[0]])))));
+ paint();
+}};
+const EMP_COLS=[['last','Last Name'],['first','First Name'],['mi','Middle Initial'],['business','Business'],['position','Position'],['status','Employment Status'],['hired','Date Hired'],['separated','Date Separated'],
+ ['basis','Pay Basis',e=>e.basis==='monthly'?'Monthly':'Daily'],['rate','Daily Rate',e=>p2(dailyOf(e))],['monthly','Monthly Rate',e=>e.basis==='monthly'?p2(e.monthly):''],['factor','Days Factor',e=>e.basis==='monthly'?e.factor:''],['allowance','Daily Meal Allowance',e=>p2(e.allowance)],
+ ['mwe','Minimum Wage Earner',e=>e.mwe?'Yes':''],['tin','TIN'],['sss','SSS No'],['ph','PhilHealth No'],['hdmf','Pag-IBIG No'],['birth','Birth Date'],['address','Address'],['contact','Contact'],['active','Active',e=>e.active===false?'No':'Yes']];
+function empForm(id,after){
+ const e=id?empById(id):null,v=e||{last:'',first:'',mi:'',business:empF.biz!=='ALL'?empF.biz:(bizList()[0]||''),position:'',status:'Regular',hired:'',basis:'daily',rate:0,monthly:0,factor:261,allowance:0,active:true,recur:[]};
+ const used=id&&DB.runs.some(r=>r.rows.some(x=>x.empId===id));
+ const recur=(v.recur||[]).slice();
+ const m=modal('<h2>'+(e?'Edit employee':'Add employee')+'</h2><div class="grid3">'
+  +fg('Last name *','<input id="fLast" value="'+esc(v.last)+'">')+fg('First name *','<input id="fFirst" value="'+esc(v.first)+'">')+fg('Middle initial','<input id="fMi" maxlength="4" value="'+esc(v.mi)+'">')
+  +fg('Business *','<input id="fBiz" list="fBizL" value="'+esc(v.business)+'"><datalist id="fBizL">'+bizList().map(b=>'<option value="'+esc(b)+'">').join('')+'</datalist>')
+  +fg('Position','<input id="fPos" value="'+esc(v.position)+'">')+fg('Employment status','<select id="fStat">'+opt([...new Set(STATUSES.concat(v.status||[]))],v.status)+'</select>')
+  +fg('Date hired','<input type="date" id="fHired" value="'+esc(v.hired)+'">')+fg('Date separated','<input type="date" id="fSep" value="'+esc(v.separated||'')+'">','leave blank while employed')
+  +fg('Birth date','<input type="date" id="fBirth" value="'+esc(v.birth||'')+'">')+'</div>'
+  +'<h3 style="margin-top:14px">Pay</h3><div class="grid3">'
+  +fg('Pay basis','<select id="fBasis">'+opt([['daily','Daily-paid (paid per day worked)'],['monthly','Monthly-paid (fixed monthly salary)']],v.basis)+'</select>')
+  +fg('Daily rate (₱) *','<input type="number" step="0.01" min="0" id="fRate" value="'+pe(v.rate)+'">','',"gRate")
+  +fg('Monthly rate (₱) *','<input type="number" step="0.01" min="0" id="fMon" value="'+pe(v.monthly)+'">','',"gMon")
+  +fg('Days factor','<select id="fFac">'+opt([[261,'261 – 5-day week'],[313,'313 – 6-day week'],[365,'365 – paid every day']],v.factor||261)+'</select>','<span id="fDaily"></span>',"gFac")
+  +fg('Meal allowance per day (₱)','<input type="number" step="0.01" min="0" id="fAllow" value="'+pe(v.allowance)+'">')
+  +fg('Minimum wage earner','<label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="fMwe"'+(v.mwe?' checked':'')+'> Basic, holiday and overtime pay not taxed</label>')+'</div>'
+  +'<h3 style="margin-top:14px">Government numbers</h3><div class="grid3">'
+  +fg('TIN','<input id="fTin" value="'+esc(v.tin||'')+'">')+fg('SSS no.','<input id="fSss" value="'+esc(v.sss||'')+'">')+fg('PhilHealth no.','<input id="fPh" value="'+esc(v.ph||'')+'">')+fg('Pag-IBIG no.','<input id="fHdmf" value="'+esc(v.hdmf||'')+'">')
+  +fg('Address','<input id="fAddr" value="'+esc(v.address||'')+'">')+fg('Contact no.','<input id="fCon" value="'+esc(v.contact||'')+'">')+'</div>'
+  +'<h3 style="margin-top:14px">Recurring pay or deductions every cutoff</h3><p class="note">For example a fixed rice subsidy or a uniform deduction. They are filled in when a new payroll is created; you can still change them per cutoff. For loans and cash advances with a balance, use Loans & Advances instead.</p><div id="fRec"></div><button type="button" class="btn o s" id="fRecAdd">+ Add recurring item</button>'
+  +'<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="fAct"'+(v.active!==false?' checked':'')+'> Active (included in new payroll runs)</label>'
+  +'<div class="acts">'+(e?'<button class="btn d" id="fDel" style="margin-right:auto">'+(used?'Make inactive':'Delete')+'</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="fSave">Save</button></div>',820);
+ const sync=()=>{const mo=$('#fBasis',m).value==='monthly';$('#gRate',m).hidden=mo;$('#gMon',m).hidden=!mo;$('#gFac',m).hidden=!mo;$('#fDaily',m).textContent=mo?'Daily rate: ₱'+n2(Math.round(c100($('#fMon',m).value)*12/(+$('#fFac',m).value))):''};
+ $('#fBasis',m).onchange=sync;$('#fMon',m).oninput=sync;$('#fFac',m).onchange=sync;sync();
+ const rec=()=>{$('#fRec',m).innerHTML=recur.map((x,i)=>'<div class="row mid" style="margin-bottom:6px"><select data-ri="'+i+'">'+opt(DB.items.filter(it=>it.active!==false).map(it=>[it.id,it.name+(it.kind==='D'?' (deduction)':'')]),x.item)+'</select><input type="number" step="0.01" min="0" data-ra="'+i+'" value="'+pe(x.amt)+'" style="width:120px" placeholder="per cutoff"><button type="button" class="btn d s" data-rx="'+i+'">Remove</button></div>').join('');
+  $$('[data-ri]',m).forEach(s=>s.onchange=()=>recur[+s.dataset.ri].item=s.value);$$('[data-ra]',m).forEach(s=>s.oninput=()=>recur[+s.dataset.ra].amt=c100(s.value));$$('[data-rx]',m).forEach(b=>b.onclick=()=>{recur.splice(+b.dataset.rx,1);rec()})};
+ $('#fRecAdd',m).onclick=()=>{recur.push({item:(DB.items.find(i=>i.id==='rice')||DB.items[0]).id,amt:0});rec()};rec();
+ $('#fSave',m).onclick=()=>{
+  const g=k=>$(k,m).value.trim(),o={last:g('#fLast'),first:g('#fFirst'),mi:g('#fMi'),business:g('#fBiz'),position:g('#fPos'),status:g('#fStat'),hired:g('#fHired'),separated:g('#fSep'),birth:g('#fBirth'),
+   basis:g('#fBasis'),rate:c100(g('#fRate')),monthly:c100(g('#fMon')),factor:+g('#fFac'),allowance:c100(g('#fAllow')),mwe:$('#fMwe',m).checked,tin:g('#fTin'),sss:g('#fSss'),ph:g('#fPh'),hdmf:g('#fHdmf'),address:g('#fAddr'),contact:g('#fCon'),active:$('#fAct',m).checked,recur:recur.filter(x=>x.amt>0)};
+  if(!o.last||!o.first)return toast('Enter the last and first name.','bad');if(!o.business)return toast('Enter the business.','bad');
+  if(o.basis==='monthly'?!o.monthly:!o.rate)return toast('Enter the '+(o.basis==='monthly'?'monthly':'daily')+' rate.','bad');
+  if(o.basis!=='monthly'){o.monthly=0}else o.rate=0;
+  if(o.separated&&o.hired&&o.separated<o.hired)return toast('Date separated is before date hired.','bad');
+  const dup=DB.employees.find(x=>x.id!==id&&x.last.toLowerCase()===o.last.toLowerCase()&&x.first.toLowerCase()===o.first.toLowerCase()&&x.business===o.business);
+  if(dup&&!e)return toast('There is already an employee named '+fullName(dup)+' in '+dup.business+'.','bad');
+  if(e)Object.assign(e,o);else DB.employees.push(Object.assign({id:'e'+uid()},o));
+  if(!DB.biz.some(b=>b.name===o.business))DB.biz.push({name:o.business});
+  save();m.close();after&&after();toast('Saved '+o.last+', '+o.first+'.','ok')};
+ const del=$('#fDel',m);if(del)del.onclick=async()=>{if(used){e.active=false;save();m.close();after&&after();toast('Marked inactive. Past payrolls keep this employee.','ok');return}
+  if(!(await confirmBox('Delete '+esc(fullName(e))+'? This cannot be undone.','Delete',1)))return;DB.employees=DB.employees.filter(x=>x!==e);DB.ledger=DB.ledger.filter(l=>l.empId!==e.id);save();m.close();after&&after()};
+}
+function empImport(after){
+ const m=modal('<h2>Import employees from a spreadsheet</h2><p class="note">Copy the rows from Google Sheets or Excel <b>with the header row</b> and paste them below, or choose a CSV file. Recognised headers: '+EMP_COLS.map(c=>c[1]).join(', ')+'. Also accepted: “Name” (Last, First M.), “Daily Rate”, “Allowance”, “Pay Frequency”. Employees with the same name and business are updated instead of added.</p>'
+  +'<textarea id="iTx" rows="9" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:.8rem" placeholder="Paste here"></textarea><div class="row mid" style="margin-top:8px"><input type="file" id="iFile" accept=".csv,.txt"><button class="btn o s" id="iTpl">Download template</button></div><div id="iOut" class="note"></div>'
+  +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="iGo">Import</button></div>',820);
+ $('#iTpl',m).onclick=()=>dl('employee_template.csv',toCsv([EMP_COLS.map(c=>c[1]),['DELA CRUZ','JUAN','P','MY STORE','Cashier','Regular','2024-01-15','','Daily','650.00','','','100.00','','123-456-789-000','34-1234567-8','12-345678901-2','1234-5678-9012','1995-05-20','Tagbilaran City','0917 000 0000','Yes']]));
+ $('#iFile',m).onchange=ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('#iTx',m).value=rd.result};rd.readAsText(f)};
+ $('#iGo',m).onclick=()=>{
+  const rows=parseCsv($('#iTx',m).value);if(rows.length<2)return toast('Paste the header row and at least one employee.','bad');
+  const H=rows[0].map(h=>h.trim().toLowerCase().replace(/[^a-z]/g,''));
+  const find=(...names)=>{for(const n of names){const i=H.indexOf(n);if(i>=0)return i}return -1};
+  const ix={last:find('lastname','surname','last'),first:find('firstname','first','givenname'),mi:find('middleinitial','mi','middlename'),name:find('name','employeename','employee','fullname'),business:find('business','company','branch','store'),position:find('position','designation','job'),status:find('employmentstatus','status'),hired:find('datehired','hired','hiredate','datestarted'),separated:find('dateseparated','separated'),
+   basis:find('paybasis','basis','payfrequency','frequency'),rate:find('dailyrate','rate','dailywage'),monthly:find('monthlyrate','monthlysalary','monthly','basicsalary'),factor:find('daysfactor','factor'),allowance:find('dailymealallowance','mealallowance','allowance','dailyallowance'),mwe:find('minimumwageearner','mwe'),
+   tin:find('tin','tinno'),sss:find('sssno','sss','sssnumber'),ph:find('philhealthno','philhealth','phicno'),hdmf:find('pagibigno','pagibig','hdmfno','hdmf'),birth:find('birthdate','dateofbirth','birthday'),address:find('address'),contact:find('contact','contactno','mobile','phone'),active:find('active')};
+  if(ix.last<0&&ix.name<0)return toast('No “Last Name” or “Name” column found in the header row.','bad');
+  let add=0,upd=0,skip=0;const val=(r,k)=>ix[k]>=0?String(r[ix[k]]||'').trim():'';
+  rows.slice(1).forEach(r=>{let last=val(r,'last'),first=val(r,'first'),mi=val(r,'mi');
+   if(!last&&ix.name>=0){const nm=val(r,'name');const p=nm.split(',');last=p[0].trim();const rest=(p[1]||'').trim().split(/\s+/);if(rest.length>1&&/^[A-Za-z]\.?$/.test(rest[rest.length-1])){mi=rest.pop()}first=rest.join(' ')}
+   if(!last||!first){skip++;return}
+   const monthly=c100(val(r,'monthly')),bas=val(r,'basis').toLowerCase(),basis=/month/.test(bas)&&!/semi/.test(bas)||(monthly&&!c100(val(r,'rate')))?'monthly':'daily';
+   const o={last,first,mi:mi.replace(/\.$/,''),business:val(r,'business')||(bizList()[0]||'MY BUSINESS'),position:val(r,'position'),status:val(r,'status')||'Regular',hired:parseDate(val(r,'hired')),separated:parseDate(val(r,'separated')),basis,
+    rate:basis==='daily'?c100(val(r,'rate')):0,monthly:basis==='monthly'?(monthly||c100(val(r,'rate'))):0,factor:[261,313,365].includes(+val(r,'factor'))?+val(r,'factor'):261,allowance:c100(val(r,'allowance')),mwe:/^(y|yes|true|1)$/i.test(val(r,'mwe')),
+    tin:val(r,'tin'),sss:val(r,'sss'),ph:val(r,'ph'),hdmf:val(r,'hdmf'),birth:parseDate(val(r,'birth')),address:val(r,'address'),contact:val(r,'contact'),active:!/^(n|no|false|0|inactive)$/i.test(val(r,'active'))};
+   const ex=DB.employees.find(x=>x.last.toLowerCase()===last.toLowerCase()&&x.first.toLowerCase()===first.toLowerCase()&&x.business===o.business);
+   if(ex){Object.keys(o).forEach(k=>{if(o[k]!==''&&o[k]!==0||k==='active'||k==='mwe')ex[k]=o[k]});upd++}else{DB.employees.push(Object.assign({id:'e'+uid(),recur:[]},o));add++}
+   if(!DB.biz.some(b=>b.name===o.business))DB.biz.push({name:o.business})});
+  save();m.close();after&&after();toast(add+' added, '+upd+' updated'+(skip?', '+skip+' rows skipped (no name)':'')+'.','ok')};
+}
+
+
+// =====================================================================================
+// Payroll Run (data entry)
+// =====================================================================================
+let runUI={biz:'ALL',q:'',hide:true};
+function parsePer(a){const m=/^(\d{4})-(\d{1,2})-([12])$/.exec(a||'');if(m)return{y:+m[1],m:+m[2],q:+m[3]};const n=new Date();return{y:n.getFullYear(),m:n.getMonth()+1,q:n.getDate()<=15?1:2}}
+function gridCols(run){
+ const used=k=>run.rows.some(r=>k.startsWith('i:')?(r.items||{})[k.slice(2)]:(r.ded||{})[k.slice(2)])||(run.show||[]).includes(k);
+ const vis=k=>!runUI.hide||used(k);
+ const C=[{k:'days',h:'Days worked',inp:1,cls:'days'},{k:'basic',h:'Basic pay',calc:1},{k:'allow',h:'Meal allowance',inp:1,man:1},{k:'hol',h:'Holiday pay',inp:1,man:1},{k:'ot',h:'OT, rest day & night diff.',inp:1,man:1}];
+ itemsE().forEach(it=>{if(vis('i:'+it.id))C.push({k:'i:'+it.id,h:it.name,inp:1,grp:'E'})});
+ C.push({k:'gross',h:'Gross pay',calc:1});
+ C.push({k:'sss',h:'SSS',inp:1,man:1,grp:'D'},{k:'ph',h:'PhilHealth',inp:1,man:1,grp:'D'},{k:'pg',h:'Pag-IBIG',inp:1,man:1,grp:'D'},{k:'tax',h:'Withholding tax',inp:1,man:1,grp:'D',neg:1});
+ DB.dtypes.forEach(d=>{if(vis('d:'+d.id))C.push({k:'d:'+d.id,h:d.name,inp:1,grp:'D'})});
+ itemsD().forEach(it=>{if(vis('i:'+it.id))C.push({k:'i:'+it.id,h:it.name,inp:1,grp:'D'})});
+ C.push({k:'totDed',h:'Total deductions',calc:1},{k:'net',h:'Net pay',calc:1,net:1});
+ return C;
+}
+const hiddenCols=run=>{const v=new Set(gridCols(run).map(c=>c.k));return itemsE().map(i=>['i:'+i.id,i.name]).concat(DB.dtypes.map(d=>['d:'+d.id,d.name]),itemsD().map(i=>['i:'+i.id,i.name+' (deduction)'])).filter(x=>!v.has(x[0]))};
+function getV(r,k){if(k.startsWith('i:'))return(r.items||{})[k.slice(2)]||0;if(k.startsWith('d:'))return(r.ded||{})[k.slice(2)]||0;return r[k]||0}
+function setV(r,k,c){if(k.startsWith('i:')){if(c)r.items[k.slice(2)]=c;else delete r.items[k.slice(2)]}else if(k.startsWith('d:')){if(c)r.ded[k.slice(2)]=c;else delete r.ded[k.slice(2)]}else r[k]=c}
+const hasTime=r=>{const t=r.tm||{};return['late','leave','ot','nd','rd','rdot'].some(k=>+t[k])||Object.keys(t.hol||{}).length>0||(r.basis==='monthly'&&+t.abs)};
+
+PAGES.run={title:'Payroll Run',render(v,a){
+ const p=parsePer(a),run=runOf(p.y,p.m,p.q);
+ const yrs=[...new Set(DB.runs.map(r=>r.year).concat([p.y,new Date().getFullYear()]))].sort();
+ const recent=DB.runs.slice().sort((x,y)=>pkey(y.year,y.month,y.q)-pkey(x.year,x.month,x.q)).slice(0,8);
+ let h='<div class="card"><div class="row">'+fg('Year','<select id="pY">'+opt(Array.from({length:Math.max(...yrs)-Math.min(...yrs)+3},(_,i)=>Math.min(...yrs)-1+i),p.y)+'</select>')
+  +fg('Month','<select id="pM">'+opt(MN.map((n,i)=>[i+1,n]),p.m)+'</select>')+fg('Cutoff','<select id="pQ">'+opt([[1,'1st (1–15)'],[2,'2nd (16–end)']],p.q)+'</select>')
+  +'<button class="btn o" id="pGo">Open</button><span class="sp"></span>'+(recent.length?'<div class="fg"><label>Recent</label><div>'+recent.map(r=>'<a class="btn o s" style="margin:0 4px 4px 0" href="#run/'+r.year+'-'+r.month+'-'+r.q+'">'+esc(perShort(r.year,r.month,r.q))+(r.status==='final'?' ✓':'')+'</a>').join('')+'</div></div>':'')+'</div></div>';
+ v.innerHTML=h+'<div id="runBody"></div>';
+ const goP=()=>go('run',$('#pY').value+'-'+$('#pM').value+'-'+$('#pQ').value);
+ $('#pGo').onclick=goP;['#pY','#pM','#pQ'].forEach(s=>$(s).onchange=goP);
+ const B=$('#runBody');
+ if(!run){
+  const list=DB.employees.filter(e=>e.active!==false&&employedIn(e,p.y,p.m,p.q));
+  const hs=holsIn(p.y,p.m,p.q);
+  B.innerHTML='<div class="card"><h2>'+esc(perLabel(p.y,p.m,p.q))+'</h2><p>No payroll yet for this cutoff. Creating it adds the <b>'+list.length+'</b> active employee'+(list.length===1?'':'s')+' employed in this period, fills in cash advances and loan installments due, and recurring pay items.</p>'
+   +(hs.length?'<p class="note">Holidays in this cutoff: '+hs.map(x=>esc(fdw(x.date))+' '+esc(x.name)+' ('+(x.type==='R'?'regular':'special')+')').join('; ')+'</p>':'')
+   +(list.length?'<button class="btn" id="pNew">Create payroll for '+esc(perShort(p.y,p.m,p.q))+'</button>':'<p class="note">Add employees first in <a href="#emp">Employees</a>.</p>')+'</div>';
+  const b=$('#pNew');if(b)b.onclick=()=>{const r={id:'r'+uid(),year:p.y,month:p.m,q:p.q,status:'draft',created:new Date().toISOString(),rows:[],show:[]};
+   list.sort(empCmp).forEach(e=>r.rows.push(rowFromEmp(e,r)));DB.runs.push(r);calcRun(r);save();PAGES.run.render(v,a);toast('Payroll created. Enter days worked and other amounts.','ok')};
+  return}
+ if(run.status!=='final'){calcRun(run)}
+ drawRun(B,run);
+}};
+function drawRun(B,run){
+ const fin=run.status==='final',hs=holsIn(run.year,run.month,run.q),cols=gridCols(run);
+ const bizs=[...new Set(run.rows.map(r=>r.business))].sort(cmp);
+ if(runUI.biz!=='ALL'&&!bizs.includes(runUI.biz))runUI.biz='ALL';
+ const rows=run.rows.map((r,i)=>({r,i})).filter(x=>(runUI.biz==='ALL'||x.r.business===runUI.biz)&&(!runUI.q||x.r.name.toLowerCase().includes(runUI.q.toLowerCase()))).sort((a,b)=>rowCmp(a.r,b.r));
+ const hid=hiddenCols(run);
+ let h='<div class="card'+(fin?' locked':'')+'" id="runCard"><div class="row mid"><div><h2 style="margin:0">'+esc(perLabel(run.year,run.month,run.q))+' '+(fin?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')+'</h2>'
+  +'<div class="note" style="margin:2px 0 0">'+run.rows.length+' employees'+(fin&&run.finalAt?' · finalized '+esc(fd(run.finalAt.slice(0,10))):'')+(run.payDate?' · pay date '+esc(fd(run.payDate)):'')+'</div></div><span class="sp"></span>'
+  +(fin?'<button class="btn o" id="rReopen">Reopen for changes</button>':'<button class="btn" id="rFinal">Finalize</button>')
+  +'<a class="btn o" href="#slips/'+run.id+'">Payslips</a><a class="btn o" href="#reg/'+run.id+'">Register</a><button class="btn o" id="rCsv">Export CSV</button></div>';
+ h+='<div class="row" style="margin-top:12px"><div class="fg"><label>Business</label><select id="rBiz">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select></div>'
+  +'<div class="fg"><label>Find</label><input id="rQ" placeholder="Employee name" value="'+esc(runUI.q)+'"></div>'
+  +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button>')
+  +'<span class="sp"></span><label style="display:flex;gap:6px;align-items:center;font-size:.85rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>'
+  +(runUI.hide&&hid.length&&!fin?'<select id="rShow"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
+ if(hs.length)h+='<div class="alert info" style="margin:12px 0 0">Holidays in this cutoff: '+hs.map(x=>'<b>'+esc(fdw(x.date))+'</b> '+esc(x.name)+' ('+(x.type==='R'?'regular':'special non-working')+')').join('; ')+'. Daily-paid employees who worked in this cutoff are paid for regular holidays automatically. Use ⏱ to mark who worked on a holiday, or who is not entitled.</div>';
+ if(run.month===12&&run.q===2&&S().annualize)h+='<div class="alert info" style="margin:12px 0 0">Year-end: withholding tax in this payroll is the annual tax due less tax already withheld this year (annualization). A negative amount is a refund to the employee.</div>';
+ h+='</div>';
+ h+='<div class="tw" style="max-height:66vh"><table class="t grid'+(fin?' locked':'')+'" id="rGrid"><thead><tr><th>Employee</th>'+cols.map(c=>'<th class="'+(c.grp==='E'?'grpE':c.grp==='D'?'grpD':'')+'">'+esc(c.h)+'</th>').join('')+'</tr></thead><tbody>';
+ rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+(isMwe(empById(r.empId),r)?' · MWE':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
+  +cols.map(c=>{if(c.calc)return '<td class="calc'+(c.net?' net':'')+'" data-c="'+c.k+'"></td>';return '<td><input data-k="'+c.k+'" class="'+(c.cls||'')+'" inputmode="decimal" aria-label="'+esc(c.h+' – '+r.name)+'"'+(fin?' disabled':'')+'></td>'}).join('')+'</tr>'});
+ if(!rows.length)h+='<tr><td colspan="'+(cols.length+1)+'" class="empty">No employees match.</td></tr>';
+ h+='</tbody><tfoot><tr><td>TOTAL</td>'+cols.map(c=>'<td class="calc" data-t="'+c.k+'"></td>').join('')+'</tr></tfoot></table></div>';
+ h+='<p class="note">Type amounts in pesos. Yellow boxes were typed over the automatic amount; clear a yellow box to go back to the automatic amount. Press <span class="kbd">Enter</span> to move down. Changes are saved as you type.</p>';
+ if(!fin)h+='<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn d s" id="rDel">Delete this payroll</button></div>';
+ B.innerHTML=h;
+ rows.forEach(({r,i})=>paintRow(run,i));paintFoot(run,rows.map(x=>x.r));
+ const redraw=()=>drawRun(B,run);
+ $('#rBiz').onchange=e=>{runUI.biz=e.target.value;redraw()};
+ let qt;$('#rQ').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{runUI.q=e.target.value;redraw();const q=$('#rQ');q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)};
+ $('#rHide').onchange=e=>{runUI.hide=e.target.checked;redraw()};
+ const sh=$('#rShow');if(sh)sh.onchange=()=>{if(!sh.value)return;run.show=(run.show||[]).concat(sh.value);save();redraw()};
+ $('#rCsv').onclick=()=>exportRunCsv(run);
+ if(fin){$('#rReopen').onclick=async()=>{const later=DB.runs.some(x=>x.status==='final'&&pkey(x.year,x.month,x.q)>pkey(run.year,run.month,run.q)&&x.year===run.year);
+  if(!(await confirmBox('Reopen '+esc(perLabel(run.year,run.month,run.q))+' for changes?'+(later?' <b>Later payrolls this year are already final</b>; their contributions, benefit limits and year-end tax will not change unless you reopen them too.':''),'Reopen')))return;
+  run.status='draft';delete run.finalAt;save();redraw()};return}
+ const grid=$('#rGrid');
+ grid.addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i,r=run.rows[i],k=t.dataset.k,raw=t.value.trim();
+  if(k==='days'){const d=Math.max(0,parseFloat(raw)||0);if(r.basis==='monthly'){r.tm.abs=r4(Math.max(0,(r.factor||261)/24-d-(+r.tm.late||0)/480))}else r.tm.days=d}
+  else{const c=k==='tax'?c100(raw):pos(c100(raw));const C=gridCols(run).find(x=>x.k===k);
+   if(C&&C.man){if(raw===''){delete r.man[k]}else{r.man[k]=true;setV(r,k,c)}}else setV(r,k,c)}
+  calcRow(run,r);t.classList.toggle('man',!!r.man[k]);paintRow(run,i,t);paintFoot(run);save()});
+ grid.addEventListener('keydown',e=>{const t=e.target;if(!t.dataset.k||!['Enter','ArrowDown','ArrowUp'].includes(e.key))return;e.preventDefault();
+  const tr=t.closest('tr'),nx=(e.key==='ArrowUp'?tr.previousElementSibling:tr.nextElementSibling);const inp=nx&&$('input[data-k="'+t.dataset.k+'"]',nx);if(inp){inp.focus();inp.select()}});
+ grid.addEventListener('focusin',e=>{if(e.target.tagName==='INPUT')setTimeout(()=>e.target.select(),0)});
+ // paste a column copied from a spreadsheet: fills this box and the boxes below it
+ grid.addEventListener('paste',e=>{const t=e.target;if(!t.dataset||!t.dataset.k)return;const txt=(e.clipboardData||window.clipboardData).getData('text');if(!/[\r\n\t]/.test(txt.trim()))return;e.preventDefault();
+  const vals=txt.replace(/\r/g,'').split('\n').filter((x,i,a)=>!(i===a.length-1&&x==='')).map(x=>x.split('\t'));let tr=t.closest('tr'),n=0;
+  vals.forEach(row=>{if(!tr)return;let inp=$('input[data-k="'+t.dataset.k+'"]',tr);const all=$$('input[data-k]',tr),start=all.indexOf(inp);
+   row.forEach((v,j)=>{const el=all[start+j];if(!el)return;el.value=String(v).replace(/[₱,\s]/g,'');el.dispatchEvent(new Event('input',{bubbles:true}))});n++;tr=tr.nextElementSibling});
+  toast('Pasted '+n+' row'+(n===1?'':'s')+'.','ok')});
+ grid.addEventListener('change',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i;paintRow(run,i)});
+ grid.addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b)timeModal(run,+b.dataset.tm,redraw)});
+ $('#rFinal').onclick=()=>finalizeRun(run,redraw);
+ $('#rDel').onclick=async()=>{if(!(await confirmBox('Delete the payroll for '+esc(perLabel(run.year,run.month,run.q))+'? Everything typed in it is removed.','Delete',1)))return;DB.runs=DB.runs.filter(x=>x!==run);recalcFrom(run);save();PAGES.run.render($('#view'),run.year+'-'+run.month+'-'+run.q)};
+ $('#rRecalc').onclick=async()=>{if(!(await confirmBox('Recompute SSS, PhilHealth, Pag-IBIG and withholding tax for every employee? Amounts you typed over (yellow) are replaced by the automatic amounts.','Recompute')))return;run.rows.forEach(r=>['sss','ph','pg','tax'].forEach(k=>delete r.man[k]));recalcFrom(run);save();redraw();toast('Deductions recomputed.','ok')};
+ $('#rRates').onclick=async()=>{const ch=run.rows.filter(r=>{const e=empById(r.empId);return e&&(dailyOf(e)!==r.daily||(e.monthly||0)!==(r.monthly||0)||(e.allowance||0)!==(r.allowance||0)||e.basis!==r.basis)});
+  if(!ch.length)return toast('All rates already match the employee records.');
+  if(!(await confirmBox('Update the rates of '+ch.length+' employee'+(ch.length===1?'':'s')+' from their employee records?<br><small>'+ch.slice(0,8).map(r=>esc(r.name)).join(', ')+(ch.length>8?'…':'')+'</small>','Update')))return;
+  ch.forEach(r=>{const e=empById(r.empId);if(e.basis!==r.basis)r.tm=e.basis==='monthly'?{abs:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol}:{days:0,late:r.tm.late,leave:r.tm.leave,hol:r.tm.hol};Object.assign(r,{basis:e.basis,rate:e.rate,monthly:e.monthly||0,factor:+e.factor||261,daily:dailyOf(e),allowance:e.allowance||0,position:e.position,business:e.business,name:fullName(e)})});
+  recalcFrom(run);save();redraw();toast('Rates updated.','ok')};
+ $('#rLoans').onclick=async()=>{if(!(await confirmBox('Fill in the cash advance and loan deductions again from Loans & Advances? Amounts typed in those columns for this cutoff are replaced.','Refresh')))return;
+  run.rows.forEach(r=>{DB.dtypes.forEach(d=>{const s=ledgerSuggest(r.empId,d.id,run);if(s)r.ded[d.id]=s;else delete r.ded[d.id]})});calcRun(run);save();redraw();toast('Loan and advance deductions refreshed.','ok')};
+ $('#rDays').onclick=()=>{const m=modal('<h2>Set days worked</h2><p class="note">For daily-paid employees. Monthly-paid employees start with a full half-month; record their absences with ⏱.</p>'+fg('Days worked in this cutoff','<input type="number" step="0.5" min="0" max="16" id="sdN" value="'+(run.q===1?13:13)+'">')
+   +'<div style="margin-top:10px"><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="sdW" value="zero" checked> Only employees with no days yet</label><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="sdW" value="all"> All daily-paid employees'+(runUI.biz!=='ALL'?' in '+esc(runUI.biz):'')+'</label></div>'
+   +'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="sdGo">Apply</button></div>',460);
+  $('#sdGo',m).onclick=()=>{const n=Math.max(0,parseFloat($('#sdN',m).value)||0),all=$('input[name=sdW]:checked',m).value==='all';let c=0;
+   run.rows.forEach(r=>{if(r.basis==='monthly'||(runUI.biz!=='ALL'&&r.business!==runUI.biz))return;if(all||!(+r.tm.days)){r.tm.days=n;c++}});calcRun(run);save();m.close();redraw();toast(c+' employee'+(c===1?'':'s')+' set to '+n+' days.','ok')}};
+ $('#rAdd').onclick=()=>{const L=DB.employees.filter(e=>!run.rows.some(r=>r.empId===e.id)&&employedIn(e,run.year,run.month,run.q)).sort(empCmp);
+  if(!L.length)return toast('Everyone employed in this period is already in this payroll.');
+  const m=modal('<h2>Add employee to this payroll</h2>'+fg('Employee','<select id="aeS">'+opt(L.map(e=>[e.id,fullName(e)+' – '+e.business+(e.active===false?' (inactive)':'')]))+'</select>')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="aeGo">Add</button></div>',520);
+  $('#aeGo',m).onclick=()=>{const e=empById($('#aeS',m).value);run.rows.push(rowFromEmp(e,run));calcRun(run);save();m.close();redraw()}};
+}
+function paintRow(run,i,skip){
+ const r=run.rows[i],tr=$('#rGrid tr[data-i="'+i+'"]');if(!tr)return;
+ $$('input[data-k]',tr).forEach(inp=>{if(inp===skip||inp===document.activeElement&&inp!==skip&&skip)return;const k=inp.dataset.k;
+  if(k==='days')inp.value=r.basis==='monthly'?r4(r.days):(+r.tm.days||'');else{const v=getV(r,k);inp.value=v?(v<0?'-':'')+(Math.abs(v)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''}
+  inp.classList.toggle('man',!!(r.man||{})[k]);inp.classList.toggle('auto',!(r.man||{})[k]&&['allow','hol','ot','sss','ph','pg','tax'].includes(k)&&!!getV(r,k))});
+ $$('td[data-c]',tr).forEach(td=>{const v=r[td.dataset.c]||0;td.textContent=m2(v);td.classList.toggle('neg',v<0)});
+ const b=$('[data-tm]',tr);if(b)b.classList.toggle('on',hasTime(r));
+}
+function paintFoot(run,list){
+ list=list||run.rows.filter(r=>(runUI.biz==='ALL'||r.business===runUI.biz)&&(!runUI.q||r.name.toLowerCase().includes(runUI.q.toLowerCase())));
+ $$('#rGrid td[data-t]').forEach(td=>{const k=td.dataset.t;if(k==='days'){td.textContent=fN(list.reduce((s,r)=>s+(r.days||0),0));return}td.textContent=n2(list.reduce((s,r)=>s+getV(r,k),0))});
+}
+async function finalizeRun(run,after){
+ const zero=run.rows.filter(r=>!r.gross),neg=run.rows.filter(r=>r.net<0);
+ if(neg.length)return toast('Net pay is negative for '+neg.map(r=>r.name).slice(0,4).join(', ')+'. Reduce the deductions first.','bad',7000);
+ const m=modal('<h2>Finalize '+esc(perLabel(run.year,run.month,run.q))+'</h2><p>Finalizing locks this payroll. Cash advances and loans are reduced by what it deducts, and it is used for reports, 13th month pay and year-end tax.</p>'
+  +(zero.length?'<div class="alert">'+zero.length+' employee'+(zero.length===1?' has':'s have')+' no pay in this cutoff ('+zero.slice(0,6).map(r=>esc(r.name)).join(', ')+(zero.length>6?'…':'')+'). They will be removed from this payroll.</div>':'')
+  +fg('Pay date','<input type="date" id="fnD" value="'+(run.payDate||cutoff(run.year,run.month,run.q)[1])+'">')+'<div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="fnGo">Finalize</button></div>',520);
+ $('#fnGo',m).onclick=()=>{run.rows=run.rows.filter(r=>r.gross);run.payDate=$('#fnD',m).value;recalcFrom(run);run.status='final';run.finalAt=new Date().toISOString();
+  // later drafts depend on this one
+  const k=pkey(run.year,run.month,run.q);DB.runs.filter(x=>x.status!=='final'&&x.year===run.year&&pkey(x.year,x.month,x.q)>k).forEach(calcRun);
+  save();m.close();after();toast('Payroll finalized. Print payslips and the register next.','ok')};
+}
+function exportRunCsv(run){
+ const cols=[['Employee','name'],['Business','business'],['Position','position'],['Pay basis','basis'],['Daily rate','daily',1],['Days worked','days',2],['Paid leave days','leave',2],['Basic pay','basic',1],['Meal allowance','allow',1],['Holiday pay','hol',1],['OT, rest day & night diff.','ot',1]]
+  .concat(itemsE().map(i=>[i.name,'i:'+i.id,1]),[['Gross pay','gross',1],['SSS','sss',1],['PhilHealth','ph',1],['Pag-IBIG','pg',1],['Withholding tax','tax',1]],DB.dtypes.map(d=>[d.name,'d:'+d.id,1]),itemsD().map(i=>[i.name,'i:'+i.id,1]),
+   [['Total deductions','totDed',1],['Net pay','net',1],['SSS employer','erSss',1],['SSS EC','erEc',1],['PhilHealth employer','ph_er',1],['Pag-IBIG employer','erPg',1],['Taxable compensation','taxable',1]]);
+ const val=(r,c)=>c[1]==='ph_er'?r.erPh:getV(r,c[1])||(typeof r[c[1]]==='string'?r[c[1]]:r[c[1]]||0);
+ const rows=run.rows.slice().sort(rowCmp).map(r=>cols.map(c=>c[2]===1?p2(val(r,c)):c[2]===2?r4(r[c[1]]||0):val(r,c)));
+ dl('payroll_'+run.year+'-'+pad(run.month)+'_'+(run.q===1?'1st':'2nd')+'.csv',toCsv([['Payroll '+perLabel(run.year,run.month,run.q)+(run.status==='final'?'':' (DRAFT)')],cols.map(c=>c[0])].concat(rows)));
+}
+
+// ---------------------------------------------------------------- time, holidays, overtime, lates and leave for one employee
+function timeModal(run,i,after){
+ const r=run.rows[i],fin=run.status==='final',mo=r.basis==='monthly',tm=clone(r.tm||{}),hs=holsIn(run.year,run.month,run.q),P=S().prem;
+ tm.hol=tm.hol||{};
+ const F=(k,l,unit,step,help)=>fg(l+' <small style="font-weight:400">('+unit+')</small>','<input type="number" min="0" step="'+(step||'0.5')+'" data-f="'+k+'" value="'+(+tm[k]||'')+'" placeholder="0"'+(fin?' disabled':'')+'>',help);
+ let h='<h2>'+esc(r.name)+'</h2><p class="note" style="margin-top:-4px">'+esc(perLabel(run.year,run.month,run.q))+' · '+(mo?'monthly-paid ₱'+n2(r.monthly)+' (factor '+r.factor+')':'daily-paid')+' · daily ₱'+n2(r.daily)+' · hourly ₱'+n2(Math.round(r.daily/8))+'</p>'
+  +'<div class="grid3">'+(mo?F('abs','Absences without pay','days','0.5','Half-month is '+r4((r.factor||261)/24)+' days'):F('days','Regular days worked','days','0.5','not counting holidays'))
+  +F('leave','Leave with pay','days','0.5',mo?'for the leave record only':'paid like a day worked')+F('late','Lates and undertime','minutes','1')
+  +F('ot','Overtime, ordinary day','hours','0.25',P.ot+'%')+F('nd','Night shift, 10 pm–6 am','hours','0.25','+'+P.nd+'%')+F('rd','Work on rest day','hours','0.25',P.rd+'%')+F('rdot','Overtime on rest day','hours','0.25',P.rdot+'%')+'</div>';
+ if(hs.length){h+='<h3 style="margin-top:14px">Holidays in this cutoff</h3><div class="hl">';
+  hs.forEach(x=>{const o=tm.hol[x.date]||{},R=x.type==='R';
+   h+='<div class="h" data-h="'+x.date+'"><div><b>'+esc(fdw(x.date))+'</b><br><small>'+esc(x.name)+' · '+(R?'regular':'special non-working')+'</small></div>'
+    +'<select data-hs'+(fin?' disabled':'')+'>'+opt(R?[['auto','Automatic: '+(mo?'covered by salary':'paid if worked in this cutoff')],['paid','Did not work – paid'+(mo?' (in salary)':' (100%)')],['worked','Worked'],['none','Not paid (absent before the holiday)']]:[['auto','Did not work – '+(mo?'no deduction':'no work, no pay')],['worked','Worked']],o.s||'auto')+'</select>'
+    +'<input type="number" min="0" max="8" step="0.25" data-hh placeholder="hrs" title="Hours worked (up to 8)" value="'+(o.h==null?'':o.h)+'"'+(fin?' disabled':'')+'><input type="number" min="0" step="0.25" data-ho placeholder="OT hrs" title="Overtime hours" value="'+(+o.ot||'')+'"'+(fin?' disabled':'')+'>'
+    +'<label style="font-size:.78rem;display:flex;gap:4px;align-items:center"><input type="checkbox" data-hr'+(o.rd?' checked':'')+(fin?' disabled':'')+'> rest day</label></div>'});
+  h+='</div><p class="note">Hours default to 8 when “Worked” is chosen. Rates: regular holiday '+P.rh+'% ('+P.rhrd+'% on a rest day), overtime '+P.rhot+'%; special day '+P.sp+'% ('+P.sprd+'% on a rest day), overtime '+P.spot+'%.'+(mo?' For monthly-paid employees only the premium above 100% is added, because the monthly salary already pays for the day.':'')+'</p>'}
+ h+='<div class="out" id="tmOut"></div><details style="margin-top:10px"><summary>How it is computed</summary><div id="tmLines" class="note" style="margin-top:6px"></div></details>'
+  +'<div class="acts">'+(fin?'':'<button class="btn d" id="tmRm" style="margin-right:auto">Remove from this payroll</button>')+'<button class="btn o" data-x>'+(fin?'Close':'Cancel')+'</button>'+(fin?'':'<button class="btn" id="tmGo">Apply</button>')+'</div>';
+ const m=modal(h,760);
+ const read=()=>{const o={hol:{}};$$('[data-f]',m).forEach(el=>{const v=Math.max(0,parseFloat(el.value)||0);if(v)o[el.dataset.f]=v});if(!mo&&o.days==null)o.days=0;if(mo&&o.abs==null)o.abs=0;
+  $$('[data-h]',m).forEach(d=>{const s=$('[data-hs]',d).value,hh=$('[data-hh]',d).value,ot=+$('[data-ho]',d).value||0,rd=$('[data-hr]',d).checked;if(s==='auto'&&!ot&&!rd&&hh==='')return;
+   const x={s:s==='auto'?undefined:s};if(hh!=='')x.h=Math.min(8,Math.max(0,+hh));if(ot)x.ot=ot;if(rd)x.rd=true;if(s==='auto'&&(ot||hh!==''))x.s='worked';o.hol[d.dataset.h]=x});return o};
+ const paint=()=>{const t=timeCalc(Object.assign({},r,{tm:read()}),run);
+  $('#tmOut',m).innerHTML='<div><span>Days worked</span><b>'+r4(t.days)+'</b></div><div><span>Basic pay</span><b>₱'+n2(t.basic)+'</b></div><div><span>Holiday pay</span><b>₱'+n2(t.hol)+'</b></div><div><span>OT, rest day & night diff.</span><b>₱'+n2(t.ot)+'</b></div>'+(t.allow?'<div><span>Meal allowance</span><b>₱'+n2(t.allow)+'</b></div>':'')+((t.lateAmt||t.absAmt)?'<div style="background:var(--warn2)"><span>Deducted for absences / lates</span><b>₱'+n2(t.lateAmt+t.absAmt)+'</b></div>':'');
+  $('#tmLines',m).innerHTML=(mo?'Half-month salary ₱'+n2(Math.round(r.monthly/2))+(t.absAmt?' less absences ₱'+n2(t.absAmt):'')+(t.lateAmt?' less lates ₱'+n2(t.lateAmt):''):'Days '+r4(t.days)+' × ₱'+n2(r.daily)+(t.lateAmt?' (after lates of ₱'+n2(t.lateAmt)+')':''))+'<br>'
+   +(t.lines.map(x=>esc(x.label)+': '+r4(x.hrs)+' h × ₱'+n2(r.daily/8)+' × '+x.pct+'% = ₱'+n2(x.amt)).join('<br>')||'No holiday or overtime pay.')};
+ $$('input,select',m).forEach(el=>{el.addEventListener('input',paint);el.addEventListener('change',paint)});paint();
+ if(fin)return;
+ $('#tmGo',m).onclick=()=>{const o=read();if(!mo&&o.days+(o.leave||0)>16)return toast('Days worked and leave cannot be more than 16 in one cutoff.','bad');
+  r.tm=o;delete r.man.hol;delete r.man.ot;delete r.man.allow;calcRow(run,r);save();m.close();after();toast('Updated '+r.name+'.','ok')};
+ $('#tmRm',m).onclick=async()=>{if(!(await confirmBox('Remove '+esc(r.name)+' from this payroll?','Remove',1)))return;run.rows.splice(i,1);save();m.close();after()};
+}
+
+
+// =====================================================================================
+// Loans & Advances
+// =====================================================================================
+let lnF={emp:'ALL',type:'ALL',show:'open'};
+const dtName=id=>(DB.dtypes.find(d=>d.id===id)||{name:id}).name;
+PAGES.loans={title:'Loans & Advances',render(v){
+ const emps=DB.employees.slice().sort(empCmp);
+ v.innerHTML='<div class="card"><p class="note" style="margin-top:0">Record cash advances, store credit, SSS and Pag-IBIG loans and other amounts to collect through payroll. Each new payroll deducts the installment (or the whole balance when no installment is set) until the balance is zero. Change the deduction in the payroll itself whenever needed.</p>'
+  +'<div class="row">'+fg('Employee','<select id="lE">'+opt([['ALL','All employees']].concat(emps.map(e=>[e.id,fullName(e)])),lnF.emp)+'</select>')
+  +fg('Type','<select id="lT">'+opt([['ALL','All types']].concat(DB.dtypes.map(d=>[d.id,d.name])),lnF.type)+'</select>')
+  +fg('Show','<select id="lS">'+opt([['open','With a balance'],['all','All']],lnF.show)+'</select>')+'<span class="sp"></span><button class="btn o" id="lCsv">Export CSV</button><button class="btn" id="lAdd">+ Record a cash advance / loan</button></div></div>'
+  +'<h2>Balances</h2><div id="lBal"></div><h2 style="margin-top:18px">Records</h2><div id="lRec"></div>';
+ const paint=()=>{
+  const keys=new Map();DB.ledger.forEach(l=>{if((lnF.emp!=='ALL'&&l.empId!==lnF.emp)||(lnF.type!=='ALL'&&l.type!==lnF.type))return;keys.set(l.empId+'|'+l.type,{empId:l.empId,type:l.type})});
+  const B=[...keys.values()].map(k=>{const e=empById(k.empId)||{last:'(deleted)',first:''};let c=0;DB.ledger.forEach(l=>{if(l.empId===k.empId&&l.type===k.type)c+=l.amount});const d=ledgerDeducted(k.empId,k.type);return{...k,name:fullName(e),business:e.business,type:dtName(k.type),charged:c,deducted:d,bal:c-d}}).filter(x=>lnF.show==='all'||x.bal>0).sort((a,b)=>cmp(a.name,b.name)||cmp(a.type,b.type));
+  const T=rptTable({cols:[{h:'Employee',k:'name'},{h:'Business',k:'business'},{h:'Type',k:'type'},{h:'Total charged',k:'charged',n:1},{h:'Deducted in payroll',k:'deducted',n:1},{h:'Balance',k:'bal',n:1}],rows:B,empty:'No balances.'});
+  $('#lBal').innerHTML=T.screen;
+  const R=DB.ledger.filter(l=>(lnF.emp==='ALL'||l.empId===lnF.emp)&&(lnF.type==='ALL'||l.type===lnF.type)).sort((a,b)=>cmp(b.date,a.date));
+  $('#lRec').innerHTML='<div class="tw"><table class="t"><thead><tr><th>Date</th><th>Employee</th><th>Type</th><th class="n">Amount</th><th class="n">Per cutoff</th><th>Start deducting</th><th>Note</th><th></th></tr></thead><tbody>'
+   +(R.map(l=>{const e=empById(l.empId);return '<tr><td>'+esc(fd(l.date))+'</td><td>'+esc(e?fullName(e):'(deleted)')+'</td><td>'+esc(dtName(l.type))+'</td><td class="n">'+n2(l.amount)+'</td><td class="n">'+(l.inst?n2(l.inst):'whole balance')+'</td><td>'+esc(l.start?fd(l.start):'next payroll')+'</td><td class="wrap">'+esc(l.note)+'</td><td><button class="btn o s" data-le="'+l.id+'">Edit</button></td></tr>'}).join('')||'<tr><td colspan="8" class="empty">No records yet.</td></tr>')+'</tbody></table></div>';
+  $$('[data-le]').forEach(b=>b.onclick=()=>ledgerForm(b.dataset.le,paint));
+  $('#lCsv').onclick=()=>dl('loans_advances_'+today()+'.csv',T.csv())};
+ $('#lE').onchange=e=>{lnF.emp=e.target.value;paint()};$('#lT').onchange=e=>{lnF.type=e.target.value;paint()};$('#lS').onchange=e=>{lnF.show=e.target.value;paint()};
+ $('#lAdd').onclick=()=>ledgerForm(null,paint);paint();
+}};
+function ledgerForm(id,after){
+ const l=id?DB.ledger.find(x=>x.id===id):null,v=l||{empId:lnF.emp!=='ALL'?lnF.emp:'',type:lnF.type!=='ALL'?lnF.type:DB.dtypes[0].id,date:today(),amount:0,inst:0,note:''};
+ const emps=DB.employees.filter(e=>e.active!==false||e.id===v.empId).sort(empCmp);
+ if(!emps.length)return toast('Add employees first.','bad');
+ const m=modal('<h2>'+(l?'Edit record':'Record a cash advance or loan')+'</h2><div class="grid2">'
+  +fg('Employee *','<select id="lfE">'+opt(emps.map(e=>[e.id,fullName(e)+' – '+e.business]),v.empId)+'</select>')+fg('Type *','<select id="lfT">'+opt(DB.dtypes.map(d=>[d.id,d.name]),v.type)+'</select>','Add types in Settings › Deduction types')
+  +fg('Date','<input type="date" id="lfD" value="'+esc(v.date)+'">')+fg('Amount (₱) *','<input type="number" step="0.01" min="0" id="lfA" value="'+pe(v.amount)+'">','Total to collect, e.g. the cash advance or loan amount')
+  +fg('Deduct per cutoff (₱)','<input type="number" step="0.01" min="0" id="lfI" value="'+pe(v.inst)+'">','Leave blank to deduct the whole amount in the next payroll')
+  +fg('Start deducting on','<input type="date" id="lfS" value="'+esc(v.start||'')+'">','Optional')+'</div>'+fg('Note','<input id="lfN" value="'+esc(v.note)+'" placeholder="e.g. loan no., reason">')
+  +'<div id="lfInfo" class="note"></div><div class="acts">'+(l?'<button class="btn d" id="lfDel" style="margin-right:auto">Delete</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="lfGo">Save</button></div>',640);
+ const info=()=>{const b=ledgerBal($('#lfE',m).value,$('#lfT',m).value);$('#lfInfo',m).textContent='Current balance of this type for this employee: ₱'+n2(b)+(l?' (including this record)':'')};
+ $('#lfE',m).onchange=info;$('#lfT',m).onchange=info;info();
+ $('#lfGo',m).onclick=()=>{const o={empId:$('#lfE',m).value,type:$('#lfT',m).value,date:$('#lfD',m).value||today(),amount:c100($('#lfA',m).value),inst:c100($('#lfI',m).value),start:$('#lfS',m).value,note:$('#lfN',m).value.trim().slice(0,200)};
+  if(o.amount<=0)return toast('Enter the amount.','bad');if(o.inst>o.amount)return toast('The amount per cutoff is more than the total.','bad');
+  if(l)Object.assign(l,o);else DB.ledger.push(Object.assign({id:'l'+uid()},o));save();m.close();after();toast('Saved. Draft payrolls pick it up with “Refresh loan deductions”; new payrolls include it automatically.','ok',5000)};
+ const d=$('#lfDel',m);if(d)d.onclick=async()=>{if(!(await confirmBox('Delete this record? Deductions already made in payroll stay in those payrolls.','Delete',1)))return;DB.ledger=DB.ledger.filter(x=>x!==l);save();m.close();after()};
+}
+
+// =====================================================================================
+// Payslips and payroll register
+// =====================================================================================
+function runPicker(sel,extra){
+ const runs=DB.runs.slice().sort((a,b)=>pkey(b.year,b.month,b.q)-pkey(a.year,a.month,a.q));
+ return fg('Payroll','<select id="'+sel+'">'+opt(runs.map(r=>[r.id,perLabel(r.year,r.month,r.q)+(r.status==='final'?'':' (draft)')]))+'</select>')+(extra||'')}
+function slipHtml(run,r){
+ const L=(l,v,sub)=>v?'<tr><td>'+l+(sub?'<small>'+sub+'</small>':'')+'</td><td class="r">'+n2(v)+'</td></tr>':'';
+ const per=perLabel(run.year,run.month,run.q),mo=r.basis==='monthly';
+ const hl=(r.lines||[]).filter(x=>x.k==='hol').map(x=>esc(x.label)).join('; '),ol=(r.lines||[]).filter(x=>x.k==='ot').map(x=>esc(x.label)+' '+r4(x.hrs)+'h').join('; ');
+ let earn=L('Basic pay',r.basic,mo?'half-month salary'+(r.absAmt?' less absences '+n2(r.absAmt):'')+(r.lateAmt?' less lates '+n2(r.lateAmt):''):fN(r.days)+' day(s) × '+n2(r.daily)+(r.lateAmt?' (after lates)':''))
+  +L('Meal allowance',r.allow,r.allowDays&&r.allowance?fN(r.allowDays)+' day(s) × '+n2(r.allowance):'')+L('Holiday pay',r.hol,hl)+L('OT, rest day & night diff.',r.ot,ol);
+ itemsE().concat(DB.items.filter(i=>i.kind!=='D'&&i.active===false)).forEach(it=>earn+=L(esc(it.name),(r.items||{})[it.id]||0));
+ let ded=L('SSS',r.sss)+L('PhilHealth',r.ph)+L('Pag-IBIG',r.pg)+(r.tax?'<tr><td>Withholding tax'+(r.annual?'<small>year-end adjustment</small>':'')+'</td><td class="r">'+n2(r.tax)+'</td></tr>':'');
+ DB.dtypes.forEach(d=>{const v=(r.ded||{})[d.id]||0;if(!v)return;const bal=ledgerBalAfter(r.empId,d.id,run);ded+=L(esc(d.name),v,'balance after: '+n2(bal))});
+ DB.items.filter(i=>i.kind==='D').forEach(it=>ded+=L(esc(it.name),(r.items||{})[it.id]||0));
+ return '<div class="slip"><div class="bz">'+esc(r.business)+'</div><div class="tl">PAYSLIP</div><div class="pr">'+esc(per)+'</div>'
+  +'<table class="info"><tr><td>Employee</td><td><b>'+esc(r.name)+'</b></td></tr><tr><td>Position</td><td>'+(esc(r.position)||'–')+'</td></tr><tr><td>Rate</td><td>'+(mo?'₱'+n2(r.monthly)+' a month':'₱'+n2(r.daily)+' a day')+(r.allowance?' + ₱'+n2(r.allowance)+' meal allowance a day':'')+'</td></tr>'+(r.leave?'<tr><td>Leave</td><td>'+fN(r.leave)+' day(s) with pay</td></tr>':'')+'</table>'
+  +'<div class="two"><div class="box"><h4>EARNINGS</h4><table>'+(earn||'<tr><td>–</td></tr>')+'<tr class="tot"><td>Gross pay</td><td class="r">'+n2(r.gross)+'</td></tr></table></div>'
+  +'<div class="box"><h4>DEDUCTIONS</h4><table>'+(ded||'<tr><td>None</td></tr>')+'<tr class="tot"><td>Total deductions</td><td class="r">'+n2(r.totDed)+'</td></tr></table></div></div>'
+  +'<div class="net"><span>NET PAY</span><b>₱ '+n2(r.net)+'</b></div><div class="ssig"><span>Employee signature</span><span>Date received</span></div></div>';
+}
+// balance after this payroll: charges up to now less deductions in this and earlier payrolls
+function ledgerBalAfter(empId,type,run){const k=pkey(run.year,run.month,run.q);let c=0,d=0;DB.ledger.forEach(l=>{if(l.empId===empId&&l.type===type)c+=l.amount});DB.runs.forEach(x=>{if(pkey(x.year,x.month,x.q)>k)return;const r=x.rows.find(y=>y.empId===empId);if(r)d+=(r.ded||{})[type]||0});return c-d}
+PAGES.slips={title:'Payslips',render(v,a){
+ if(!DB.runs.length){v.innerHTML='<div class="card empty">No payroll yet. Create one in <a href="#run">Payroll Run</a>.</div>';return}
+ v.innerHTML='<div class="card"><div class="row">'+runPicker('sR')+fg('Business','<select id="sB"></select>')+fg('Employee','<select id="sE"></select>')+fg('Layout','<select id="sL">'+opt([['4','4 per A4 page'],['1','1 per page']],'4')+'</select>')+'<span class="sp"></span><button class="btn" id="sP">Print / Save as PDF</button></div><p class="note" id="sInfo"></p></div><div id="sPv"></div>';
+ if(a&&DB.runs.some(r=>r.id===a))$('#sR').value=a;
+ const fill=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),bz=[...new Set(run.rows.map(r=>r.business))].sort(cmp),cur=$('#sB').value;
+  $('#sB').innerHTML=opt([['ALL','All']].concat(bz),bz.includes(cur)?cur:'ALL');fillE()};
+ const fillE=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,L=run.rows.filter(r=>b==='ALL'||r.business===b).sort(rowCmp);$('#sE').innerHTML=opt([['ALL','All ('+L.length+')']].concat(L.map(r=>[r.empId,r.name])));paint()};
+ const html=()=>{const run=DB.runs.find(r=>r.id===$('#sR').value),b=$('#sB').value,e=$('#sE').value,one=$('#sL').value==='1';
+  const L=run.rows.filter(r=>(b==='ALL'||r.business===b)&&(e==='ALL'||r.empId===e)).sort(rowCmp);let out='';const n=one?1:4;
+  for(let i=0;i<L.length;i+=n)out+='<div class="sheet'+(one?' one':'')+'">'+L.slice(i,i+n).map(r=>slipHtml(run,r)).join('')+'</div>';return{out,run,count:L.length}};
+ const paint=()=>{const x=html();$('#sInfo').innerHTML=x.count+' payslip'+(x.count===1?'':'s')+(x.run.status==='final'?'':' · <span class="chip warn">this payroll is still a draft</span>');showPreview($('#sPv'),x.out||'<div class="page">No payslips.</div>',false,'Payslips')};
+ $('#sR').onchange=fill;$('#sB').onchange=fillE;$('#sE').onchange=paint;$('#sL').onchange=paint;
+ $('#sP').onclick=()=>{const x=html();if(!x.count)return toast('No payslips to print.','bad');printHtml(x.out,false,'Payslips '+perLabel(x.run.year,x.run.month,x.run.q))};fill();
+}};
+function regHtml(run,biz){
+ const rows=run.rows.filter(r=>biz==='ALL'||r.business===biz);
+ const dCols=DB.dtypes.filter(d=>rows.some(r=>(r.ded||{})[d.id])),eI=DB.items.filter(i=>i.kind!=='D'&&rows.some(r=>(r.items||{})[i.id])),dI=DB.items.filter(i=>i.kind==='D'&&rows.some(r=>(r.items||{})[i.id]));
+ const cols=[{h:'No.',k:'no'},{h:'Employee',k:'name'},{h:'Rate',k:r=>r.basis==='monthly'?r.monthly:r.daily,n:1,sumNo:1},{h:'Days',k:'days',d:1},{h:'Basic pay',k:'basic',n:1},{h:'Meal allow.',k:'allow',n:1},{h:'Holiday pay',k:'hol',n:1},{h:'OT & premium',k:'ot',n:1}]
+  .concat(eI.map(i=>({h:i.name,k:r=>(r.items||{})[i.id]||0,n:1})),[{h:'Gross pay',k:'gross',n:1},{h:'SSS',k:'sss',n:1},{h:'PhilHealth',k:'ph',n:1},{h:'Pag-IBIG',k:'pg',n:1},{h:'Tax',k:'tax',n:1}],
+   dCols.map(d=>({h:d.name,k:r=>(r.ded||{})[d.id]||0,n:1})),dI.map(i=>({h:i.name,k:r=>(r.items||{})[i.id]||0,n:1})),[{h:'Total deductions',k:'totDed',n:1},{h:'Net pay',k:'net',n:1},{h:'Signature',k:()=>''}]);
+ const sorted=rows.slice().sort(rowCmp).map((r,i)=>Object.assign({no:i+1},r));
+ const T=rptTable({cols,rows:sorted,groupBy:'business',labelCol:1});
+ return{print:hd(coName(biz),'PAYROLL',perLabel(run.year,run.month,run.q)+(run.status==='final'?'':' – DRAFT'))+T.print.replace(/<td class="">(<\/td><\/tr>)/g,'<td class="sg">$1')+'<div class="sigs"><span>Prepared by</span><span>Checked by</span><span>Approved by</span></div>',csv:T.csv,count:rows.length};
+}
+PAGES.reg={title:'Payroll Register',render(v,a){
+ if(!DB.runs.length){v.innerHTML='<div class="card empty">No payroll yet. Create one in <a href="#run">Payroll Run</a>.</div>';return}
+ v.innerHTML='<div class="card"><div class="row">'+runPicker('gR')+fg('Business','<select id="gB"></select>')+'<span class="sp"></span><button class="btn o" id="gC">Download CSV (Excel)</button><button class="btn" id="gP">Print / Save as PDF</button></div><p class="note">A signing sheet on A4 landscape, grouped by business with subtotals.</p></div><div id="gPv"></div>';
+ if(a&&DB.runs.some(r=>r.id===a))$('#gR').value=a;
+ const run=()=>DB.runs.find(r=>r.id===$('#gR').value);
+ const fill=()=>{const bz=[...new Set(run().rows.map(r=>r.business))].sort(cmp);$('#gB').innerHTML=opt([['ALL','All']].concat(bz));paint()};
+ const paint=()=>{const x=regHtml(run(),$('#gB').value);showPreview($('#gPv'),'<div class="page">'+x.print+'</div>',true,'Payroll register')};
+ $('#gR').onchange=fill;$('#gB').onchange=paint;
+ $('#gP').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value);printHtml('<div class="page" style="padding:0">'+x.print+'</div>',true,'Payroll '+perLabel(r.year,r.month,r.q))};
+ $('#gC').onclick=()=>{const r=run(),x=regHtml(r,$('#gB').value);dl('payroll_register_'+r.year+'-'+pad(r.month)+'_'+(r.q===1?'1st':'2nd')+'.csv',x.csv())};fill();
+}};
+
+
+// =====================================================================================
+// Reports
+// =====================================================================================
+const REPS=[['sum','Payroll Summary'],['contrib','SSS, PhilHealth & Pag-IBIG'],['wtax','Withholding Tax (1601-C)'],['m13','13th Month Pay'],['annual','Annual Tax, BIR 2316 & Alphalist'],['emp','Employee Earnings Record'],['loanrep','Loan & Advance Deductions'],['leave','Leave Record'],['cost','Labor Cost']];
+let rpF={y:new Date().getFullYear(),m:new Date().getMonth()+1,m1:1,m2:12,biz:'ALL',emp:'',ag:'ALL',by:'emp'};
+const runsIn=(y,m1,m2)=>DB.runs.filter(r=>r.year===y&&r.month>=m1&&r.month<=m2).sort((a,b)=>pkey(a.year,a.month,a.q)-pkey(b.year,b.month,b.q));
+const anyDraft=L=>L.some(r=>r.status!=='final');
+function rowsOf(runs,biz){const out=[];runs.forEach(run=>run.rows.forEach(r=>{if(biz==='ALL'||r.business===biz)out.push({run,r})}));return out}
+function empMeta(id,r){const e=empById(id)||{};return{name:r?r.name:fullName(e),business:r?r.business:e.business,tin:e.tin||'',sssNo:e.sss||'',phNo:e.ph||'',hdmfNo:e.hdmf||'',position:e.position||'',hired:e.hired||'',separated:e.separated||'',birth:e.birth||'',address:e.address||'',mwe:!!e.mwe}}
+const sumEmp=(L,fields)=>{const m=new Map();L.forEach(({run,r})=>{let o=m.get(r.empId);if(!o){o=Object.assign({empId:r.empId,periods:0},empMeta(r.empId,r));fields.forEach(f=>o[f]=0);m.set(r.empId,o)}o.periods++;o.name=r.name;o.business=r.business;fields.forEach(f=>o[f]+=typeof f==='string'&&f in FX?FX[f](r):(r[f]||0))});return[...m.values()].sort(rowCmp)};
+const FX={xe:r=>earn(r).xe,xd:r=>earn(r).xd+earn(r).dt,er:r=>(r.erSss||0)+(r.erEc||0)+(r.erPh||0)+(r.erPg||0),sssT:r=>r.sss+(r.erSss||0)+(r.erEc||0),phT:r=>r.ph+(r.erPh||0),pgT:r=>r.pg+(r.erPg||0),
+ mweB:r=>r.mweEx?r.basic:0,mweO:r=>r.mweEx?r.hol+r.ot:0,benIn:r=>(r.ben||0)-(r.benEx||0),contN:r=>r.mweEx?0:r.sss+r.ph+r.pg,otherNT:r=>(r.nItems||0)+(r.mealNT||0),contAll:r=>r.sss+r.ph+r.pg,m13:r=>(r.items||{}).m13||0,
+ sssB:r=>sssBase(r),phB:r=>phBase(r)};
+PAGES.rep={title:'Reports',render(v,a){
+ const id=REPS.some(x=>x[0]===a)?a:'sum';
+ v.innerHTML='<div class="tabs">'+REPS.map(x=>'<a href="#rep/'+x[0]+'" class="'+(x[0]===id?'on':'')+'">'+x[1]+'</a>').join('')+'</div><div class="card"><div class="row" id="rpF"></div><p class="note" id="rpN" style="margin-bottom:0"></p></div><div id="rpOut"></div>';
+ REP[id]();
+}};
+const yrOpts=()=>{const ys=[...new Set(DB.runs.map(r=>r.year).concat([new Date().getFullYear()]))].sort();return ys};
+function filt(parts,run){
+ const P={y:fg('Year','<select id="fY">'+opt(yrOpts(),rpF.y)+'</select>'),m:fg('Month','<select id="fM">'+opt(MN.map((n,i)=>[i+1,n]),rpF.m)+'</select>'),
+  range:fg('From','<select id="fM1">'+opt(MN.map((n,i)=>[i+1,n]),rpF.m1)+'</select>')+fg('To','<select id="fM2">'+opt(MN.map((n,i)=>[i+1,n]),rpF.m2)+'</select>'),
+  biz:fg('Business','<select id="fB">'+opt([['ALL','All businesses']].concat(bizList()),rpF.biz)+'</select>'),
+  emp:fg('Employee','<select id="fE">'+opt(DB.employees.slice().sort(empCmp).map(e=>[e.id,fullName(e)+' – '+e.business]),rpF.emp)+'</select>'),
+  ag:fg('Agency','<select id="fA">'+opt([['ALL','All three'],['sss','SSS'],['ph','PhilHealth'],['pg','Pag-IBIG']],rpF.ag)+'</select>'),
+  by:fg('Show','<select id="fBy">'+opt([['emp','Per employee'],['per','Per payroll period']],rpF.by)+'</select>')};
+ $('#rpF').innerHTML=parts.map(p=>P[p]).join('')+'<span class="sp"></span><button class="btn o" id="rpCsv">Download CSV (Excel)</button><button class="btn" id="rpPr">Print / Save as PDF</button>';
+ const bind=(sel,k,num)=>{const el=$(sel);if(el)el.onchange=()=>{rpF[k]=num?+el.value:el.value;run()}};
+ bind('#fY','y',1);bind('#fM','m',1);bind('#fM1','m1',1);bind('#fM2','m2',1);bind('#fB','biz');bind('#fE','emp');bind('#fA','ag');bind('#fBy','by');
+ if($('#fE')&&!rpF.emp&&DB.employees.length)rpF.emp=$('#fE').value;
+}
+function outReport(o){
+ // o: {title, sub, tables:[{h, def}], land, note, extra}
+ const blocks=o.tables.map(t=>({h:t.h,T:rptTable(t.def)}));
+ $('#rpOut').innerHTML=(o.warn?'<div class="alert">'+o.warn+'</div>':'')+(o.top||'')+blocks.map(b=>(b.h?'<h2 style="margin-top:14px">'+esc(b.h)+'</h2>':'')+b.T.screen).join('')+(o.note?'<p class="note">'+o.note+'</p>':'')+(o.extra||'');
+ const co=coName(rpF.biz);
+ $('#rpPr').onclick=()=>printHtml('<div class="page"'+(o.land?' style="padding:0"':'')+'>'+hd(co,o.title,o.sub)+(o.ptop||'')+blocks.map(b=>(b.h?'<h3 style="font-size:9.5pt;margin:4mm 0 1.5mm">'+esc(b.h)+'</h3>':'')+b.T.print).join('')+(o.pnote?'<p class="note">'+o.pnote+'</p>':'')+(o.sig===false?'':'<div class="sigs"><span>Prepared by</span><span>Checked by</span><span>Approved by</span></div>')+'</div>',o.land!==false,o.title);
+ $('#rpCsv').onclick=()=>{const parts=blocks.map(b=>(b.h?'"'+b.h.replace(/"/g,'""')+'"\r\n':'')+b.T.csv().replace(/^﻿/,''));dl(slug(co+' '+o.title+' '+(o.file||''))+'.csv','﻿"'+o.title+'"\r\n"'+(o.sub||'')+'"\r\n'+parts.join('\r\n\r\n'))};
+ return blocks;
+}
+const draftWarn=L=>anyDraft(L)?'Includes payroll that is still a draft ('+L.filter(r=>r.status!=='final').map(r=>perShort(r.year,r.month,r.q)).join(', ')+'). Finalize it before filing or remitting.':'';
+const bizSub=()=>rpF.biz==='ALL'?'All businesses':rpF.biz;
+const REP={
+ sum(){const run=()=>{const L=runsIn(rpF.y,rpF.m1,rpF.m2),R=rowsOf(L,rpF.biz);
+   const per=MN[rpF.m1-1]+(rpF.m2!==rpF.m1?' – '+MN[rpF.m2-1]:'')+' '+rpF.y;
+   const base=[{h:'Days',k:'days',d:1},{h:'Basic pay',k:'basic',n:1},{h:'Meal allow.',k:'allow',n:1},{h:'Holiday pay',k:'hol',n:1},{h:'OT & premium',k:'ot',n:1},{h:'Other earnings',k:'xe',n:1},{h:'Gross pay',k:'gross',n:1},{h:'SSS',k:'sss',n:1},{h:'PhilHealth',k:'ph',n:1},{h:'Pag-IBIG',k:'pg',n:1},{h:'Tax',k:'tax',n:1},{h:'Loans & other ded.',k:'xd',n:1},{h:'Total deductions',k:'totDed',n:1},{h:'Net pay',k:'net',n:1}];
+   let def;
+   if(rpF.by==='per'){const rows=L.map(run=>{const o={per:perShort(run.year,run.month,run.q)+(run.status==='final'?'':' (draft)'),count:0};base.forEach(c=>o[c.k]=0);run.rows.forEach(r=>{if(rpF.biz!=='ALL'&&r.business!==rpF.biz)return;o.count++;base.forEach(c=>o[c.k]+=c.k in FX?FX[c.k](r):(r[c.k]||0))});return o}).filter(o=>o.count);
+    def={cols:[{h:'Payroll period',k:'per'},{h:'Employees',k:'count'}].concat(base),rows,empty:'No payroll in this range.'}}
+   else def={cols:[{h:'Employee',k:'name'},{h:'Business',k:'business'},{h:'Cutoffs',k:'periods'}].concat(base),rows:sumEmp(R,base.map(c=>c.k)),groupBy:'business',empty:'No payroll in this range.'};
+   $('#rpN').textContent='Totals of saved payroll from '+per+'.';
+   outReport({title:'PAYROLL SUMMARY',sub:per+' · '+bizSub(),tables:[{def}],warn:draftWarn(L),file:per})};
+  filt(['y','range','biz','by'],run);run()},
+ contrib(){const run=()=>{const L=runsIn(rpF.y,rpF.m,rpF.m),R=rowsOf(L,rpF.biz),per=MN[rpF.m-1]+' '+rpF.y,bi=bizInfo(rpF.biz);
+   const E=sumEmp(R,['sssB','phB','sss','erSss','erEc','sssT','ph','erPh','phT','pg','erPg','pgT']);
+   const T=[];
+   if(rpF.ag==='ALL'||rpF.ag==='sss')T.push({h:'SSS'+(bi.sss?' – Employer no. '+bi.sss:''),def:{cols:[{h:'Employee',k:'name'},{h:'SSS no.',k:'sssNo'},{h:'Compensation',k:'sssB',n:1},{h:'Employee share',k:'sss',n:1},{h:'Employer share',k:'erSss',n:1},{h:'EC',k:'erEc',n:1},{h:'Total',k:'sssT',n:1}],rows:E.filter(x=>x.sssT),groupBy:rpF.biz==='ALL'?'business':null,empty:'No SSS contributions this month.'}});
+   if(rpF.ag==='ALL'||rpF.ag==='ph')T.push({h:'PhilHealth'+(bi.ph?' – Employer no. '+bi.ph:''),def:{cols:[{h:'Employee',k:'name'},{h:'PhilHealth no.',k:'phNo'},{h:'Basic salary',k:'phB',n:1},{h:'Employee share',k:'ph',n:1},{h:'Employer share',k:'erPh',n:1},{h:'Total',k:'phT',n:1}],rows:E.filter(x=>x.phT),groupBy:rpF.biz==='ALL'?'business':null,empty:'No PhilHealth contributions this month.'}});
+   if(rpF.ag==='ALL'||rpF.ag==='pg')T.push({h:'Pag-IBIG'+(bi.hdmf?' – Employer no. '+bi.hdmf:''),def:{cols:[{h:'Employee',k:'name'},{h:'Pag-IBIG no.',k:'hdmfNo'},{h:'Basic salary',k:'phB',n:1},{h:'Employee share',k:'pg',n:1},{h:'Employer share',k:'erPg',n:1},{h:'Total',k:'pgT',n:1}],rows:E.filter(x=>x.pgT),groupBy:rpF.biz==='ALL'?'business':null,empty:'No Pag-IBIG contributions this month.'}});
+   const miss=E.filter(x=>(x.sssT&&!x.sssNo)||(x.phT&&!x.phNo)||(x.pgT&&!x.hdmfNo)).map(x=>x.name);
+   $('#rpN').innerHTML='Contributions deducted in the payrolls of '+per+' (both cutoffs). Use these figures for My.SSS, PhilHealth EPRS and Pag-IBIG Virtual.'+(miss.length?' <span class="chip warn">Missing ID numbers: '+esc(miss.slice(0,6).join(', '))+(miss.length>6?'…':'')+'</span>':'');
+   outReport({title:'MONTHLY CONTRIBUTIONS',sub:per+' · '+bizSub(),tables:T,warn:draftWarn(L),file:per})};
+  filt(['y','m','biz','ag'],run);run()},
+ wtax(){const run=()=>{const L=runsIn(rpF.y,rpF.m,rpF.m),R=rowsOf(L,rpF.biz),per=MN[rpF.m-1]+' '+rpF.y,bi=bizInfo(rpF.biz);
+   const E=sumEmp(R,['gross','mweB','mweO','benIn','dmIn','contN','otherNT','taxable','tax']);E.forEach(x=>x.ntx=x.mweB+x.mweO+x.benIn+x.dmIn+x.contN+x.otherNT);
+   const t=k=>E.reduce((s,x)=>s+x[k],0);
+   const lines=[['14','Total amount of compensation',t('gross')],['15','Statutory minimum wage (minimum wage earners)',t('mweB')],['16','Holiday pay, overtime pay, night shift differential and hazard pay (minimum wage earners)',t('mweO')],['17','13th month pay and other benefits',t('benIn')],['18','De minimis benefits',t('dmIn')],['19','SSS, GSIS, PHIC, HDMF mandatory contributions and union dues (employee share)',t('contN')],['20','Other non-taxable compensation',t('otherNT')],['21','Total non-taxable compensation',t('ntx')],['22','Total taxable compensation',t('gross')-t('ntx')],['25','Total taxes withheld',t('tax')]];
+   const diff=t('gross')-t('ntx')-t('taxable');
+   const box='<table class="t" style="max-width:760px"><tbody>'+lines.map(l=>'<tr'+(['21','22','25'].includes(l[0])?' class="g"':'')+'><td style="width:40px">'+l[0]+'</td><td class="wrap">'+esc(l[1])+'</td><td class="n">'+n2(l[2])+'</td></tr>').join('')+'</tbody></table>';
+   $('#rpN').innerHTML='Figures for BIR Form 1601-C for '+per+(bi.tin?' · TIN '+esc(bi.tin):'')+'. File and pay through eBIRForms or eFPS.'+(diff?' <span class="chip bad">Check: differs by '+n2(diff)+'</span>':'');
+   outReport({title:'WITHHOLDING TAX ON COMPENSATION (BIR 1601-C)',sub:per+' · '+bizSub(),top:'<div class="card">'+box+'</div>',ptop:'<table class="rt" style="margin-bottom:4mm">'+lines.map(l=>'<tr><td style="width:10mm">'+l[0]+'</td><td>'+esc(l[1])+'</td><td class="r">'+n2(l[2])+'</td></tr>').join('')+'</table>',
+    tables:[{h:'Per employee',def:{cols:[{h:'Employee',k:'name'},{h:'TIN',k:'tin'},{h:'Gross compensation',k:'gross',n:1},{h:'Non-taxable',k:'ntx',n:1},{h:'Taxable',k:'taxable',n:1},{h:'Tax withheld',k:'tax',n:1}],rows:E,groupBy:rpF.biz==='ALL'?'business':null,empty:'No payroll this month.'}}],warn:draftWarn(L),file:per})};
+  filt(['y','m','biz'],run);run()},
+ m13(){const run=()=>{const L=runsIn(rpF.y,1,12),R=rowsOf(L,rpF.biz);
+   const m=new Map();R.forEach(({run,r})=>{let o=m.get(r.empId);if(!o){o=Object.assign({empId:r.empId,tot:0,paid:0},empMeta(r.empId,r));for(let i=1;i<=12;i++)o['m'+i]=0;m.set(r.empId,o)}o['m'+run.month]+=r.basic;o.tot+=r.basic;o.paid+=(r.items||{}).m13||0;o.name=r.name;o.business=r.business});
+   const op=DB.ytd[rpF.y]||{};m.forEach((o,id)=>{const x=op[id]||{};if(x.basic13){o.open=x.basic13;o.tot+=x.basic13}if(x.paid13)o.paid+=x.paid13});
+   const rows=[...m.values()].sort(rowCmp);rows.forEach(o=>{o.pay=Math.round(o.tot/12);o.bal=o.pay-o.paid});
+   const cols=[{h:'Employee',k:'name'}].concat(MN.map((n,i)=>({h:n.slice(0,3),k:'m'+(i+1),n:1})),rows.some(o=>o.open)?[{h:'Opening',k:'open',n:1}]:[],[{h:'Basic salary earned',k:'tot',n:1},{h:'13th month (÷12)',k:'pay',n:1},{h:'Already paid',k:'paid',n:1},{h:'Balance to pay',k:'bal',n:1}]);
+   const drafts=DB.runs.filter(r=>r.status!=='final').sort((a,b)=>pkey(b.year,b.month,b.q)-pkey(a.year,a.month,a.q));
+   $('#rpN').innerHTML='One-twelfth of the basic salary earned in '+rpF.y+' (PD 851): basic pay after absences and lates, without overtime, holiday pay, allowances or other pay. Pay on or before December 24. Up to ₱'+n2(S().benCap)+' a year of 13th month and other benefits is tax-free.';
+   outReport({title:'13TH MONTH PAY',sub:'Year '+rpF.y+' · '+bizSub(),tables:[{def:{cols,rows,groupBy:rpF.biz==='ALL'?'business':null,empty:'No payroll this year.'}}],warn:draftWarn(L),file:rpF.y,
+    extra:'<div class="card"><h2>Put the balance into a payroll</h2><p class="note">Fills the “13th Month Pay” column of a draft payroll with each employee’s balance to pay (employees in that payroll only). You can still change the amounts there.</p>'+(drafts.length?'<div class="row">'+fg('Draft payroll','<select id="m13R">'+opt(drafts.map(r=>[r.id,perLabel(r.year,r.month,r.q)]))+'</select>')+'<button class="btn" id="m13Go">Fill in 13th month pay</button></div>':'<p class="note">Create a draft payroll first in Payroll Run.</p>')+'</div>'});
+   const b=$('#m13Go');if(b)b.onclick=async()=>{const run=DB.runs.find(r=>r.id===$('#m13R').value);let n=0;
+    if(!(await confirmBox('Fill in 13th month pay in '+esc(perLabel(run.year,run.month,run.q))+'? Amounts already in that column are replaced.','Fill in')))return;
+    run.rows.forEach(r=>{const o=m.get(r.empId);if(!o)return;const already=o.paid-((r.items||{}).m13||0)*(run.year===rpF.y?1:0);const bal=pos(o.pay-already);if(bal){r.items.m13=bal;n++}else delete r.items.m13});
+    run.show=[...new Set((run.show||[]).concat('i:m13'))];recalcFrom(run);save();toast('13th month pay filled in for '+n+' employee'+(n===1?'':'s')+'.','ok');go('run',run.year+'-'+run.month+'-'+run.q)}};
+  filt(['y','biz'],run);run()},
+ annual(){const run=()=>{const L=runsIn(rpF.y,1,12),R=rowsOf(L,rpF.biz);
+   const E=sumEmp(R,['gross','basic','hol','ot','allow','mweB','mweO','benIn','dmIn','contN','contAll','otherNT','taxable','tax','m13','xe']);
+   const op=DB.ytd[rpF.y]||{};E.forEach(x=>{const o=op[x.empId]||{};['gross','taxable','tax','benIn','contAll'].forEach(k=>{if(o[k==='benIn'?'ben':k])x[k]+=o[k==='benIn'?'ben':k]});if(o.contAll)x.contN+=o.contAll;if(o.gross)x.otherNT+=pos((o.gross||0)-(o.taxable||0)-(o.ben||0)-(o.contAll||0))});
+   E.forEach(x=>{x.ntx=x.mweB+x.mweO+x.benIn+x.dmIn+x.contN+x.otherNT;x.due=taxYear(x.taxable);x.diff=x.tax-x.due});
+   $('#rpN').innerHTML='Annual compensation, non-taxable parts and tax for '+rpF.y+'. <b>Tax due</b> uses the graduated rates on the year’s taxable compensation; <b>over / (under)</b> is what was withheld less the tax due. Use the 2316 button for each employee’s certificate, and the CSV for the alphalist.';
+   const cols=[{h:'Employee',k:'name'},{h:'TIN',k:'tin'},{h:'Gross compensation',k:'gross',n:1},{h:'MWE basic',k:'mweB',n:1},{h:'MWE holiday/OT',k:'mweO',n:1},{h:'13th month & benefits',k:'benIn',n:1},{h:'De minimis',k:'dmIn',n:1},{h:'SSS/PHIC/HDMF',k:'contN',n:1},{h:'Other non-taxable',k:'otherNT',n:1},{h:'Total non-taxable',k:'ntx',n:1},{h:'Taxable',k:'taxable',n:1},{h:'Tax due',k:'due',n:1},{h:'Tax withheld',k:'tax',n:1},{h:'Over / (under) withheld',k:'diff',n:1}];
+   outReport({title:'ANNUAL COMPENSATION AND TAX (ALPHALIST)',sub:'Year '+rpF.y+' · '+bizSub(),tables:[{def:{cols,rows:E,groupBy:rpF.biz==='ALL'?'business':null,empty:'No payroll this year.'}}],warn:draftWarn(L),file:rpF.y,
+    extra:E.length?'<div class="card"><h2>BIR Form 2316 data</h2><p class="note">A certificate of compensation payment and tax withheld for each employee, laid out like Parts I to IV of BIR Form 2316. Copy the figures to the official form (eBIRForms or the BIR PDF) for signing.</p><div class="row">'+fg('Employee','<select id="c2E">'+opt([['ALL','All employees ('+E.length+')']].concat(E.map(x=>[x.empId,x.name])))+'</select>')+'<button class="btn" id="c2Go">Preview and print 2316</button></div><div id="c2Pv" style="margin-top:10px"></div></div>':''});
+   const b=$('#c2Go');if(b)b.onclick=()=>{const sel=$('#c2E').value,L2=E.filter(x=>sel==='ALL'||x.empId===sel);const html=L2.map(x=>c2316(x,rpF.y)).join('');showPreview($('#c2Pv'),html,false,'2316');
+    if(!$('#c2Pr')){b.insertAdjacentHTML('afterend','<button class="btn o" id="c2Pr">Print</button>')}$('#c2Pr').onclick=()=>printHtml(html,false,'BIR 2316 '+rpF.y)}};
+  filt(['y','biz'],run);run()},
+ emp(){const run=()=>{const e=empById(rpF.emp);if(!e){$('#rpOut').innerHTML='<div class="card empty">Add employees first.</div>';return}
+   const L=runsIn(rpF.y,1,12),rows=[];L.forEach(run=>{const r=run.rows.find(x=>x.empId===e.id);if(r)rows.push(Object.assign({per:perShort(run.year,run.month,run.q)+(run.status==='final'?'':' (draft)')},r,{xe:FX.xe(r),xd:FX.xd(r)}))});
+   const cols=[{h:'Payroll period',k:'per'},{h:'Days',k:'days',d:1},{h:'Leave',k:'leave',d:1},{h:'Basic pay',k:'basic',n:1},{h:'Meal allow.',k:'allow',n:1},{h:'Holiday pay',k:'hol',n:1},{h:'OT & premium',k:'ot',n:1},{h:'Other earnings',k:'xe',n:1},{h:'Gross pay',k:'gross',n:1},{h:'SSS',k:'sss',n:1},{h:'PhilHealth',k:'ph',n:1},{h:'Pag-IBIG',k:'pg',n:1},{h:'Tax',k:'tax',n:1},{h:'Loans & other ded.',k:'xd',n:1},{h:'Net pay',k:'net',n:1}];
+   $('#rpN').innerHTML=esc(fullName(e))+' · '+esc(e.business)+(e.position?' · '+esc(e.position):'')+(e.tin?' · TIN '+esc(e.tin):'')+(e.sss?' · SSS '+esc(e.sss):'');
+   outReport({title:'EMPLOYEE EARNINGS RECORD',sub:fullName(e)+' · '+rpF.y,tables:[{def:{cols,rows,empty:'No payroll for this employee in '+rpF.y+'.'}}],file:fullName(e)+' '+rpF.y,sig:false})};
+  filt(['y','emp'],run);run()},
+ loanrep(){const run=()=>{const L=runsIn(rpF.y,rpF.m1,rpF.m2),R=rowsOf(L,rpF.biz),per=MN[rpF.m1-1]+(rpF.m2!==rpF.m1?' – '+MN[rpF.m2-1]:'')+' '+rpF.y;
+   const rows=[];R.forEach(({run,r})=>DB.dtypes.forEach(d=>{const v=(r.ded||{})[d.id];if(v)rows.push({name:r.name,business:r.business,per:perShort(run.year,run.month,run.q),type:d.name,amt:v,bal:ledgerBalAfter(r.empId,d.id,run)})}));
+   $('#rpN').textContent='Cash advances, credit and loans deducted in payroll from '+per+', with the balance left after each deduction.';
+   outReport({title:'LOAN & ADVANCE DEDUCTIONS',sub:per+' · '+bizSub(),tables:[{def:{cols:[{h:'Employee',k:'name'},{h:'Payroll',k:'per'},{h:'Type',k:'type'},{h:'Deducted',k:'amt',n:1},{h:'Balance after',k:'bal',n:1,sumNo:1}],rows,groupBy:rpF.biz==='ALL'?'business':null,empty:'No deductions in this range.'}}],warn:draftWarn(L),file:per})};
+  filt(['y','range','biz'],run);run()},
+ leave(){const run=()=>{const y=rpF.y,L=runsIn(y,1,12),used=new Map();L.forEach(run=>run.rows.forEach(r=>{if(r.leave)used.set(r.empId,(used.get(r.empId)||0)+r.leave)}));
+   const rows=DB.employees.filter(e=>(rpF.biz==='ALL'||e.business===rpF.biz)&&(e.active!==false||used.has(e.id))).sort(empCmp).map(e=>{const elig=e.hired?ymd(+e.hired.slice(0,4)+1,+e.hired.slice(5,7),+e.hired.slice(8,10)):'';const ent=!e.hired||elig<=ymd(y,12,31)?(e.sil!=null?e.sil:S().silDays):0;const u=used.get(e.id)||0;return{name:fullName(e),business:e.business,hired:fd(e.hired),elig:elig?fd(elig):'',ent,used:u,bal:ent-u}});
+   $('#rpN').textContent='Service incentive leave: '+S().silDays+' days with pay a year after one year of service (Labor Code Art. 95). Leave used comes from “Leave with pay” entered with ⏱ in each payroll.';
+   outReport({title:'LEAVE RECORD',sub:'Year '+y+' · '+bizSub(),tables:[{def:{cols:[{h:'Employee',k:'name'},{h:'Date hired',k:'hired'},{h:'Eligible from',k:'elig'},{h:'Days allowed',k:'ent',d:1},{h:'Days used',k:'used',d:1},{h:'Balance',k:'bal',d:1}],rows,groupBy:rpF.biz==='ALL'?'business':null}}],file:y,land:false})};
+  filt(['y','biz'],run);run()},
+ cost(){const run=()=>{const y=rpF.y,rows=MN.map((n,i)=>{const o={mon:n,heads:new Set(),gross:0,erSss:0,erEc:0,erPh:0,erPg:0};runsIn(y,i+1,i+1).forEach(run=>run.rows.forEach(r=>{if(rpF.biz!=='ALL'&&r.business!==rpF.biz)return;o.heads.add(r.empId);o.gross+=r.gross;o.erSss+=r.erSss||0;o.erEc+=r.erEc||0;o.erPh+=r.erPh||0;o.erPg+=r.erPg||0}));o.n=o.heads.size;o.tot=o.gross+o.erSss+o.erEc+o.erPh+o.erPg;return o}).filter(o=>o.n);
+   $('#rpN').textContent='Gross pay plus employer contributions per month.';
+   outReport({title:'LABOR COST',sub:'Year '+y+' · '+bizSub(),tables:[{def:{cols:[{h:'Month',k:'mon'},{h:'Employees paid',k:'n'},{h:'Gross pay',k:'gross',n:1},{h:'SSS employer',k:'erSss',n:1},{h:'SSS EC',k:'erEc',n:1},{h:'PhilHealth employer',k:'erPh',n:1},{h:'Pag-IBIG employer',k:'erPg',n:1},{h:'Total labor cost',k:'tot',n:1}],rows,empty:'No payroll this year.'}}],file:y,land:false})};
+  filt(['y','biz'],run);run()}
+};
+function c2316(x,y){
+ const e=empById(x.empId)||{},b=bizInfo(x.business),R=(l,v,no)=>'<tr><td>'+(no?'<b>'+no+'</b> ':'')+esc(l)+'</td><td class="r">'+n2(v)+'</td></tr>';
+ const prior=(DB.ytd[y]||{})[x.empId]||{};
+ return '<div class="page cert">'+hd(b.name||x.business,'CERTIFICATE OF COMPENSATION PAYMENT / TAX WITHHELD','BIR Form 2316 data · for the year '+y)
+  +'<h3>Part I – Employee information</h3><table class="kv"><tr><td>Name</td><td>'+esc(x.name)+'</td></tr><tr><td>TIN</td><td>'+esc(e.tin||'')+'</td></tr><tr><td>Date of birth</td><td>'+esc(fd(e.birth))+'</td></tr><tr><td>Address</td><td>'+esc(e.address||'')+'</td></tr><tr><td>Period covered</td><td>'+esc(fd(e.hired&&e.hired>ymd(y,1,1)?e.hired:ymd(y,1,1)))+' to '+esc(fd(e.separated&&e.separated<ymd(y,12,31)?e.separated:ymd(y,12,31)))+'</td></tr><tr><td>Minimum wage earner</td><td>'+(x.mweB?'Yes':'No')+'</td></tr></table>'
+  +'<h3>Part II – Employer information (present)</h3><table class="kv"><tr><td>Employer</td><td>'+esc(b.name||x.business)+'</td></tr><tr><td>TIN</td><td>'+esc(b.tin||'')+'</td></tr><tr><td>Registered address</td><td>'+esc(b.address||'')+'</td></tr></table>'
+  +(prior.gross?'<h3>Part III – Previous employer / opening balances</h3><table class="kv">'+R('Gross compensation from opening balances',prior.gross)+R('Tax withheld from opening balances',prior.tax)+'</table>':'')
+  +'<h3>Part IV-A – Summary</h3><table class="kv">'+R('Gross compensation income',x.gross,19)+R('Less: total non-taxable / exempt compensation',x.ntx,20)+R('Taxable compensation income',x.taxable,21)+R('Tax due',x.due,25)+R('Amount of taxes withheld',x.tax,26)+R(x.diff>=0?'Over-withheld (refund to employee)':'Under-withheld (to collect)',Math.abs(x.diff))+'</table>'
+  +'<h3>Part IV-B – Details of compensation income</h3><table class="kv"><tr><td colspan="2"><b>A. Non-taxable / exempt compensation</b></td></tr>'+R('Basic salary of minimum wage earner',x.mweB,29)+R('Holiday, overtime and night shift pay (MWE)',x.mweO,'30–32')+R('13th month pay and other benefits',x.benIn,34)+R('De minimis benefits',x.dmIn,35)+R('SSS, GSIS, PHIC and Pag-IBIG contributions (employee share)',x.contN,36)+R('Salaries and other forms of compensation (non-taxable)',x.otherNT,37)+R('Total non-taxable / exempt compensation',x.ntx,38)
+  +'<tr><td colspan="2"><b>B. Taxable compensation</b></td></tr>'+R('Basic salary, holiday, overtime and other taxable pay (net of employee contributions)',x.taxable,'39–51')+R('Total taxable compensation',x.taxable,52)+'</table>'
+  +'<p class="note">Prepared from AJ Payroll. Copy these figures to the official BIR Form 2316 for signing by the employer and employee.</p></div>';
+}
+
+
+// =====================================================================================
+// Settings
+// =====================================================================================
+const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['data','Backup & data']];
+PAGES.set={title:'Settings',render(v,a){
+ const id=SETS.some(x=>x[0]===a)?a:'company';
+ v.innerHTML='<div class="tabs">'+SETS.map(x=>'<a href="#set/'+x[0]+'" class="'+(x[0]===id?'on':'')+'">'+x[1]+'</a>').join('')+'</div><div id="setB"></div>';
+ SET[id]($('#setB'));
+}};
+const num=(id,v,step)=>'<input type="number" id="'+id+'" step="'+(step||'any')+'" value="'+esc(v)+'">';
+const SET={
+ company(B){
+  const paint=()=>{B.innerHTML='<div class="card"><h2>Company</h2><div class="grid2">'+fg('Name shown in the app and on reports for “All businesses”','<input id="cN" value="'+esc(DB.company.name||'')+'" placeholder="e.g. GSVC Group">')+'</div></div>'
+   +'<div class="card"><div class="row mid"><h2 style="margin:0">Businesses (employers)</h2><span class="sp"></span><button class="btn" id="bAdd">+ Add business</button></div><p class="note">Each business prints its own name on payslips and registers. Its TIN and employer numbers appear on the contribution, 1601-C and 2316 reports.</p>'
+   +'<div class="tw"><table class="t"><thead><tr><th>Business</th><th>TIN</th><th>RDO</th><th>Address</th><th>SSS employer no.</th><th>PhilHealth employer no.</th><th>Pag-IBIG employer no.</th><th class="n">Employees</th><th></th></tr></thead><tbody>'
+   +(bizList().map(n=>{const b=bizInfo(n);return '<tr><td><b>'+esc(n)+'</b></td><td>'+esc(b.tin)+'</td><td>'+esc(b.rdo)+'</td><td class="wrap">'+esc(b.address)+'</td><td>'+esc(b.sss)+'</td><td>'+esc(b.ph)+'</td><td>'+esc(b.hdmf)+'</td><td class="n">'+DB.employees.filter(e=>e.business===n).length+'</td><td><button class="btn o s" data-b="'+esc(n)+'">Edit</button></td></tr>'}).join('')||'<tr><td colspan="9" class="empty">No businesses yet.</td></tr>')+'</tbody></table></div></div>';
+   $('#cN').onchange=e=>{DB.company.name=e.target.value.trim();save();brand()};
+   $('#bAdd').onclick=()=>bizForm(null,paint);$$('[data-b]',B).forEach(b=>b.onclick=()=>bizForm(b.dataset.b,paint))};paint()},
+ rules(B){const s=S();
+  B.innerHTML='<div class="card"><h2>Payroll rules</h2><div class="grid2">'
+   +fg('When to deduct SSS, PhilHealth and Pag-IBIG','<select id="sSch">'+opt([['split','Half on each cutoff'],['second','Whole month on the 2nd cutoff']],s.sched)+'</select>','Contributions are always based on the month’s total pay.')
+   +fg('Meal allowance','<select id="sMeal">'+opt([['1','Not taxable, not in the SSS base'],['0','Taxable and part of the SSS base']],s.mealNT?'1':'0')+'</select>')
+   +fg('Year-end tax','<select id="sAnn">'+opt([['1','Annualize in the December 16–31 payroll'],['0','Do not annualize (semi-monthly table only)']],s.annualize?'1':'0')+'</select>','Annualizing adjusts the last payroll of the year so total tax withheld equals the tax due for the year.')
+   +fg('Minimum wage (daily, ₱)','<input type="number" step="0.01" min="0" id="sMwe" value="'+pe(s.mweRate)+'">','Employees paid at or below this daily rate are minimum wage earners (basic, holiday and overtime pay not taxed). 0 = mark them one by one in Employees.')
+   +fg('Service incentive leave (days a year)','<input type="number" step="0.5" min="0" id="sSil" value="'+s.silDays+'">')
+   +fg('Tax-free ceiling for 13th month and other benefits (₱)','<input type="number" step="0.01" min="0" id="sBen" value="'+pe(s.benCap)+'">')+'</div><p class="note">Changes apply to draft payrolls when you open them. Final payrolls keep their amounts.</p></div>';
+  const bind=(id,f)=>$(id).onchange=e=>{f(e.target.value);save();toast('Saved.','ok')};
+  bind('#sSch',v=>s.sched=v);bind('#sMeal',v=>s.mealNT=v==='1');bind('#sAnn',v=>s.annualize=v==='1');bind('#sMwe',v=>s.mweRate=c100(v));bind('#sSil',v=>s.silDays=Math.max(0,+v||0));bind('#sBen',v=>s.benCap=c100(v))},
+ rates(B){const R=S().rates,P=S().prem;
+  B.innerHTML='<div class="card"><h2>Government contributions ('+esc(R.asOf||'')+')</h2><div class="grid3">'
+   +fg('SSS employee %',num('r_sss_ee',R.sss.ee))+fg('SSS employer %',num('r_sss_er',R.sss.er))+fg('SSS minimum salary credit',num('r_sss_min',R.sss.min))+fg('SSS maximum salary credit',num('r_sss_max',R.sss.max))+fg('SSS salary credit step',num('r_sss_step',R.sss.step))
+   +fg('EC below the threshold',num('r_sss_ecLow',R.sss.ecLow))+fg('EC at or above the threshold',num('r_sss_ecHigh',R.sss.ecHigh))+fg('EC threshold (salary credit)',num('r_sss_ecAt',R.sss.ecAt))
+   +fg('PhilHealth % (shared 50/50)',num('r_ph_rate',R.ph.rate))+fg('PhilHealth salary floor',num('r_ph_floor',R.ph.floor))+fg('PhilHealth salary ceiling',num('r_ph_ceil',R.ph.ceil))
+   +fg('Pag-IBIG employee %',num('r_hdmf_ee',R.hdmf.ee))+fg('Pag-IBIG employee % (low salary)',num('r_hdmf_eeLow',R.hdmf.eeLow))+fg('Pag-IBIG low-salary limit',num('r_hdmf_low',R.hdmf.low))+fg('Pag-IBIG employer %',num('r_hdmf_er',R.hdmf.er))+fg('Pag-IBIG maximum fund salary',num('r_hdmf_cap',R.hdmf.cap))
+   +'</div><div class="row" style="margin-top:10px"><button class="btn o s" id="rRes">Reset to built-in '+DEF_RATES.asOf+' rates</button></div>'
+   +'<details style="margin-top:12px"><summary>Check: contributions for a monthly salary</summary><div class="row" style="margin-top:8px">'+fg('Monthly salary (₱)','<input type="number" id="rTest" value="20000">')+'</div><div id="rTestOut" class="out"></div></details></div>'
+   +'<div class="card"><h2>Premium pay rates (% of the hourly rate)</h2><div class="grid3">'+Object.keys(DEF_PREM).map(k=>fg(PREM_LBL[k],num('p_'+k,P[k],1))).join('')+'</div><div class="row" style="margin-top:10px"><button class="btn o s" id="pRes">Reset to Labor Code rates</button></div><p class="note">Hourly rate = daily rate ÷ 8. Night differential is added on top of the hour’s pay. For monthly-paid employees the app adds only the part above 100% for holidays, because the monthly salary already covers those days.</p></div>'
+   +'<div class="card"><h2>Withholding tax tables (TRAIN, from January 1, 2023)</h2><div class="grid2"><div><h3>Semi-monthly</h3><table class="t"><thead><tr><th class="n">Over</th><th class="n">Fixed tax</th><th class="n">+ % of excess</th></tr></thead><tbody><tr><td class="n">0</td><td class="n">0.00</td><td class="n">0%</td></tr>'+WT_SEMI.map(r=>'<tr><td class="n">'+r[0].toLocaleString()+'</td><td class="n">'+r[1].toLocaleString('en-US',{minimumFractionDigits:2})+'</td><td class="n">'+r[2]+'%</td></tr>').join('')+'</tbody></table></div>'
+   +'<div><h3>Annual (year-end)</h3><table class="t"><thead><tr><th class="n">Over</th><th class="n">Fixed tax</th><th class="n">+ % of excess</th></tr></thead><tbody><tr><td class="n">0</td><td class="n">0.00</td><td class="n">0%</td></tr>'+WT_YEAR.map(r=>'<tr><td class="n">'+r[0].toLocaleString()+'</td><td class="n">'+r[1].toLocaleString('en-US',{minimumFractionDigits:2})+'</td><td class="n">'+r[2]+'%</td></tr>').join('')+'</tbody></table></div></div><p class="note">Taxable compensation = taxable pay less the employee’s SSS, PhilHealth and Pag-IBIG contributions.</p></div>';
+  const test=()=>{const mo=c100($('#rTest').value),s=sssOf(mo),p=phOf(mo),g=hdmfOf(mo);$('#rTestOut').innerHTML='<div><span>SSS salary credit</span><b>'+n2(s.msc*100)+'</b></div><div><span>SSS employee / employer / EC</span><b>'+n2(s.ee)+' / '+n2(s.er)+' / '+n2(s.ec)+'</b></div><div><span>PhilHealth employee / employer</span><b>'+n2(p.ee)+' / '+n2(p.er)+'</b></div><div><span>Pag-IBIG employee / employer</span><b>'+n2(g.ee)+' / '+n2(g.er)+'</b></div><div><span>Tax per cutoff on half</span><b>'+n2(wtaxSemi(pos(Math.round(mo/2)-Math.round((s.ee+p.ee+g.ee)/2))))+'</b></div>'};
+  $$('input[id^="r_"]',B).forEach(el=>el.onchange=()=>{const [,g,k]=el.id.split('_');const x=parseFloat(el.value);if(!Number.isFinite(x)||x<0)return toast('Enter a number.','bad');R[g][k]=x;R.asOf='custom';save();test();toast('Saved.','ok')});
+  $$('input[id^="p_"]',B).forEach(el=>el.onchange=()=>{const x=parseFloat(el.value);if(!Number.isFinite(x)||x<0)return toast('Enter a number.','bad');P[el.id.slice(2)]=x;save();toast('Saved.','ok')});
+  $('#rRes').onclick=()=>{S().rates=clone(DEF_RATES);save();SET.rates(B);toast('Rates reset.','ok')};$('#pRes').onclick=()=>{S().prem=clone(DEF_PREM);save();SET.rates(B);toast('Premium rates reset.','ok')};
+  $('#rTest').oninput=test;test()},
+ items(B){const paint=()=>{
+  B.innerHTML='<div class="card"><div class="row mid"><h2 style="margin:0">Pay items</h2><span class="sp"></span><button class="btn" id="iAdd">+ Add pay item</button></div><p class="note">Additional pay and deductions that appear as columns in the payroll. The tax treatment decides how each earning is taxed and reported.</p>'
+   +'<div class="tw"><table class="t"><thead><tr><th>Name</th><th>Kind</th><th>Tax treatment</th><th>Limit</th><th>In SSS base</th><th>Status</th><th></th></tr></thead><tbody>'
+   +DB.items.map(it=>'<tr class="'+(it.active===false?'off':'')+'"><td><b>'+esc(it.name)+'</b></td><td>'+(it.kind==='D'?'Deduction':'Earning')+'</td><td class="wrap">'+(it.kind==='D'?'–':esc(TAXK[it.tax]))+'</td><td>'+(it.tax==='DM'&&it.limit?'₱'+n2(it.limit)+' '+({M:'a month',Y:'a year',S:'a semester'}[it.per]||''):'')+'</td><td>'+(it.kind!=='D'&&it.tax==='T'&&it.sss?'Yes':'')+'</td><td>'+(it.active===false?'Hidden':'Active')+'</td><td><button class="btn o s" data-it="'+it.id+'">Edit</button></td></tr>').join('')+'</tbody></table></div></div>';
+  $('#iAdd').onclick=()=>itemForm(null,paint);$$('[data-it]',B).forEach(b=>b.onclick=()=>itemForm(b.dataset.it,paint))};paint()},
+ dtypes(B){const paint=()=>{
+  B.innerHTML='<div class="card"><div class="row mid"><h2 style="margin:0">Deduction types for loans and advances</h2><span class="sp"></span><button class="btn" id="dAdd">+ Add type</button></div><p class="note">Each type is a column in the payroll and a balance in Loans & Advances (for example Cash Advance, Credit, Credit Balance, SSS Loan, Pag-IBIG Loan).</p>'
+   +'<div class="tw"><table class="t"><thead><tr><th>Name</th><th class="n">Records</th><th></th></tr></thead><tbody>'+DB.dtypes.map(d=>'<tr><td><input data-dn="'+d.id+'" value="'+esc(d.name)+'" style="min-width:240px"></td><td class="n">'+DB.ledger.filter(l=>l.type===d.id).length+'</td><td><button class="btn d s" data-dd="'+d.id+'">Delete</button></td></tr>').join('')+'</tbody></table></div></div>';
+  $$('[data-dn]',B).forEach(i=>i.onchange=()=>{const d=DB.dtypes.find(x=>x.id===i.dataset.dn);if(!i.value.trim())return toast('Enter a name.','bad');d.name=i.value.trim();save();toast('Saved.','ok')});
+  $$('[data-dd]',B).forEach(b=>b.onclick=async()=>{const id=b.dataset.dd,used=DB.ledger.some(l=>l.type===id)||DB.runs.some(r=>r.rows.some(x=>(x.ded||{})[id]));if(used)return toast('This type is used in records or payrolls and cannot be deleted. Rename it instead.','bad');if(!(await confirmBox('Delete this deduction type?','Delete',1)))return;DB.dtypes=DB.dtypes.filter(d=>d.id!==id);save();paint()});
+  $('#dAdd').onclick=()=>{DB.dtypes.push({id:'d'+uid(),name:'New deduction'});save();paint()}};paint()},
+ hol(B){let y=new Date().getFullYear();const paint=()=>{const off=new Set(DB.hol.off),base=baseHol(y);
+  B.innerHTML='<div class="card"><div class="row">'+fg('Year','<select id="hY">'+opt(Array.from({length:5},(_,i)=>y-2+i),y)+'</select>')+'<span class="sp"></span></div><p class="note">Fixed holidays are built in, and Holy Week dates and National Heroes Day are worked out for each year. Add holidays proclaimed each year (Eid’l Fitr, Eid’l Adha, Chinese New Year, EDSA Anniversary when declared, special days in your province or city) and switch off any that do not apply.</p>'
+   +'<div class="tw"><table class="t"><thead><tr><th>Date</th><th>Holiday</th><th>Type</th><th>Source</th><th></th></tr></thead><tbody>'
+   +base.map(h=>({...h,src:'built-in'})).concat(DB.hol.add.filter(h=>+h.date.slice(0,4)===y).map(h=>({...h,src:'added'}))).sort((a,b)=>a.date.localeCompare(b.date)).map(h=>{const k=h.date+'|'+h.name,isOff=h.src==='built-in'&&off.has(k);
+    return '<tr class="'+(isOff?'off':'')+'"><td>'+esc(fdw(h.date))+'</td><td>'+esc(h.name)+'</td><td>'+(h.type==='R'?'Regular':h.type==='S'?'Special non-working':'Special working (ordinary day)')+'</td><td>'+h.src+(isOff?' · off':'')+'</td><td>'+(h.src==='added'?'<button class="btn d s" data-hd="'+esc(k)+'">Remove</button>':'<button class="btn o s" data-ho="'+esc(k)+'">'+(isOff?'Switch on':'Switch off')+'</button>')+'</td></tr>'}).join('')+'</tbody></table></div>'
+   +'<h3 style="margin-top:14px">Add a holiday</h3><div class="row">'+fg('Date','<input type="date" id="hD" value="'+y+'-01-01">')+fg('Name','<input id="hN" placeholder="e.g. Eid’l Fitr">')+fg('Type','<select id="hT">'+opt([['R','Regular holiday'],['S','Special non-working day'],['W','Special working day']])+'</select>')+'<button class="btn" id="hAdd">Add</button></div></div>';
+  $('#hY').onchange=e=>{y=+e.target.value;paint()};
+  $$('[data-ho]',B).forEach(b=>b.onclick=()=>{const k=b.dataset.ho;DB.hol.off=DB.hol.off.includes(k)?DB.hol.off.filter(x=>x!==k):DB.hol.off.concat(k);save();paint()});
+  $$('[data-hd]',B).forEach(b=>b.onclick=()=>{DB.hol.add=DB.hol.add.filter(h=>h.date+'|'+h.name!==b.dataset.hd);save();paint()});
+  $('#hAdd').onclick=()=>{const d=$('#hD').value,n=$('#hN').value.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!n)return toast('Enter the date and name.','bad');DB.hol.add.push({date:d,name:n,type:$('#hT').value});save();y=+d.slice(0,4);paint();toast('Holiday added. Open draft payrolls of that cutoff to apply it.','ok')}};paint()},
+ ytd(B){let y=new Date().getFullYear();const F=[['gross','Gross compensation'],['taxable','Taxable compensation'],['tax','Tax withheld'],['ben','13th month & benefits received (non-taxable part)'],['contAll','SSS, PhilHealth, Pag-IBIG (employee share)'],['basic13','Basic salary earned (for 13th month)'],['paid13','13th month already paid']];
+  const paint=()=>{const o=DB.ytd[y]||{};
+   B.innerHTML='<div class="card"><h2>Opening balances for the year</h2><p class="note">If you start using this app in the middle of a year, enter what each employee already received and had withheld this year (from your old payroll records or a previous employer’s 2316). They are added to the year-end tax, 13th month pay, benefit ceiling and BIR 2316 figures.</p><div class="row">'+fg('Year','<select id="yY">'+opt(Array.from({length:4},(_,i)=>new Date().getFullYear()-2+i),y)+'</select>')+'<span class="sp"></span><button class="btn o s" id="yTpl">Download as CSV</button><button class="btn o s" id="yImp">Paste from spreadsheet</button></div></div>'
+    +'<div class="tw"><table class="t grid"><thead><tr><th>Employee</th>'+F.map(f=>'<th>'+esc(f[1])+'</th>').join('')+'</tr></thead><tbody>'+DB.employees.slice().sort(empCmp).map(e=>'<tr><td class="nm"><b>'+esc(fullName(e))+'</b><small>'+esc(e.business)+'</small></td>'+F.map(f=>'<td><input data-y="'+e.id+'|'+f[0]+'" value="'+pe((o[e.id]||{})[f[0]])+'" inputmode="decimal"></td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+   $('#yY').onchange=e=>{y=+e.target.value;paint()};
+   $$('[data-y]',B).forEach(i=>i.onchange=()=>{const [id,f]=i.dataset.y.split('|');DB.ytd[y]=DB.ytd[y]||{};DB.ytd[y][id]=DB.ytd[y][id]||{};DB.ytd[y][id][f]=c100(i.value);save()});
+   $('#yTpl').onclick=()=>dl('opening_balances_'+y+'.csv',toCsv([['Employee','Business'].concat(F.map(f=>f[1]))].concat(DB.employees.slice().sort(empCmp).map(e=>[fullName(e),e.business].concat(F.map(f=>p2((o[e.id]||{})[f[0]])))))));
+   $('#yImp').onclick=()=>{const m=modal('<h2>Paste opening balances</h2><p class="note">Paste the downloaded CSV after filling it in (with its header row). Employees are matched by name.</p><textarea id="yTx" rows="10" style="width:100%"></textarea><div class="acts"><button class="btn o" data-x>Cancel</button><button class="btn" id="yGo">Import</button></div>',760);
+    $('#yGo',m).onclick=()=>{const rows=parseCsv($('#yTx',m).value);if(rows.length<2)return toast('Paste the header and rows.','bad');let n=0;DB.ytd[y]=DB.ytd[y]||{};
+     rows.slice(1).forEach(r=>{const e=DB.employees.find(x=>fullName(x).toLowerCase()===String(r[0]).trim().toLowerCase());if(!e)return;DB.ytd[y][e.id]={};F.forEach((f,i)=>DB.ytd[y][e.id][f[0]]=c100(r[i+2]));n++});save();m.close();paint();toast(n+' employees updated.','ok')}}};paint()},
+ data(B){const age=backupAge();
+  B.innerHTML='<div class="card"><h2>Backup</h2><p>All payroll data is stored in this browser on this computer. If the browser’s data is cleared, or the computer fails, it is gone unless you have a backup. Download a backup at least once a week and after every finalized payroll, and keep copies outside this computer.</p><p class="note">Last backup: '+(DB.meta.lastBackup?esc(new Date(DB.meta.lastBackup).toLocaleString())+(age?' ('+age+' days ago)':''):'never')+'</p><button class="btn" id="dBk">Download backup</button></div>'
+   +'<div class="card"><h2>Restore from a backup</h2><p class="note">Replaces everything in this app with the contents of the backup file.</p><input type="file" id="dFile" accept=".json"></div>'
+   +'<div class="card"><h2>Storage</h2><p class="note" id="dSt"></p></div>'
+   +'<div class="card"><h2>Start over</h2><p class="note">Deletes all employees, payrolls and settings in this browser. Download a backup first.</p><button class="btn d" id="dClr">Delete all data</button></div>';
+  $('#dBk').onclick=()=>{backup();SET.data(B)};
+  $('#dFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{let d;try{d=JSON.parse(rd.result)}catch(x){return toast('That file is not an AJ Payroll backup.','bad')}
+   if(!d||!Array.isArray(d.employees)||!Array.isArray(d.runs))return toast('That file is not an AJ Payroll backup.','bad');
+   if(!(await confirmBox('Replace all current data with this backup ('+d.employees.length+' employees, '+d.runs.length+' payrolls)?','Restore',1)))return;DB=migrate(d);save(true);brand();toast('Backup restored.','ok');go('dash')};rd.readAsText(f)};
+  $('#dClr').onclick=async()=>{if(!(await confirmBox('Delete <b>all</b> payroll data in this browser? This cannot be undone.','Delete everything',1)))return;DB=blank();save(true);brand();go('dash')};
+  try{const n=JSON.stringify(DB).length;$('#dSt').textContent='Data size: '+(n/1024).toFixed(0)+' KB · '+DB.employees.length+' employees, '+DB.runs.length+' payrolls. Stored in this browser'+(IDB.db?' (IndexedDB, plus a copy in local storage while it fits).':' (local storage, about 5,000 KB available).')}catch(e){}
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}
+};
+function bizForm(name,after){
+ const b=name?bizInfo(name):{name:''},has=name&&DB.biz.some(x=>x.name===name);
+ const m=modal('<h2>'+(name?'Edit business':'Add business')+'</h2><div class="grid2">'+fg('Business name *','<input id="bN" value="'+esc(b.name)+'">','As it should appear on payslips')+fg('TIN','<input id="bT" value="'+esc(b.tin||'')+'">')+fg('RDO code','<input id="bR" value="'+esc(b.rdo||'')+'">')
+  +fg('Registered address','<input id="bA" value="'+esc(b.address||'')+'">')+fg('SSS employer no.','<input id="bS" value="'+esc(b.sss||'')+'">')+fg('PhilHealth employer no.','<input id="bP" value="'+esc(b.ph||'')+'">')+fg('Pag-IBIG employer no.','<input id="bH" value="'+esc(b.hdmf||'')+'">')+'</div>'
+  +'<div class="acts">'+(name?'<button class="btn d" id="bDel" style="margin-right:auto">Remove</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="bGo">Save</button></div>',720);
+ $('#bGo',m).onclick=()=>{const n=$('#bN',m).value.trim();if(!n)return toast('Enter the name.','bad');if(n!==name&&bizList().includes(n))return toast('That business already exists.','bad');
+  const o={name:n,tin:$('#bT',m).value.trim(),rdo:$('#bR',m).value.trim(),address:$('#bA',m).value.trim(),sss:$('#bS',m).value.trim(),ph:$('#bP',m).value.trim(),hdmf:$('#bH',m).value.trim()};
+  if(has)Object.assign(DB.biz.find(x=>x.name===name),o);else DB.biz.push(o);
+  if(name&&n!==name){DB.employees.forEach(e=>{if(e.business===name)e.business=n});DB.runs.forEach(r=>r.status!=='final'&&r.rows.forEach(x=>{if(x.business===name)x.business=n}))}
+  save();m.close();after();toast('Saved.','ok')};
+ const d=$('#bDel',m);if(d)d.onclick=()=>{if(DB.employees.some(e=>e.business===name))return toast('Move or remove its employees first.','bad');DB.biz=DB.biz.filter(x=>x.name!==name);save();m.close();after()};
+}
+function itemForm(id,after){
+ const it=id?DB.items.find(x=>x.id===id):null,v=it||{name:'',kind:'E',tax:'T',sss:0,limit:0,per:'M'},used=id&&DB.runs.some(r=>r.rows.some(x=>(x.items||{})[id]));
+ const m=modal('<h2>'+(it?'Edit pay item':'Add pay item')+'</h2><div class="grid2">'+fg('Name *','<input id="tN" value="'+esc(v.name)+'">')+fg('Kind','<select id="tK"'+(used||(it&&it.fixed)?' disabled':'')+'>'+opt([['E','Earning (added to pay)'],['D','Deduction (taken from pay)']],v.kind)+'</select>')
+  +fg('Tax treatment','<select id="tT"'+(it&&it.fixed?' disabled':'')+'>'+opt(Object.entries(TAXK),v.tax)+'</select>','','gT')+fg('Tax-free limit (₱)','<input type="number" step="0.01" min="0" id="tL" value="'+pe(v.limit)+'">','For de minimis benefits, e.g. rice subsidy ₱2,000 a month','gL')
+  +fg('Limit applies','<select id="tP">'+opt([['M','per month'],['S','per semester'],['Y','per year']],v.per||'M')+'</select>','','gP')+fg('Part of the SSS base','<select id="tS">'+opt([['0','No'],['1','Yes (e.g. commissions)']],v.sss?'1':'0')+'</select>','','gS')+'</div>'
+  +'<p class="note">De minimis limits change from time to time. Check the current BIR regulations before relying on them.</p>'
+  +'<div class="acts">'+(it&&!it.fixed?'<button class="btn d" id="tDel" style="margin-right:auto">'+(used?'Hide':'Delete')+'</button>':'')+(it&&it.active===false?'<button class="btn o" id="tShow">Show again</button>':'')+'<button class="btn o" data-x>Cancel</button><button class="btn" id="tGo">Save</button></div>',700);
+ const sync=()=>{const e=$('#tK',m).value!=='D',t=$('#tT',m).value;$('#gT',m).hidden=!e;$('#gL',m).hidden=!(e&&t==='DM');$('#gP',m).hidden=!(e&&t==='DM');$('#gS',m).hidden=!(e&&t==='T')};
+ $('#tK',m).onchange=sync;$('#tT',m).onchange=sync;sync();
+ $('#tGo',m).onclick=()=>{const n=$('#tN',m).value.trim();if(!n)return toast('Enter a name.','bad');const o={name:n,kind:$('#tK',m).value,tax:$('#tT',m).value,limit:c100($('#tL',m).value),per:$('#tP',m).value,sss:$('#tS',m).value==='1'?1:0};
+  if(o.kind==='D'){o.tax='';o.sss=0;o.limit=0}if(it)Object.assign(it,o);else DB.items.push(Object.assign({id:'i'+uid()},o));save();m.close();after();toast('Saved.','ok')};
+ const d=$('#tDel',m);if(d)d.onclick=()=>{if(used)it.active=false;else DB.items=DB.items.filter(x=>x!==it);save();m.close();after()};
+ const s=$('#tShow',m);if(s)s.onclick=()=>{it.active=true;save();m.close();after()};
+}
+
+// =====================================================================================
+// start
+// =====================================================================================
+(async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':''})();
+window.AJPAY={DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+
+</script>
+</body>
+</html>
