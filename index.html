@@ -92,6 +92,10 @@ table.t td.wrap{white-space:normal;min-width:180px}
 #toasts .toast{pointer-events:auto;cursor:pointer}
 .toast{background:#13241f;color:#fff;border-radius:10px;padding:10px 14px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:.9rem}
 .toast.ok{background:var(--ok)}.toast.bad{background:var(--danger)}
+.bkst{font-size:.78rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}.bkst.ok{background:var(--ok2);color:var(--ok)}.bkst.warn{background:var(--warn2);color:var(--warn)}
+#bkBtn.due{background:var(--brand);color:#fff;animation:bkp 1.6s ease-in-out 3}@keyframes bkp{50%{box-shadow:0 0 0 6px rgba(1,99,81,.18)}}
+#abCard{position:fixed;right:16px;bottom:16px;z-index:95;width:min(360px,calc(100vw - 32px));background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:12px 14px}#abCard b{display:block;margin-bottom:2px}#abCard p{margin:0 0 10px;color:var(--muted);font-size:.86rem}
+@media(max-width:900px){#bkSt{display:none}}
 .pv{width:100%;height:72vh;border:1px solid var(--line);border-radius:10px;background:#fff}
 .hl{display:grid;gap:6px}
 .hl .h{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.6fr) 70px 70px auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line2);border-radius:8px}
@@ -111,7 +115,7 @@ details>summary{cursor:pointer;font-weight:700}
  <ul class="nav" id="nav"></ul>
 </aside>
 <div class="main">
- <header class="top"><button class="menu" id="menuBtn" aria-label="Menu">☰</button><h1 id="ttl">AJ Payroll</h1><span class="st" id="saveSt"></span><button class="btn o s" id="bkBtn" title="Download a backup of all payroll data">Backup</button></header>
+ <header class="top"><button class="menu" id="menuBtn" aria-label="Menu">☰</button><h1 id="ttl">AJ Payroll</h1><span class="st" id="saveSt"></span><span id="bkSt"></span><button class="btn o s" id="bkBtn" title="Download a backup of all payroll data">Backup</button></header>
  <div id="view"></div>
 </div>
 <div id="toasts" aria-live="polite"></div>
@@ -173,7 +177,7 @@ const TAXK={T:'Taxable',N:'Non-taxable',DM:'De minimis (tax-free up to a limit)'
 
 // ---------------------------------------------------------------- data
 let DB=null;
-function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',mealNT:true,annualize:true,mweRate:0,silDays:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
+function blank(){return{v:1,company:{name:''},biz:[],settings:{sched:'split',mealNT:true,annualize:true,mweRate:0,silDays:5,autoBk:5,benCap:9000000,rates:clone(DEF_RATES),prem:clone(DEF_PREM)},
  items:clone(DEF_ITEMS),dtypes:DEF_DTYPES.map((n,i)=>({id:'d'+(i+1),name:n})),employees:[],ledger:[],runs:[],hol:{add:[],off:[]},ytd:{},meta:{created:new Date().toISOString(),lastBackup:null}}}
 function migrate(d){
  const b=blank();if(!d||typeof d!=='object')return b;
@@ -195,11 +199,11 @@ async function load(){
  if(await IDB.open()){try{a=JSON.parse(await IDB.get(KEY)||'null')}catch(e){}}
  const t=d=>d&&d.meta&&d.meta.savedAt||'';DB=migrate(a&&b?(t(a)>=t(b)?a:b):(a||b))}
 let saveT=null,dirty=false;
-function save(now){dirty=true;$('#saveSt')&&($('#saveSt').textContent='Saving…');clearTimeout(saveT);
+function save(now,silent){dirty=true;if(!silent&&DB)DB.meta.rev=(DB.meta.rev||0)+1;$('#saveSt')&&($('#saveSt').textContent='Saving…');clearTimeout(saveT);
  const go=async()=>{DB.meta.savedAt=new Date().toISOString();const s=JSON.stringify(DB);let ok=false,ls=false;
   try{localStorage.setItem(KEY,s);ls=true}catch(e){try{localStorage.removeItem(KEY)}catch(x){}}
   if(IDB.db)ok=await IDB.put(KEY,s);
-  if(ok||ls){dirty=false;$('#saveSt').textContent='All changes saved'}else{$('#saveSt').textContent='NOT SAVED';toast('Could not save: browser storage is full or blocked. Download a backup now (Settings › Backup & data).','bad',9000)}};
+  if(ok||ls){dirty=false;$('#saveSt').textContent='All changes saved';if(window.bkStatus)bkStatus()}else{$('#saveSt').textContent='NOT SAVED';toast('Could not save: browser storage is full or blocked. Download a backup now (Settings › Backup & data).','bad',9000)}};
  if(now)go();else saveT=setTimeout(go,300)}
 window.addEventListener('beforeunload',e=>{if(dirty)save(true)});
 const S=()=>DB.settings;
@@ -438,7 +442,7 @@ function initNav(){
  window.addEventListener('hashchange',onRoute);
 }
 function brand(){$('#brandSub').textContent=DB.company.name||'Offline payroll'}
-function backup(){DB.meta.lastBackup=new Date().toISOString();save(true);dl('AJ-Payroll-backup_'+slug(DB.company.name||'payroll')+'_'+today()+'.json',JSON.stringify(DB),'application/json');toast('Backup downloaded. Keep it somewhere safe (a USB drive or Google Drive).','ok')}
+function backup(){DB.meta.lastBackup=new Date().toISOString();DB.meta.backupRev=DB.meta.rev||0;save(true,true);dl('AJ-Payroll-backup_'+slug(DB.company.name||'payroll')+'_'+stampNow()+'.json',JSON.stringify(DB),'application/json');hideAutoCard();bkStatus();toast('Backup downloaded. Keep it somewhere safe (a USB drive or Google Drive).','ok')}
 function backupAge(){const b=DB.meta.lastBackup;return b?Math.floor((Date.now()-new Date(b).getTime())/864e5):null}
 
 // =====================================================================================
@@ -987,6 +991,45 @@ function c2316(x,y){
 
 
 // =====================================================================================
+// Backups: date-and-time file names, warning when leaving, reminders every few minutes, copies kept in this browser
+// =====================================================================================
+function stampNow(){const d=new Date();return today()+'_'+pad(d.getHours())+'h'+pad(d.getMinutes())+'m'+pad(d.getSeconds())+'s'}
+const hasData=()=>DB&&(DB.employees.length||DB.runs.length||DB.ledger.length);
+const changedSinceBackup=()=>!!hasData()&&(!DB.meta.lastBackup||(DB.meta.rev||0)!==(DB.meta.backupRev||0));
+const tShort=iso=>{const d=new Date(iso),t=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())===today()?t:d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t};
+function bkStatus(){const el=$('#bkSt'),btn=$('#bkBtn');if(!el||!DB)return;const ch=changedSinceBackup();
+ el.className='bkst '+(ch?'warn':'ok');el.textContent=ch?(DB.meta.lastBackup?'Not backed up since '+tShort(DB.meta.lastBackup):'Not backed up yet'):(DB.meta.lastBackup?'Backed up '+tShort(DB.meta.lastBackup):'');if(!hasData())el.textContent='';
+ btn.classList.toggle('due',ch);btn.title=ch?'There are changes since your last backup. Download a backup now.':'Download a backup of all payroll data'}
+// leaving the page or closing the browser: the browser shows its own "Leave site?" question when there are changes not backed up
+window.addEventListener('beforeunload',e=>{if(changedSinceBackup()){e.preventDefault();e.returnValue='You have changes that are not backed up.';return e.returnValue}});
+// if the person chose to stay, remind them right away
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&changedSinceBackup()&&S().autoBk&&Date.now()>=nextAuto)autoTick(true)});
+function hideAutoCard(){const c=$('#abCard');if(c)c.remove()}
+function showAutoCard(msg){hideAutoCard();const c=document.createElement('div');c.id='abCard';c.setAttribute('role','alertdialog');c.setAttribute('aria-label','Backup reminder');
+ c.innerHTML='<b>Time to back up · '+esc(new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+'</b><p>'+esc(msg)+'</p><div class="row mid"><button class="btn" id="abGo">Download backup</button><button class="btn o" id="abLater">Later</button></div>';
+ document.body.appendChild(c);$('#abGo').onclick=()=>backup();$('#abLater').onclick=()=>{hideAutoCard();nextAuto=Date.now()+(S().autoBk||5)*60000}}
+let nextAuto=Date.now()+5*60000,autoTimer=null;
+async function autoTick(force){
+ if(!DB||!changedSinceBackup()){hideAutoCard();return}
+ if(!force&&(!S().autoBk||Date.now()<nextAuto))return;
+ nextAuto=Date.now()+(S().autoBk||5)*60000;
+ await addSnap();
+ showAutoCard('There are changes since '+(DB.meta.lastBackup?'your last backup at '+tShort(DB.meta.lastBackup):'you started')+'. Download a backup file (named with today’s date and time) and keep it off this computer.');
+}
+function startAutoBackup(){bkStatus();nextAuto=Date.now()+(S().autoBk||5)*60000;clearInterval(autoTimer);autoTimer=setInterval(()=>autoTick(false),20000);
+ if(changedSinceBackup())setTimeout(()=>showAutoCard('This payroll data has changes that were never downloaded as a backup'+(DB.meta.lastBackup?' (last backup '+tShort(DB.meta.lastBackup)+')':'')+'. Download a backup now.'),800)}
+// copies inside this browser (IndexedDB), newest first, at most 12
+async function getSnaps(){if(!IDB.db)return[];try{return JSON.parse(await IDB.get('snaps')||'[]')}catch(e){return[]}}
+async function addSnap(){if(!IDB.db)return;const L=await getSnaps(),s=JSON.stringify(DB);if(L[0]&&L[0].data===s)return;L.unshift({at:new Date().toISOString(),n:DB.employees.length,r:DB.runs.length,data:s});await IDB.put('snaps',JSON.stringify(L.slice(0,12)))}
+async function paintSnaps(el){const L=await getSnaps();if(!el.isConnected)return;
+ if(!L.length){el.textContent=IDB.db?'No automatic copies yet. One is kept each time a backup reminder appears.':'Not available in this browser.';return}
+ el.innerHTML='<div class="tw"><table class="t"><thead><tr><th>Saved</th><th class="n">Employees</th><th class="n">Payrolls</th><th class="n">Size</th><th></th></tr></thead><tbody>'+L.map((x,i)=>'<tr><td>'+esc(new Date(x.at).toLocaleString())+'</td><td class="n">'+x.n+'</td><td class="n">'+x.r+'</td><td class="n">'+Math.round(x.data.length/1024)+' KB</td><td><button class="btn o s" data-sd="'+i+'">Download</button> <button class="btn o s" data-sr="'+i+'">Restore</button></td></tr>').join('')+'</tbody></table></div>';
+ $$('[data-sd]',el).forEach(b=>b.onclick=()=>{const x=L[+b.dataset.sd],d=new Date(x.at);dl('AJ-Payroll-autobackup_'+slug(DB.company.name||'payroll')+'_'+ymd(d.getFullYear(),d.getMonth()+1,d.getDate())+'_'+pad(d.getHours())+'h'+pad(d.getMinutes())+'m'+pad(d.getSeconds())+'s.json',x.data,'application/json')});
+ $$('[data-sr]',el).forEach(b=>b.onclick=async()=>{const x=L[+b.dataset.sr];if(!(await confirmBox('Go back to the copy saved '+esc(new Date(x.at).toLocaleString())+'? Everything changed after it is replaced. Download a backup of the current data first if you may need it.','Restore this copy',1)))return;
+  await addSnap();DB=migrate(JSON.parse(x.data));save(true);brand();bkStatus();toast('Restored the copy from '+new Date(x.at).toLocaleString()+'.','ok');go('dash')})}
+
+
+// =====================================================================================
 // Settings
 // =====================================================================================
 const SETS=[['company','Company & businesses'],['rules','Payroll rules'],['rates','Rates & tax table'],['items','Pay items'],['dtypes','Deduction types'],['hol','Holidays'],['ytd','Opening balances'],['data','Backup & data']];
@@ -1063,13 +1106,16 @@ const SET={
      rows.slice(1).forEach(r=>{const e=DB.employees.find(x=>fullName(x).toLowerCase()===String(r[0]).trim().toLowerCase());if(!e)return;DB.ytd[y][e.id]={};F.forEach((f,i)=>DB.ytd[y][e.id][f[0]]=c100(r[i+2]));n++});save();m.close();paint();toast(n+' employees updated.','ok')}}};paint()},
  data(B){const age=backupAge();
   B.innerHTML='<div class="card"><h2>Backup</h2><p>All payroll data is stored in this browser on this computer. If the browser’s data is cleared, or the computer fails, it is gone unless you have a backup. Download a backup at least once a week and after every finalized payroll, and keep copies outside this computer.</p><p class="note">Last backup: '+(DB.meta.lastBackup?esc(new Date(DB.meta.lastBackup).toLocaleString())+(age?' ('+age+' days ago)':''):'never')+'</p><button class="btn" id="dBk">Download backup</button></div>'
+   +'<div class="card"><h2>Automatic backups</h2><div class="row">'+fg('Remind me to download a backup every','<select id="dAuto">'+opt([[0,'Off'],[5,'5 minutes'],[10,'10 minutes'],[15,'15 minutes'],[30,'30 minutes'],[60,'1 hour']],S().autoBk)+'</select>','Only when something changed since the last backup. Each reminder also keeps a copy inside this browser.')+'</div><h3 style="margin-top:14px">Copies kept in this browser</h3><p class="note">The last 12 automatic copies. Use them to undo a mistake; they do not protect you if this browser’s data is cleared, so still download backups.</p><div id="dSnaps" class="note">Loading…</div></div>'
    +'<div class="card"><h2>Restore from a backup</h2><p class="note">Replaces everything in this app with the contents of the backup file.</p><input type="file" id="dFile" accept=".json"></div>'
    +'<div class="card"><h2>Storage</h2><p class="note" id="dSt"></p></div>'
    +'<div class="card"><h2>Start over</h2><p class="note">Deletes all employees, payrolls and settings in this browser. Download a backup first.</p><button class="btn d" id="dClr">Delete all data</button></div>';
   $('#dBk').onclick=()=>{backup();SET.data(B)};
+  $('#dAuto').onchange=e=>{S().autoBk=+e.target.value;save(true,true);nextAuto=Date.now()+S().autoBk*60000;toast(S().autoBk?'Backup reminder every '+S().autoBk+' minutes.':'Backup reminders turned off.','ok')};
+  paintSnaps($('#dSnaps'));
   $('#dFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{let d;try{d=JSON.parse(rd.result)}catch(x){return toast('That file is not an AJ Payroll backup.','bad')}
    if(!d||!Array.isArray(d.employees)||!Array.isArray(d.runs))return toast('That file is not an AJ Payroll backup.','bad');
-   if(!(await confirmBox('Replace all current data with this backup ('+d.employees.length+' employees, '+d.runs.length+' payrolls)?','Restore',1)))return;DB=migrate(d);save(true);brand();toast('Backup restored.','ok');go('dash')};rd.readAsText(f)};
+   if(!(await confirmBox('Replace all current data with this backup ('+d.employees.length+' employees, '+d.runs.length+' payrolls)?','Restore',1)))return;DB=migrate(d);DB.meta.backupRev=DB.meta.rev||0;save(true,true);brand();bkStatus();toast('Backup restored.','ok');go('dash')};rd.readAsText(f)};
   $('#dClr').onclick=async()=>{if(!(await confirmBox('Delete <b>all</b> payroll data in this browser? This cannot be undone.','Delete everything',1)))return;DB=blank();save(true);brand();go('dash')};
   try{const n=JSON.stringify(DB).length;$('#dSt').textContent='Data size: '+(n/1024).toFixed(0)+' KB · '+DB.employees.length+' employees, '+DB.runs.length+' payrolls. Stored in this browser'+(IDB.db?' (IndexedDB, plus a copy in local storage while it fits).':' (local storage, about 5,000 KB available).')}catch(e){}
   if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}
@@ -1104,8 +1150,8 @@ function itemForm(id,after){
 // =====================================================================================
 // start
 // =====================================================================================
-(async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':''})();
-window.AJPAY={DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
+(async()=>{await load();initNav();brand();onRoute();$('#saveSt').textContent=DB.employees.length?'All changes saved':'';startAutoBackup()})();
+window.AJPAY={autoTick:()=>autoTick(true),snaps:()=>getSnaps(),changed:()=>changedSinceBackup(),DB:()=>DB,timeCalc,calcRow,calcRun,contrib,taxCalc,sssOf,phOf,hdmfOf,wtaxSemi,taxYear,holsIn,ledgerBal,ledgerSuggest,save};
 
 </script>
 </body>
