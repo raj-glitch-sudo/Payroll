@@ -23,27 +23,27 @@ h1,h2,h3{margin:0 0 .5rem;line-height:1.25}h1{font-size:1.35rem}h2{font-size:1.1
 .nav a.on{background:#18a383;color:#06221c;font-weight:700}
 .nav a.sub{padding-left:28px;font-size:.92rem}
 .main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:auto}
-.top{display:flex;align-items:center;gap:12px;padding:12px 22px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top{display:flex;align-items:center;gap:12px;padding:8px 18px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .top h1{margin:0;font-size:1.15rem;flex:1;min-width:0}
 .top .st{font-size:.8rem;color:var(--muted)}
 .menu{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer;color:var(--ink);flex:0 0 auto}.menu:hover{background:var(--brand2)}.menu svg{width:18px;height:18px}
 .nav svg{width:19px;height:19px;flex:0 0 19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body.navc .side{width:64px;flex-basis:64px}body.navc .brand{padding:18px 15px 14px}body.navc .brand>div:last-child,body.navc .nav a span{display:none}body.navc .nav .sec{font-size:0;padding:8px 0;margin:6px 10px 2px;border-top:1px solid rgba(255,255,255,.12)}body.navc .nav a{justify-content:center;padding:9px 0}body.navc #toasts{left:80px}
 .side .tip{position:fixed;z-index:300;background:#13241f;color:#fff;font-size:.8rem;padding:4px 9px;border-radius:6px;pointer-events:none;white-space:nowrap}
-#view{padding:20px 22px 60px;max-width:1500px;width:100%}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+#view{padding:12px 18px 40px;max-width:1600px;width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 .row.mid{align-items:center}
 .sp{flex:1}
-.fg{display:flex;flex-direction:column;gap:4px;min-width:120px}
+.fg{display:flex;flex-direction:column;gap:3px;min-width:120px}
 .fg label{font-size:.78rem;font-weight:600;color:var(--muted)}
 .fg small{color:var(--muted);font-size:.76rem}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 14px}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 12px}
-input,select,textarea{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;min-width:0}
+input,select,textarea{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 8px;min-width:0}
 input:focus,select:focus,textarea:focus,button:focus-visible{outline:none;box-shadow:var(--focus);border-color:var(--brand)}
 input[type=checkbox]{width:auto}
-.btn{display:inline-block;text-decoration:none;border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn{display:inline-block;text-decoration:none;border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;white-space:nowrap}
 .btn:hover{filter:brightness(1.08)}
 .btn.o{background:#fff;color:var(--brand)}
 .btn.d{background:#fff;color:var(--danger);border-color:#e7b4ae}
@@ -54,8 +54,8 @@ input[type=checkbox]{width:auto}
 .chip.ok{background:var(--ok2);color:var(--ok)}.chip.warn{background:var(--warn2);color:var(--warn)}.chip.bad{background:var(--danger2);color:var(--danger)}
 .alert{border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--warn2);color:#5c3a00;border:1px solid #f1d49b}
 .alert.info{background:var(--brand2);color:#0b3d32;border-color:#bfe0d6}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .kpi>span{display:block;font-size:.78rem;color:var(--muted);font-weight:600}.kpi b{display:block;font-size:1.3rem;margin:.15rem 0}.kpi small{color:var(--muted)}
 .tw{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:70vh}
 table.t{border-collapse:separate;border-spacing:0;width:100%;font-size:.88rem}
@@ -85,7 +85,7 @@ table.t td.wrap{white-space:normal;min-width:180px}
 .grid .tm{border:1px solid var(--line);background:#fff;border-radius:6px;padding:2px 6px;cursor:pointer;margin-left:4px}
 .grid .tm.on{background:var(--brand2);border-color:#9fd2c4}
 .grid.locked input{background:transparent;border-color:transparent;pointer-events:none;color:var(--ink)}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tabs a,.tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;text-decoration:none;color:var(--ink);font-weight:600;cursor:pointer}
 .tabs .on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .ov{position:fixed;inset:0;background:rgba(10,25,20,.45);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;z-index:100;overflow:auto}
@@ -100,7 +100,7 @@ table.t td.wrap{white-space:normal;min-width:180px}
 #bkBtn.due{background:var(--brand);color:#fff;animation:bkp 1.6s ease-in-out 3}@keyframes bkp{50%{box-shadow:0 0 0 6px rgba(1,99,81,.18)}}
 #abCard{position:fixed;right:16px;bottom:16px;z-index:95;width:min(360px,calc(100vw - 32px));background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:12px 14px}#abCard b{display:block;margin-bottom:2px}#abCard p{margin:0 0 10px;color:var(--muted);font-size:.86rem}
 @media(max-width:900px){#bkSt{display:none}}
-.pv{width:100%;height:72vh;border:1px solid var(--line);border-radius:10px;background:#fff}
+.pv{width:100%;height:calc(100vh - 200px);min-height:420px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .hl{display:grid;gap:6px}
 .hl .h{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.6fr) 70px 70px auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line2);border-radius:8px}
 .hl .h small{color:var(--muted)}
@@ -113,6 +113,21 @@ details>summary{cursor:pointer;font-weight:700}
 @media print{body{display:block}.side,.top{display:none}}
 
 [hidden]{display:none!important}
+.grid .nm>div>div{min-width:0}.grid .nm b,.grid .nm small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:205px}.grid .nm small{font-size:.74rem}.grid td.nm{padding-top:4px;padding-bottom:4px}
+.mmenu{position:relative}.mmenu summary{list-style:none}.mmenu summary::-webkit-details-marker{display:none}.mmenu .mm{position:absolute;z-index:40;top:calc(100% + 4px);left:0;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.14);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:210px}.mmenu .mm .btn{text-align:left;border-color:transparent}.mmenu .mm .btn:hover{background:var(--brand2)}
+body.hasab #view{padding-bottom:190px}
+/* compact payroll run header */
+.runpick{padding:8px 12px}.runpick select{width:auto}.runpick .row{gap:6px}
+.rtitle{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}.rtitle h2{margin:0;font-size:1.15rem}
+.runtools{margin-top:8px;gap:6px}.runtools select{max-width:260px}
+.hline{margin-top:8px;font-size:.84rem;background:var(--brand2);border:1px solid #bfe0d6;border-radius:8px;padding:5px 10px;color:#0b3d32}
+.tw.fill{max-height:calc(100vh - 250px);min-height:320px}
+/* calendar pop-up */
+.calpop{position:fixed;z-index:150;width:320px;max-width:calc(100vw - 16px);max-height:min(70vh,520px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.18);padding:10px 12px;font-size:.88rem}
+.calpop .x{border:0;background:none;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);padding:0 4px}
+.calpop .cnt{display:flex;gap:6px;margin:8px 0 2px}.calpop .cnt span{flex:1;background:var(--line2);border-radius:8px;padding:5px 6px;text-align:center;font-size:.78rem;color:var(--muted)}.calpop .cnt b{display:block;font-size:1.05rem;color:var(--ink)}
+.calpop .pg{margin-top:8px}.calpop h4,.calpop summary{margin:0 0 3px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:default}.calpop summary{cursor:pointer}.calpop .pl{padding:1px 0}
+
 .cal .calh{margin-bottom:10px;gap:8px}.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.cw{font-size:.74rem;font-weight:700;color:var(--muted);text-align:center;padding:2px 0}
 .cd{min-height:92px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:4px 5px;text-align:left;display:flex;flex-direction:column;gap:2px;font:inherit;cursor:pointer;min-width:0;overflow:hidden}.cd:hover{border-color:#9fd2c4}.cd.x{border:0;background:none;cursor:default}
 .cd .dn{font-weight:700;font-size:.82rem}.cd.td .dn{background:var(--brand);color:#fff;border-radius:99px;padding:0 6px;align-self:flex-start}.cd.sel{box-shadow:0 0 0 2px var(--brand)}.cd.hol{background:#fff8ec}
@@ -710,9 +725,12 @@ PAGES.run={title:'Payroll Run',render(v,a){
  const p=parsePer(a),run=runOf(p.y,p.m,p.q);
  const yrs=[...new Set(DB.runs.map(r=>r.year).concat([p.y,new Date().getFullYear()]))].sort();
  const recent=DB.runs.slice().sort((x,y)=>pkey(y.year,y.month,y.q)-pkey(x.year,x.month,x.q)).slice(0,8);
- let h='<div class="card"><div class="row">'+fg('Year','<select id="pY">'+opt(Array.from({length:Math.max(...yrs)-Math.min(...yrs)+3},(_,i)=>Math.min(...yrs)-1+i),p.y)+'</select>')
-  +fg('Month','<select id="pM">'+opt(MN.map((n,i)=>[i+1,n]),p.m)+'</select>')+fg('Cutoff','<select id="pQ">'+opt([[1,'1st (1–15)'],[2,'2nd (16–end)']],p.q)+'</select>')
-  +'<button class="btn o" id="pGo">Open</button><span class="sp"></span>'+(recent.length?'<div class="fg"><label>Recent</label><div>'+recent.map(r=>'<a class="btn o s" style="margin:0 4px 4px 0" href="#run/'+r.year+'-'+r.month+'-'+r.q+'">'+esc(perShort(r.year,r.month,r.q))+(r.status==='final'?' ✓':'')+'</a>').join('')+'</div></div>':'')+'</div></div>';
+ const nb=(d)=>{let y=p.y,m=p.m,q=p.q+d;if(q>2){q=1;m++}if(q<1){q=2;m--}if(m>12){m=1;y++}if(m<1){m=12;y--}return y+'-'+m+'-'+q};
+ let h='<div class="card runpick"><div class="row mid"><a class="btn o s" href="#run/'+nb(-1)+'" title="Previous cutoff" aria-label="Previous cutoff">‹</a>'
+  +'<select id="pM" aria-label="Month">'+opt(MN.map((n,i)=>[i+1,n]),p.m)+'</select><select id="pQ" aria-label="Cutoff">'+opt([[1,'1–15'],[2,'16–end']],p.q)+'</select>'
+  +'<select id="pY" aria-label="Year">'+opt(Array.from({length:Math.max(...yrs)-Math.min(...yrs)+3},(_,i)=>Math.min(...yrs)-1+i),p.y)+'</select>'
+  +'<a class="btn o s" href="#run/'+nb(1)+'" title="Next cutoff" aria-label="Next cutoff">›</a><button class="btn o s" id="pGo" hidden>Open</button><span class="sp"></span>'
+  +(recent.length?'<span class="note" style="margin:0">Recent:</span>'+recent.map(r=>'<a class="btn o s" href="#run/'+r.year+'-'+r.month+'-'+r.q+'">'+esc(perShort(r.year,r.month,r.q))+(r.status==='final'?' ✓':'')+'</a>').join(''):'')+'</div></div>';
  v.innerHTML=h+'<div id="runBody"></div>';
  const goP=()=>go('run',$('#pY').value+'-'+$('#pM').value+'-'+$('#pQ').value);
  $('#pGo').onclick=goP;['#pY','#pM','#pQ'].forEach(s=>$(s).onchange=goP);
@@ -737,28 +755,28 @@ function drawRun(B,run){
  if(runUI.biz!=='ALL'&&!bizs.includes(runUI.biz))runUI.biz='ALL';
  const rows=run.rows.map((r,i)=>({r,i})).filter(x=>(runUI.biz==='ALL'||x.r.business===runUI.biz)&&(!runUI.q||x.r.name.toLowerCase().includes(runUI.q.toLowerCase()))).sort((a,b)=>rowCmp(a.r,b.r));
  const hid=hiddenCols(run);
- let h='<div class="card'+(fin?' locked':'')+'" id="runCard"><div class="row mid"><div><h2 style="margin:0">'+esc(perLabel(run.year,run.month,run.q))+' '+(fin?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')+'</h2>'
-  +'<div class="note" style="margin:2px 0 0">'+run.rows.length+' employees'+(fin&&run.finalAt?' · finalized '+esc(fd(run.finalAt.slice(0,10))):'')+(run.payDate?' · pay date '+esc(fd(run.payDate)):'')+'</div></div><span class="sp"></span>'
+ let h='<div class="card'+(fin?' locked':'')+'" id="runCard"><div class="row mid"><div class="rtitle"><h2>'+esc(perLabel(run.year,run.month,run.q))+'</h2> '+(fin?'<span class="chip ok">Final</span>':'<span class="chip warn">Draft</span>')
+  +' <span class="note" style="margin:0">'+run.rows.length+' employees'+(fin&&run.finalAt?' · finalized '+esc(fd(run.finalAt.slice(0,10))):'')+(run.payDate?' · pay date '+esc(fd(run.payDate)):'')+'</span></div><span class="sp"></span>'
   +(fin?'<button class="btn o" id="rReopen">Reopen for changes</button>':'<button class="btn" id="rFinal">Finalize</button>')
   +'<button class="btn o" id="rChk">Check</button><a class="btn o" href="#slips/'+run.id+'">Payslips</a><a class="btn o" href="#reg/'+run.id+'">Register</a><button class="btn o" id="rCsv">Export CSV</button></div>';
- h+='<div class="row mid" style="margin-top:12px"><div class="seg" role="tablist" aria-label="View"><button role="tab" data-view="pay" aria-selected="'+(runUI.view!=='time')+'" class="'+(runUI.view!=='time'?'on':'')+'">Pay amounts</button><button role="tab" data-view="time" aria-selected="'+(runUI.view==='time')+'" class="'+(runUI.view==='time'?'on':'')+'">Time sheet (hours & holidays)</button></div></div>'
-  +'<div class="row" style="margin-top:10px"><div class="fg"><label>Business</label><select id="rBiz">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select></div>'
-  +'<div class="fg"><label>Find</label><input id="rQ" placeholder="Employee name" value="'+esc(runUI.q)+'"></div>'
-  +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rCopy">Copy from last cutoff…</button><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button>')
-  +'<span class="sp"></span>'+(runUI.view==='time'?'':'<label style="display:flex;gap:6px;align-items:center;font-size:.85rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>')
-  +(runUI.view!=='time'&&runUI.hide&&hid.length&&!fin?'<select id="rShow"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
- if(hs.length)h+='<div class="alert info" style="margin:12px 0 0">Holidays in this cutoff: '+hs.map(x=>'<b>'+esc(fdw(x.date))+'</b> '+esc(x.name)+' ('+(x.type==='R'?'regular':'special non-working')+')').join('; ')+'. Daily-paid employees who worked in this cutoff are paid for regular holidays automatically. Use ⏱ to mark who worked on a holiday, or who is not entitled.</div>';
- if(run.month===12&&run.q===2&&S().annualize)h+='<div class="alert info" style="margin:12px 0 0">Year-end: withholding tax in this payroll is the annual tax due less tax already withheld this year (annualization). A negative amount is a refund to the employee.</div>';
+ h+='<div class="row mid runtools"><div class="seg" role="tablist" aria-label="View"><button role="tab" data-view="pay" aria-selected="'+(runUI.view!=='time')+'" class="'+(runUI.view!=='time'?'on':'')+'">Pay amounts</button><button role="tab" data-view="time" aria-selected="'+(runUI.view==='time')+'" class="'+(runUI.view==='time'?'on':'')+'">Time sheet</button></div>'
+  +'<select id="rBiz" aria-label="Business">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select>'
+  +'<input id="rQ" placeholder="Find employee" aria-label="Find employee" value="'+esc(runUI.q)+'" style="width:170px">'
+  +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rCopy">Copy last cutoff…</button>'
+   +'<details class="mmenu"><summary class="btn o s">More ▾</summary><div class="mm"><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button><button class="btn d s" id="rDel">Delete this payroll</button></div></details>')
+  +'<span class="sp"></span>'+(runUI.view==='time'?'':'<label style="display:flex;gap:5px;align-items:center;font-size:.82rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>')
+  +(runUI.view!=='time'&&runUI.hide&&hid.length&&!fin?'<select id="rShow" style="width:150px" aria-label="Show a column"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
+ const ye=run.month===12&&run.q===2&&S().annualize;
+ if(hs.length||ye)h+='<div class="hline">'+(hs.length?'<span title="Daily-paid employees who worked in this cutoff are paid for regular holidays automatically. Use ⏱ or the time sheet to mark who worked on a holiday, or who is not entitled.">Holidays: '+hs.map(x=>'<b>'+esc(fdw(x.date).replace(/^\w+, /,''))+'</b> '+esc(x.name)+' ('+(x.type==='R'?'regular':'special')+')').join(' · ')+' ⓘ</span>':'')+(ye?'<span title="Tax in this payroll is the year’s tax due less tax already withheld. A negative amount is a refund.">'+(hs.length?' &nbsp;|&nbsp; ':'')+'<b>Year-end:</b> tax is annualized ⓘ</span>':'')+'</div>';
  h+='</div>';
  const TV=runUI.view==='time';
  if(TV)h+=timeGridHtml(run,rows,fin);else{
- h+='<div class="tw" style="max-height:66vh"><table class="t grid'+(fin?' locked':'')+'" id="rGrid"><thead><tr><th>Employee</th>'+cols.map(c=>'<th class="'+(c.grp==='E'?'grpE':c.grp==='D'?'grpD':'')+'">'+esc(c.h)+'</th>').join('')+'</tr></thead><tbody>';
- rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small>'+esc(r.business)+' · '+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+(isMwe(empById(r.empId),r)?' · MWE':'')+(skipLabel(r)?' · <span class="nocon">'+esc(skipLabel(r))+'</span>':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
+ h+='<div class="tw fill"><table class="t grid'+(fin?' locked':'')+'" id="rGrid"><thead><tr><th>Employee</th>'+cols.map(c=>'<th class="'+(c.grp==='E'?'grpE':c.grp==='D'?'grpD':'')+'">'+esc(c.h)+'</th>').join('')+'</tr></thead><tbody>';
+ rows.forEach(({r,i})=>{h+='<tr data-i="'+i+'"><td class="nm"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><div><b>'+esc(r.name)+'</b><small title="'+esc(r.business)+'">'+(r.basis==='monthly'?'₱'+n2(r.monthly)+'/mo':'₱'+n2(r.daily)+'/day')+' · '+esc(r.business)+(isMwe(empById(r.empId),r)?' · MWE':'')+(skipLabel(r)?' · <span class="nocon">'+esc(skipLabel(r))+'</span>':'')+'</small></div><button class="tm'+(hasTime(r)?' on':'')+'" data-tm="'+i+'" title="Time, holidays, overtime, lates and leave">⏱</button></div></td>'
   +cols.map(c=>{if(c.calc)return '<td class="calc'+(c.net?' net':'')+'" data-c="'+c.k+'"></td>';return '<td><input data-k="'+c.k+'" class="'+(c.cls||'')+'" inputmode="decimal" aria-label="'+esc(c.h+' – '+r.name)+'"'+(fin?' disabled':'')+'></td>'}).join('')+'</tr>'});
  if(!rows.length)h+='<tr><td colspan="'+(cols.length+1)+'" class="empty">No employees match.</td></tr>';
  h+='</tbody><tfoot><tr><td>TOTAL</td>'+cols.map(c=>'<td class="calc" data-t="'+c.k+'"></td>').join('')+'</tr></tfoot></table></div>';
  h+='<p class="note">Type amounts in pesos. Yellow boxes were typed over the automatic amount; clear a yellow box to go back to the automatic amount. Press <span class="kbd">Enter</span> to move down. Changes are saved as you type.</p>';}
- if(!fin)h+='<div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn d s" id="rDel">Delete this payroll</button></div>';
  B.innerHTML=h;
  if(TV)paintTime(run,rows);else{rows.forEach(({r,i})=>paintRow(run,i));paintFoot(run,rows.map(x=>x.r))}
  const redraw=()=>drawRun(B,run);
@@ -791,6 +809,7 @@ function drawRun(B,run){
  grid.addEventListener('change',e=>{const t=e.target;if(!t.dataset.k)return;const i=+t.closest('tr').dataset.i;paintRow(run,i)});
  grid.addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b)timeModal(run,+b.dataset.tm,redraw)});}
  $('#rCopy').onclick=()=>copyModal(run,redraw);
+ const mm=$('.mmenu',B);if(mm){$$('.mm button',mm).forEach(b=>b.addEventListener('click',()=>mm.open=false));document.addEventListener('mousedown',e=>{if(mm.open&&!mm.contains(e.target))mm.open=false})}
  $('#rFinal').onclick=()=>finalizeRun(run,redraw);
  $('#rDel').onclick=async()=>{if(!(await confirmBox('Delete the payroll for '+esc(perLabel(run.year,run.month,run.q))+'? Everything typed in it is removed.','Delete',1)))return;DB.runs=DB.runs.filter(x=>x!==run);recalcFrom(run);save();PAGES.run.render($('#view'),run.year+'-'+run.month+'-'+run.q)};
  $('#rRecalc').onclick=async()=>{if(!(await confirmBox('Recompute SSS, PhilHealth, Pag-IBIG and withholding tax for every employee? Amounts you typed over (yellow) are replaced by the automatic amounts.','Recompute')))return;run.rows.forEach(r=>['sss','ph','pg','tax'].forEach(k=>delete r.man[k]));recalcFrom(run);save();redraw();toast('Deductions recomputed.','ok')};
@@ -1270,7 +1289,7 @@ const holVal=x=>x.s==='worked'?(x.rd?'wrd':'worked'):(x.s||'auto');
 const holOpts=(h,x)=>opt(h.type==='R'?[['auto','Auto'],['paid','Off, paid'],['worked','Worked'],['wrd','Worked, rest day'],['none','Not paid']]:[['auto','Off'],['worked','Worked'],['wrd','Worked, rest day']],holVal(x));
 const visRows=run=>run.rows.filter(r=>(runUI.biz==='ALL'||r.business===runUI.biz)&&(!runUI.q||r.name.toLowerCase().includes(runUI.q.toLowerCase())));
 function timeGridHtml(run,rows,fin){const hs=holsIn(run.year,run.month,run.q),dis=fin?' disabled':'';
- let h='<div class="tw" style="max-height:66vh"><table class="t grid tg'+(fin?' locked':'')+'" id="tGrid"><thead><tr><th>Employee</th>'+TCOLS.map(c=>'<th>'+c[1]+'<small>'+c[2]+'</small></th>').join('')
+ let h='<div class="tw fill"><table class="t grid tg'+(fin?' locked':'')+'" id="tGrid"><thead><tr><th>Employee</th>'+TCOLS.map(c=>'<th>'+c[1]+'<small>'+c[2]+'</small></th>').join('')
   +hs.map(x=>'<th class="hcol'+(x.type==='R'?' grpE':'')+'">'+esc(fdw(x.date))+'<small>'+esc(x.name)+' · '+(x.type==='R'?'regular':'special')+'</small></th>').join('')
   +'<th>Basic pay</th><th>Holiday pay</th><th>OT & premium</th><th>Gross pay</th></tr></thead><tbody>';
  rows.forEach(({r,i})=>{const mo=r.basis==='monthly',tm=r.tm||{};
@@ -1733,7 +1752,10 @@ const empsOn=(d,biz)=>DB.employees.filter(e=>!isRecruit(e)&&e.active!==false&&(!
 
 // ---------------------------------------------------------------- calendar (Dashboard and Leaves page)
 let calF={y:new Date().getFullYear(),m:new Date().getMonth()+1,biz:'ALL',sel:today()};
-function renderCal(el,compact){holReset();const y=calF.y,m=calF.m,first=new Date(y,m-1,1).getDay(),nd=lastDay(y,m),t=today();
+function calPopClose(){const p=document.getElementById('calP');if(p)p.remove()}
+document.addEventListener('mousedown',e=>{const p=document.getElementById('calP');if(p&&!p.contains(e.target)&&!e.target.closest('[data-cd]'))p.remove()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')calPopClose()});window.addEventListener('hashchange',calPopClose);
+function renderCal(el,compact){holReset();calPopClose();const y=calF.y,m=calF.m,first=new Date(y,m-1,1).getDay(),nd=lastDay(y,m),t=today();
  const lv=(DB.leaves||[]).filter(l=>(l.status||'ok')!=='no'&&l.to>=ymd(y,m,1)&&l.from<=ymd(y,m,nd));
  const day=d=>{const E=empsOn(d,calF.biz),ids=new Set(E.map(e=>e.id));const L=[];lv.forEach(l=>{if(!ids.has(l.empId))return;const x=leaveDates(l).find(z=>z.d===d);if(x)L.push({l,n:x.n})});const onL=new Set(L.map(x=>x.l.empId));return{E,L,R:E.filter(e=>!onL.has(e.id)&&restOn(e,d)),h:holOn(d)}};
  let h='<div class="cal'+(compact?' compact':'')+'"><div class="row mid calh"><button class="btn o s" data-cm="-1" aria-label="Previous month">‹</button><h2 style="margin:0;min-width:170px;text-align:center">'+MN[m-1]+' '+y+'</h2><button class="btn o s" data-cm="1" aria-label="Next month">›</button><button class="btn o s" data-cm="0">Today</button><span class="sp"></span>'
@@ -1746,18 +1768,29 @@ function renderCal(el,compact){holReset();const y=calF.y,m=calF.m,first=new Date
    +D.L.slice(0,compact?2:3).map(x=>'<span class="lv'+((x.l.status||'ok')==='pend'?' pend':'')+'" title="'+esc(fullName(empById(x.l.empId))+' – '+ltById(x.l.type).name)+'">'+esc((empById(x.l.empId)||{}).first||'')+' '+esc(((empById(x.l.empId)||{}).last||'').slice(0,1))+'. · '+esc(ltAbbr(x.l.type))+(x.n<1?' ½':'')+'</span>').join('')
    +(D.L.length>(compact?2:3)?'<span class="more">+'+(D.L.length-(compact?2:3))+' on leave</span>':'')
    +(D.R.length?'<span class="rs">'+D.R.length+' rest day</span>':'')+'</button>'}
- h+='</div><div class="calp" id="calP"></div><p class="note" style="margin:6px 0 0"><span class="lv" style="display:inline-block">Name · type</span> approved leave · <span class="lv pend" style="display:inline-block">pending</span> filed, not yet approved · click a date for the full list.</p></div>';
+ h+='</div><p class="note" style="margin:6px 0 0"><span class="lv" style="display:inline-block">Name · type</span> approved leave · <span class="lv pend" style="display:inline-block">pending</span> filed, not yet approved · click a date for details.</p></div>';
  el.innerHTML=h;
  $$('[data-cm]',el).forEach(b=>b.onclick=()=>{const k=+b.dataset.cm;if(!k){const n=new Date();calF.y=n.getFullYear();calF.m=n.getMonth()+1;calF.sel=today()}else{calF.m+=k;if(calF.m<1){calF.m=12;calF.y--}if(calF.m>12){calF.m=1;calF.y++}}renderCal(el,compact)});
  const cb=$('#calB',el);if(cb)cb.onchange=()=>{calF.biz=cb.value;renderCal(el,compact)};
- $$('[data-cd]',el).forEach(b=>b.onclick=()=>{calF.sel=b.dataset.cd;$$('.cd.sel',el).forEach(x=>x.classList.remove('sel'));b.classList.add('sel');panel()});
- const panel=()=>{const d=calF.sel;if(d.slice(0,7)!==ymd(y,m,1).slice(0,7)){$('#calP',el).innerHTML='';return}const D=day(d),W=D.E.filter(e=>!D.L.some(x=>x.l.empId===e.id)&&!D.R.includes(e));
-  $('#calP',el).innerHTML='<div class="row mid"><h3 style="margin:0">'+esc(fdw(d))+(D.h?' · <span class="chip warn">'+esc(D.h.name)+' ('+(D.h.type==='R'?'regular holiday':'special day')+')</span>':'')+'</h3><span class="sp"></span><a class="btn o s" href="#leave/new/'+d+'">+ File a leave on this date</a><button class="btn o s" id="calRx">Change rest days on this date…</button></div>'
-   +'<div class="grid3" style="margin-top:8px"><div><b>On leave ('+D.L.length+')</b>'+(D.L.map(x=>'<div class="pl"><a href="#leave/rec/'+x.l.id+'">'+esc(fullName(empById(x.l.empId)))+'</a> – '+esc(ltById(x.l.type).name)+(x.n<1?' (half day)':'')+((x.l.status||'ok')==='pend'?' <span class="chip warn">pending</span>':'')+'</div>').join('')||'<div class="note">None</div>')+'</div>'
-   +'<div><b>Rest day ('+D.R.length+')</b>'+(D.R.map(e=>'<div class="pl">'+esc(fullName(e))+((e.restX||{})[d]?' <span class="chip">changed</span>':'')+'</div>').join('')||'<div class="note">None</div>')+'</div>'
-   +'<div><b>Working ('+W.length+')</b>'+(W.slice(0,40).map(e=>'<div class="pl">'+esc(fullName(e))+((e.restX||{})[d]?' <span class="chip">changed</span>':'')+'</div>').join('')+(W.length>40?'<div class="note">and '+(W.length-40)+' more</div>':'')||'<div class="note">None</div>')+'</div></div>';
-  $('#calRx',el).onclick=()=>restXModal(d,()=>renderCal(el,compact))};
- panel()}
+ $$('[data-cd]',el).forEach(b=>b.onclick=ev=>{ev.stopPropagation();calF.sel=b.dataset.cd;$$('.cd.sel',el).forEach(x=>x.classList.remove('sel'));b.classList.add('sel');pop(b)});
+ // a small pop-up next to the date: counts, holiday, who is on leave and on rest day
+ const pop=cell=>{calPopClose();const d=calF.sel,D=day(d),W=D.E.filter(e=>!D.L.some(x=>x.l.empId===e.id)&&!D.R.includes(e));
+  const names=(L,f,max)=>L.slice(0,max).map(f).join('')+(L.length>max?'<div class="note" style="margin:2px 0 0">and '+(L.length-max)+' more</div>':'');
+  const p=document.createElement('div');p.className='calpop';p.id='calP';p.setAttribute('role','dialog');p.setAttribute('aria-label',fdw(d));
+  p.innerHTML='<div class="row mid" style="gap:6px"><b>'+esc(fdw(d))+'</b><span class="sp"></span><button class="x" aria-label="Close">×</button></div>'
+   +(D.h?'<div class="chip warn" style="margin-top:4px">'+esc(D.h.name)+' · '+(D.h.type==='R'?'regular holiday':'special day')+'</div>':'')
+   +'<div class="cnt"><span><b>'+D.L.length+'</b> on leave</span><span><b>'+D.R.length+'</b> rest day</span><span><b>'+W.length+'</b> working</span></div>'
+   +(D.L.length?'<div class="pg"><h4>On leave ('+D.L.length+')</h4>'+names(D.L,x=>'<div class="pl"><a href="#leave/rec/'+x.l.id+'">'+esc(fullName(empById(x.l.empId)))+'</a> – '+esc(ltById(x.l.type).name)+(x.n<1?' (half day)':'')+((x.l.status||'ok')==='pend'?' <span class="chip warn">pending</span>':'')+'</div>',8)+'</div>':'')
+   +(D.R.length?'<div class="pg"><h4>Rest day ('+D.R.length+')</h4>'+names(D.R,e=>'<div class="pl">'+esc(fullName(e))+((e.restX||{})[d]?' <span class="chip">changed</span>':'')+'</div>',8)+'</div>':'')
+   +'<details class="pg"><summary>Working ('+W.length+')</summary>'+names(W,e=>'<div class="pl">'+esc(fullName(e))+'</div>',60)+'</details>'
+   +'<div class="row" style="margin-top:8px;gap:6px"><a class="btn s" href="#leave/new/'+d+'">+ File a leave</a><button class="btn o s" id="calRx">Change rest days…</button></div>';
+  document.body.appendChild(p);
+  const r=cell.getBoundingClientRect(),w=p.offsetWidth,h=p.offsetHeight,vw=innerWidth,vh=innerHeight;
+  let x=r.right+6,y=r.top;if(x+w>vw-8)x=r.left-w-6;if(x<8)x=Math.max(8,Math.min(vw-w-8,r.left));y=Math.max(8,Math.min(vh-h-8,y));if(x===r.left)y=Math.min(vh-h-8,r.bottom+6);
+  p.style.left=x+'px';p.style.top=y+'px';
+  $('.x',p).onclick=calPopClose;$('#calRx',p).onclick=()=>{calPopClose();restXModal(d,()=>renderCal(el,compact))};$$('a',p).forEach(a=>a.addEventListener('click',calPopClose));
+  setTimeout(()=>$('.x',p).focus(),0)};
+ }
 const ltAbbr=id=>{const t=ltById(id);return t.abbr||t.name.split(/\s+/).filter(w=>!/^(leave|of|for|the)$/i.test(w)).map(w=>w[0]).join('').toUpperCase().slice(0,4)};
 function restXModal(d,after){const E=empsOn(d,calF.biz).sort(empCmp);
  const m=modal('<h2>Rest days on '+esc(fdw(d))+'</h2><p class="note">Tick who is on rest day on this date only (a swapped or extra rest day). The weekly rest days in the employee records stay the same.</p><div class="tw" style="max-height:52vh"><table class="t"><thead><tr><th>Employee</th><th>Weekly rest day</th><th>Rest day on this date</th></tr></thead><tbody>'
@@ -1872,11 +1905,11 @@ async function fbWrite(name,text){try{const fh=await FB.h.getFileHandle(name,{cr
 // keep the newest 48 automatic files in the folder; backups made with the button are never removed
 async function fbPrune(){try{const L=[];for await(const x of FB.h.values())if(x.kind==='file'&&/^AJ-Payroll-auto_.*\.json$/.test(x.name))L.push(x.name);L.sort().reverse().slice(48).forEach(n=>FB.h.removeEntry(n).catch(()=>{}))}catch(e){}}
 async function fbForget(){FB.h=null;FB.ok=false;FB.name='';try{await IDB.put('bkdir',null)}catch(e){}bkStatus()}
-function hideAutoCard(){const c=$('#abCard');if(c)c.remove()}
+function hideAutoCard(){const c=$('#abCard');if(c)c.remove();document.body.classList.remove('hasab')}
 function showAutoCard(msg){hideAutoCard();const c=document.createElement('div');c.id='abCard';c.setAttribute('role','alertdialog');c.setAttribute('aria-label','Backup reminder');
  const re=FB.h&&!FB.ok;
  c.innerHTML='<b>'+(re?'Reconnect the backup folder':'Time to back up')+' · '+esc(new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+'</b><p>'+esc(msg)+'</p><div class="row mid">'+(re?'<button class="btn" id="abRe">Allow saving to “'+esc(FB.name)+'”</button><button class="btn o" id="abGo">Download instead</button>':'<button class="btn" id="abGo">Download backup</button>')+'<button class="btn o" id="abLater">Later</button></div>';
- document.body.appendChild(c);$('#abGo').onclick=()=>backup(true);if(re)$('#abRe').onclick=async()=>{if(await fbAsk()){hideAutoCard();await autoTick(true)}};$('#abLater').onclick=()=>{hideAutoCard();nextAuto=Date.now()+(S().autoBk||5)*60000}}
+ document.body.appendChild(c);document.body.classList.add('hasab');$('#abGo').onclick=()=>backup(true);if(re)$('#abRe').onclick=async()=>{if(await fbAsk()){hideAutoCard();await autoTick(true)}};$('#abLater').onclick=()=>{hideAutoCard();nextAuto=Date.now()+(S().autoBk||5)*60000}}
 let nextAuto=Date.now()+5*60000,autoTimer=null;
 async function autoTick(force){
  if(!DB||!changedSinceBackup()){hideAutoCard();return}
