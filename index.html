@@ -113,6 +113,13 @@ details>summary{cursor:pointer;font-weight:700}
 @media print{body{display:block}.side,.top{display:none}}
 
 [hidden]{display:none!important}
+.pvhd{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:12px}.pvsub{color:var(--muted);font-size:.86rem;margin-top:3px}
+.pvg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pvs{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}.pvs.wide{grid-column:1/-1}.pvs h3{margin:0 0 6px;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pvkv{width:100%;border-collapse:collapse;font-size:.88rem}.pvkv th{text-align:left;font-weight:500;color:var(--muted);padding:3px 10px 3px 0;width:42%;vertical-align:top}.pvkv td{padding:3px 0;vertical-align:top}
+.pvt{width:100%;border-collapse:collapse;font-size:.85rem}.pvt th{text-align:right;font-weight:600;color:var(--muted);padding:3px 0 3px 8px;border-bottom:1px solid var(--line2)}.pvt th:first-child,.pvt td:first-child{text-align:left;padding-left:0}.pvt td{text-align:right;padding:3px 0 3px 8px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}.pvt td.neg{color:var(--danger)}
+.pvx{color:var(--muted)}.pvnote{font-size:.8rem;color:var(--muted);margin-top:6px}
+@media(max-width:760px){.pvg{grid-template-columns:1fr}}
+.acct td{white-space:normal!important;vertical-align:top}.acct td:first-child{width:190px;color:var(--muted)}.acct small{display:block;color:var(--muted);margin-top:2px}
 .md.wide .pv{height:calc(100vh - 210px);min-height:380px}.t.hist td{vertical-align:middle}.t.hist tr.st td{background:#f7faf9;border-top:1px solid var(--line)}
 .nmlink{border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;cursor:pointer;text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.nmlink:hover,.nmlink:focus-visible{color:var(--brand);text-decoration:underline}.grid .nm .nmlink{max-width:205px}
 .grid .nm>div>div{min-width:0}.grid .nm b,.grid .nm small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:205px}.grid .nm small{font-size:.74rem}.grid td.nm{padding-top:4px;padding-bottom:4px}
@@ -610,7 +617,7 @@ PAGES.emp={title:'Employees',render(v){
   $('#eTbl').innerHTML='<div class="tw"><table class="t"><thead><tr><th class="cbc"><input type="checkbox" id="eAll" aria-label="Select all shown"'+(allOn?' checked':'')+'></th><th>Name</th><th>Business</th><th>Position</th><th>Status</th><th>Hired</th><th>Pay basis</th><th class="n">Daily rate</th><th class="n">Monthly</th><th class="n">Meal allow./day</th><th>TIN</th><th>SSS</th><th>PhilHealth</th><th>Pag-IBIG</th></tr></thead><tbody>'
    +(L.map(e=>'<tr class="'+(e.active===false?'off':'')+(empSel.has(e.id)?' sel':'')+'"><td class="cbc"><input type="checkbox" data-es="'+e.id+'" aria-label="Select '+esc(fullName(e))+'"'+(empSel.has(e.id)?' checked':'')+'></td><td><button type="button" class="nmlink" data-ed="'+e.id+'" title="View or edit">'+esc(fullName(e))+'</button>'+(e.mwe?' <span class="chip">MWE</span>':'')+(e.noSss||e.noPh||e.noPg?' <span class="chip warn" title="Not registered yet – no deduction">no '+[e.noSss&&'SSS',e.noPh&&'PH',e.noPg&&'HDMF'].filter(Boolean).join('/')+' yet</span>':'')+(isPending(e)?' <a class="chip warn" href="#docs/new/'+e.id+'">Pending – onboarding</a>':e.onb&&e.onb.state==='withdrawn'?' <span class="chip">Did not push through</span>':e.active===false?' <span class="chip bad">Inactive</span>':'')+'</td><td>'+esc(e.business)+'</td><td>'+esc(e.position)+'</td><td>'+esc(e.status)+'</td><td>'+esc(fd(e.hired))+'</td><td>'+(e.basis==='monthly'?'Monthly ('+e.factor+')':'Daily')+'</td><td class="n">'+n2(dailyOf(e))+'</td><td class="n">'+(e.basis==='monthly'?n2(e.monthly):'–')+'</td><td class="n">'+m2(e.allowance)+'</td><td>'+esc(e.tin)+'</td><td>'+esc(e.sss)+'</td><td>'+esc(e.ph)+'</td><td>'+esc(e.hdmf)+'</td></tr>').join('')
    ||'<tr><td colspan="14" class="empty">'+(DB.employees.length?'No employees match.':'No employees yet. Press “+ Add employee” or import from your spreadsheet.')+'</td></tr>')+'</tbody></table></div>';
-  $$('[data-ed]').forEach(b=>b.onclick=()=>empForm(b.dataset.ed,paint));
+  $$('[data-ed]').forEach(b=>b.onclick=()=>empView(b.dataset.ed,()=>empForm(b.dataset.ed,paint),paint));
   $$('[data-es]').forEach(c=>c.onchange=()=>{c.checked?empSel.add(c.dataset.es):empSel.delete(c.dataset.es);c.closest('tr').classList.toggle('sel',c.checked);selN()});
   const a=$('#eAll');if(a)a.onchange=()=>{L.forEach(e=>a.checked?empSel.add(e.id):empSel.delete(e.id));paint()};selN()};
  const selN=()=>{const n=empSel.size;$('#eSelN').textContent=n?n+' selected':'Tick employees to edit several at once';$('#eBulk').disabled=!n;$('#eRate').disabled=!n;$('#eSelX').hidden=!n};
@@ -1469,6 +1476,8 @@ function printFinalPay(runId,empId){const run=DB.runs.find(r=>r.id===runId),r=ru
 
 // open the employee record from a payroll; a draft payroll takes the saved changes (name, business, rates)
 function empFromRun(run,empId,after){if(!empById(empId))return toast('This employee record was deleted.','bad');
+ empView(empId,()=>empEditFromRun(run,empId,after),after)}
+function empEditFromRun(run,empId,after){
  empForm(empId,()=>{const r=run.rows.find(x=>x.empId===empId),e=empById(empId);if(r&&e&&run.status!=='final'){const before=JSON.stringify([r.name,r.daily,r.monthly,r.allowance,r.business,r.basis]);syncRowRate(run,r);
   if(JSON.stringify([r.name,r.daily,r.monthly,r.allowance,r.business,r.basis])!==before){recalcFrom(run);save();toast('This payroll was updated with the changes.','ok')}}after&&after()})}
 
@@ -1711,7 +1720,7 @@ function onbRender(v,a){
 function acceptModal(e,after){const o=e.onb,R=reqState(e),miss=R.filter(r=>!r.done&&!r.q.opt),S2=(DB.signers||[]).filter(s=>!s.biz||s.biz===e.business);
  const ctype=o.ctype||'prob';
  const m=modal('<h2>Accept '+esc(fullName(e))+' as an employee</h2>'
-  +'<table class="t kvt"><tbody><tr><td>Business</td><td>'+esc(e.business)+'</td></tr><tr><td>Contract</td><td>'+esc(CT_STATUS[ctype])+(o.start?' from '+esc(fd(o.start)):'')+(o.end?' to '+esc(fd(o.end)):'')+'</td></tr><tr><td>Signed by the employee</td><td>'+esc(fd(o.signedAt))+'</td></tr><tr><td>Requirements</td><td>'+(R.filter(r=>r.done).length)+' of '+R.length+' received'+(miss.length?'<small>Still due: '+miss.map(r=>esc(r.q.name)+' ('+esc(fd(r.due))+')').join('; ')+'</small>':'')+'</td></tr></tbody></table>'
+  +'<table class="t acct"><tbody><tr><td>Business</td><td>'+esc(e.business)+'</td></tr><tr><td>Contract</td><td>'+esc(CT_STATUS[ctype])+(o.start?' from '+esc(fd(o.start)):'')+(o.end?' to '+esc(fd(o.end)):'')+'</td></tr><tr><td>Signed by the employee</td><td>'+esc(fd(o.signedAt))+'</td></tr><tr><td>Requirements</td><td>'+(R.filter(r=>r.done).length)+' of '+R.length+' received'+(miss.length?'<small>Still due: '+miss.map(r=>esc(r.q.name)+' ('+esc(fd(r.due))+')').join('; ')+'</small>':'')+'</td></tr></tbody></table>'
   +'<div class="grid3" style="margin-top:10px">'+fg('Accepted by','<select id="acB">'+opt(S2.map(s=>[s.name+' – '+s.position,s.name+' – '+s.position]).concat([['_','Type a name…']]),S2[0]?S2[0].name+' – '+S2[0].position:'_')+'</select><input id="acT" placeholder="Name and position" style="margin-top:6px"'+(S2.length?' hidden':'')+'>')
   +fg('Date accepted','<input type="date" id="acD" value="'+today()+'">')+fg('First day in payroll','<input type="date" id="acS" value="'+esc(o.start||e.hired||today())+'">')+'</div>'
   +'<label class="ck"><input type="checkbox" id="acOk"> I have checked the employment contract signed by '+esc(fullName(e))+' and the requirements received.</label>'
@@ -1948,6 +1957,58 @@ function histReg(id){const run=DB.runs.find(r=>r.id===id);if(!run)return;
  if($('#vrB',m))$('#vrB',m).onchange=paint;if($('#vrL',m))$('#vrL',m).onchange=paint;
  $('#vrP',m).onclick=()=>{const x=regHtml(run,B(),Ly());printHtml(x.pages.map(p=>'<div class="page" style="padding:0">'+p+'</div>').join(''),true,'Payroll '+perLabel(run.year,run.month,run.q))};
  $('#vrC',m).onclick=()=>{const x=regHtml(run,B(),'one');dl('payroll_register_'+run.year+'-'+pad(run.month)+'_'+(run.q===1?'1st':'2nd')+'.csv',x.csv())};paint()}
+
+
+// =====================================================================================
+// Employee profile (read only): opens when a name is clicked; "Edit employee" opens the edit window
+// =====================================================================================
+function empView(id,onEdit,after){
+ const e=empById(id);if(!e)return toast('This employee record was deleted.','bad');
+ holReset();const t=today(),y=+t.slice(0,4),R=rateAt(e,t),mo=e.basis==='monthly';
+ const val=(v,dash)=>v==null||v===''?'<span class="pvx">'+(dash||'–')+'</span>':esc(v);
+ const kv=(rows)=>'<table class="pvkv"><tbody>'+rows.map(([k,v])=>'<tr><th>'+k+'</th><td>'+v+'</td></tr>').join('')+'</tbody></table>';
+ const sec=(title,body,cls)=>'<section class="pvs'+(cls?' '+cls:'')+'"><h3>'+title+'</h3>'+body+'</section>';
+ // status
+ const state=isPending(e)?'<span class="chip warn">Pending new hire</span>':(e.onb&&e.onb.state==='withdrawn')?'<span class="chip">Did not push through</span>':e.active===false?'<span class="chip bad">Inactive'+(e.separated?' · separated '+esc(fd(e.separated)):'')+'</span>':'<span class="chip ok">Active</span>';
+ const yrs=e.hired?svcMonths(e,t):0,svc=e.hired?(Math.floor(yrs/12)?Math.floor(yrs/12)+' yr ':'')+(yrs%12)+' mo':'';
+ // pay
+ const recur=(e.recur||[]).filter(x=>x.amt).map(x=>{const it=DB.items.find(i=>i.id===x.item);return esc(it?it.name:x.item)+' ₱'+n2(x.amt)}).join('<br>');
+ const pay=kv([['Pay basis',mo?'Monthly-paid (factor '+(+e.factor||261)+')':'Daily-paid'],[mo?'Monthly salary':'Daily rate','<b>₱'+n2(mo?R.monthly:R.rate)+'</b>'+(mo?' <span class="pvx">(₱'+n2(dailyOf(Object.assign({},e,R)))+'/day)</span>':'')],
+  ['Meal allowance',R.allowance?'₱'+n2(R.allowance)+' a day worked':val('')],['Minimum wage earner',e.mwe?'Yes':'No'],['Weekly rest day',restDays(e).map(i=>WDL[i]).join(', ')||val('')],['Every cutoff',recur||val('None')]]);
+ const H=(e.hist||[]).slice().sort((a,b)=>cmp(b.eff,a.eff)).slice(0,3);
+ const hist=H.length?'<div class="pvnote">Rate changes: '+H.map(h=>esc(fd(h.eff))+' ₱'+n2(mo?h.to.monthly:h.to.rate)+(h.note?' ('+esc(h.note)+')':'')).join(' · ')+'</div>':'';
+ // government
+ const sk=skipOf({empId:e.id,status:e.status});
+ const gv=(n,skip)=>skip?(n?esc(n)+' ':'')+'<span class="chip warn">'+(sk.nr?'no deduction (not Regular)':'not registered yet')+'</span>':val(n,'not on file');
+ const gov=kv([['TIN',val(e.tin,'not on file')],['SSS',gv(e.sss,sk.sss)],['PhilHealth',gv(e.ph,sk.ph)],['Pag-IBIG',gv(e.hdmf,sk.pg)]]);
+ // leave credits this year
+ const T=(DB.ltypes||[]).filter(x=>x.active!==false&&annualT(x)).map(x=>({x,en:entitled(e,x,y),u:usedIn(e,x,y),p:usedIn(e,x,y,'pend')})).filter(o=>o.en||o.u||o.p);
+ const up=(DB.leaves||[]).filter(l=>l.empId===e.id&&l.to>=t&&(l.status||'ok')!=='no').sort((a,b)=>cmp(a.from,b.from)).slice(0,3);
+ const lv=(T.length?'<table class="pvt"><thead><tr><th>Leave '+y+'</th><th>Entitled</th><th>Used</th><th>Waiting</th><th>Left</th></tr></thead><tbody>'+T.map(o=>'<tr><td>'+esc(o.x.name)+'</td><td>'+r4(o.en)+'</td><td>'+r4(o.u)+'</td><td>'+(o.p?r4(o.p):'–')+'</td><td class="'+(o.en-o.u<0?'neg':'')+'"><b>'+r4(o.en-o.u)+'</b></td></tr>').join('')+'</tbody></table>':'<p class="pvx">No leave credits this year.</p>')
+  +(up.length?'<div class="pvnote">Coming up: '+up.map(l=>esc(ltById(l.type).name)+' '+esc(fd(l.from))+(l.to!==l.from?'–'+esc(fd(l.to)):'')+((l.status||'ok')==='pend'?' (waiting)':'')).join(' · ')+'</div>':'');
+ // loans
+ const LB=DB.dtypes.map(d=>({d,c:ledgerCharged(e.id,d.id),x:ledgerDeducted(e.id,d.id)})).filter(o=>o.c||o.x);
+ const ln=LB.length?'<table class="pvt"><thead><tr><th>Loan / advance</th><th>Total</th><th>Deducted</th><th>Balance</th></tr></thead><tbody>'+LB.map(o=>'<tr><td>'+esc(o.d.name)+'</td><td>'+n2(o.c)+'</td><td>'+n2(o.x)+'</td><td><b>'+n2(o.c-o.x)+'</b></td></tr>').join('')+'</tbody></table><div class="pvnote">Deducted includes draft payrolls.</div>':'<p class="pvx">No loans or advances.</p>';
+ // pay this year (finalized payrolls)
+ const F=DB.runs.filter(r=>r.status==='final'&&r.year===y).map(r=>({r,x:r.rows.find(z=>z.empId===e.id)})).filter(o=>o.x).sort((a,b)=>pkey(b.r.year,b.r.month,b.r.q)-pkey(a.r.year,a.r.month,a.r.q));
+ const S=k=>F.reduce((s,o)=>s+(o.x[k]||0),0);
+ const ytd=F.length?kv([['Payrolls',F.length+' finalized'],['Gross pay','₱'+n2(S('gross'))],['SSS · PhilHealth · Pag-IBIG','₱'+n2(S('sss'))+' · ₱'+n2(S('ph'))+' · ₱'+n2(S('pg'))],['Withholding tax','₱'+n2(S('tax'))],['Net pay','<b>₱'+n2(S('net'))+'</b>'],
+   ['Last payslip',esc(perShort(F[0].r.year,F[0].r.month,F[0].r.q))+' · net ₱'+n2(F[0].x.net)+' <a href="#hist" data-x>History ›</a>']]):'<p class="pvx">No finalized payroll this year.</p>';
+ // documents / onboarding
+ const D=(e.docs||[]).slice(-3).reverse();
+ const miss=e.onb&&e.onb.state==='accepted'?reqMissing(e):[];
+ const docs=(D.length?D.map(d=>(d.kind==='coe'?'Certificate of employment':CT_STATUS[d.type]+' contract'+(d.end?' (to '+esc(fd(d.end))+')':''))+' · '+esc(fd(d.at.slice(0,10)))).join('<br>'):'<span class="pvx">None printed from the app.</span>')
+  +(miss.length?'<div class="pvnote" style="color:var(--danger)">Requirements still due: '+miss.map(r=>esc(r.q.name)).join(', ')+'</div>':'');
+ const info=kv([['Position',val(e.position)],['Business',val(e.business)],['Employment status',val(e.status)],['Date hired',e.hired?esc(fd(e.hired))+' <span class="pvx">('+svc+')</span>':val('')],['Birth date',e.birth?esc(fd(e.birth)):val('')],['Address',val(e.address)],['Contact no.',val(e.contact)]]);
+ const btns='<button class="btn" data-pe>Edit employee</button>';
+ const m=modal('<div class="pvhd"><div><h2 style="margin:0">'+esc(fullName(e))+'</h2><div class="pvsub">'+esc(e.position||'')+(e.position?' · ':'')+esc(e.business||'')+' '+state+'</div></div><span class="sp"></span>'+btns+'<button class="btn o" data-x>Close</button></div>'
+  +'<div class="pvg">'+sec('Employee information',info)+sec('Pay',pay+hist)+sec('Government numbers',gov)+sec('Pay this year',ytd)+sec('Leave credits',lv)+sec('Loans and advances',ln)+sec('Contracts and documents',docs,'wide')+'</div>'
+  +'<div class="acts">'+(isRecruit(e)?'':'<button class="btn o" data-pl>File a leave</button><button class="btn o" data-pd>Contract / COE</button>')+'<span class="sp"></span>'+btns+'</div>',920);
+ $$('[data-pe]',m).forEach(b=>b.onclick=()=>{m.close();onEdit&&onEdit()});
+ const pl=$('[data-pl]',m);if(pl)pl.onclick=()=>{m.close();leaveForm(null,after,{empId:e.id})};
+ const pd=$('[data-pd]',m);if(pd)pd.onclick=()=>{m.close();go('docs','contract/'+e.id)};
+ setTimeout(()=>{const b=$('[data-pe]',m);if(b)b.focus()},0);
+ return m}
 
 
 // =====================================================================================
