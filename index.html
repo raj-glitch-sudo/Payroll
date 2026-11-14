@@ -341,6 +341,7 @@ function sssOf(mo){const R=S().rates.sss;if(mo<=0)return{msc:0,ee:0,er:0,ec:0};c
  const msc=m<R.min+half?R.min:Math.min(R.max,R.min+Math.floor((m-(R.min-half))/R.step)*R.step);
  return{msc,ee:Math.round(msc*R.ee),er:Math.round(msc*R.er),ec:Math.round((msc<R.ecAt?R.ecLow:R.ecHigh)*100)}}
 function phOf(mo){const R=S().rates.ph;if(mo<=0)return{ee:0,er:0};const base=Math.min(R.ceil,Math.max(R.floor,mo/100)),tot=Math.round(base*R.rate),ee=Math.round(tot/2);return{ee,er:tot-ee}}
+function hdmfEr(ee){const R=S().rates.hdmf;return Math.min(ee*2,Math.round(R.cap*R.er))}
 function hdmfOf(mo){const R=S().rates.hdmf;if(mo<=0)return{ee:0,er:0};const m=mo/100,b=Math.min(m,R.cap);return{ee:Math.round(b*(m<=R.low?R.eeLow:R.ee)),er:Math.round(b*R.er)}}
 const sssBase=r=>r.basic+r.hol+r.ot+earn(r).xS+(S().mealNT?0:r.allow);
 const phBase=r=>r.basic;
@@ -349,13 +350,20 @@ function otherRow(run,empId){const o=runOf(run.year,run.month,3-run.q);return o?
 function skipOf(r){const e=empById(r.empId)||{},st=String(e.status||r.status||'Regular'),nr=S().contribFor!=='all'&&st!=='Regular';
  return{sss:nr||!!e.noSss,ph:nr||!!e.noPh,pg:nr||!!e.noPg,nr}}
 const skipLabel=r=>{const k=skipOf(r);if(k.nr)return 'no SSS/PhilHealth/Pag-IBIG (not Regular)';const L=[k.sss&&'SSS',k.ph&&'PhilHealth',k.pg&&'Pag-IBIG'].filter(Boolean);return L.length?'no '+L.join('/')+' yet':''};
-function contrib(run,r){const D=contrib0(run,r),k=skipOf(r);
+// automatic SSS / PhilHealth / Pag-IBIG: Payroll rules setting, or this payroll's own on/off (run.auto)
+function autoOn(run){return run&&run.auto!=null?!!run.auto:S().autoContrib!==false}
+function contrib(run,r){if(!autoOn(run))return{sss:0,ph:0,pg:0,erSss:0,erEc:0,erPh:0,erPg:0};const D=contrib0(run,r),k=skipOf(r);
  if(k.sss){D.sss=0;D.erSss=0;D.erEc=0}if(k.ph){D.ph=0;D.erPh=0}if(k.pg){D.pg=0;D.erPg=0}return D}
 function contrib0(run,r){
  const cfg=S(),D={sss:0,ph:0,pg:0,erSss:0,erEc:0,erPh:0,erPg:0};
  if(!(r.basic+r.hol+r.ot+r.allow+earn(r).xe))return D;
  if(run.q===1&&cfg.sched==='second')return D;
  const o=otherRow(run,r.empId);let Sx,Px,Gx,frac=1,less=null;
+ if(cfg.sched==='sss1'){// SSS whole month on the 1st cutoff (from 1st-cutoff pay x 2); PhilHealth and Pag-IBIG whole month on the 2nd
+  const z={ee:0,er:0,ec:0},mo=sssBase(r)+(o?sssBase(o):0),mp=phBase(r)+(o?phBase(o):0);
+  if(run.q===1){Sx=sssOf(sssBase(r)*2);Px=z;Gx=z}
+  else{Sx=o?z:sssOf(mo);Px=phOf(mp);Gx=hdmfOf(mp)}
+  D.sss=Sx.ee;D.erSss=Sx.er;D.erEc=Sx.ec||0;D.ph=Px.ee;D.erPh=Px.er;D.pg=Gx.ee;D.erPg=Gx.er;return D}
  if(run.q===1){Sx=sssOf(sssBase(r)*2);Px=phOf(phBase(r)*2);Gx=hdmfOf(phBase(r)*2);frac=.5}
  else{Sx=sssOf(sssBase(r)+(o?sssBase(o):0));Px=phOf(phBase(r)+(o?phBase(o):0));Gx=hdmfOf(phBase(r)+(o?phBase(o):0));if(o&&cfg.sched==='split')less=o}
  const part=(v,k)=>pos(Math.round(v*frac)-(less?(less[k]||0):0));
@@ -391,8 +399,8 @@ function calcRow(run,r){
  const D=contrib(run,r);
  if(!man.sss)r.sss=D.sss;if(!man.ph)r.ph=D.ph;if(!man.pg)r.pg=D.pg;
  // employer shares follow the employee share when it was typed by hand
- const R=S().rates.sss;r.erSss=man.sss?(r.sss?Math.round(r.sss*R.er/R.ee):0):D.erSss;r.erEc=man.sss?(r.sss?D.erEc:0):D.erEc;
- r.erPh=man.ph?r.ph:D.erPh;r.erPg=man.pg?(r.pg?D.erPg:0):D.erPg;
+ const R=S().rates.sss,ecT=v=>{const m=v/R.ee;return Math.round((m<R.ecAt?R.ecLow:R.ecHigh)*100)};r.erSss=man.sss?(r.sss?Math.round(r.sss*R.er/R.ee):0):D.erSss;r.erEc=man.sss?(r.sss?(D.erEc||(autoOn(run)?0:ecT(r.sss))):0):D.erEc;
+ r.erPh=man.ph?r.ph:D.erPh;r.erPg=man.pg?(r.pg?(D.erPg||(autoOn(run)?0:hdmfEr(r.pg))):0):D.erPg;
  const T=taxCalc(run,r);if(!man.tax)r.tax=T.tax;
  Object.assign(r,{taxable:T.taxable,ben:T.ben,benEx:T.benEx,dmIn:T.dmIn,mweEx:T.mweEx,nItems:T.nItems,mealNT:T.mealNT,annual:T.annual});
  const E=earn(r);r.gross=E.gross;r.totDed=E.ded;r.net=E.net;
@@ -776,10 +784,11 @@ function drawRun(B,run){
   +'<select id="rBiz" aria-label="Business">'+opt([['ALL','All ('+run.rows.length+')']].concat(bizs.map(b=>[b,b+' ('+run.rows.filter(r=>r.business===b).length+')'])),runUI.biz)+'</select>'
   +'<input id="rQ" placeholder="Find employee" aria-label="Find employee" value="'+esc(runUI.q)+'" style="width:170px">'
   +(fin?'':'<button class="btn o s" id="rDays">Set days…</button><button class="btn o s" id="rCopy">Copy last cutoff…</button>'
-   +'<details class="mmenu"><summary class="btn o s">More ▾</summary><div class="mm"><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button><button class="btn d s" id="rDel">Delete this payroll</button></div></details>')
+   +'<details class="mmenu"><summary class="btn o s">More ▾</summary><div class="mm"><button class="btn o s" id="rAdd">Add employee</button><button class="btn o s" id="rLoans">Refresh loan deductions</button><button class="btn o s" id="rRates">Update rates</button><button class="btn o s" id="rRecalc">Recompute deductions</button><button class="btn o s" id="rAuto">'+(autoOn(run)?'Turn off automatic SSS, PhilHealth, Pag-IBIG':'Turn on automatic SSS, PhilHealth, Pag-IBIG')+'</button><button class="btn d s" id="rDel">Delete this payroll</button></div></details>')
   +'<span class="sp"></span>'+(runUI.view==='time'?'':'<label style="display:flex;gap:5px;align-items:center;font-size:.82rem"><input type="checkbox" id="rHide"'+(runUI.hide?' checked':'')+'> Hide unused columns</label>')
   +(runUI.view!=='time'&&runUI.hide&&hid.length&&!fin?'<select id="rShow" style="width:150px" aria-label="Show a column"><option value="">Show a column…</option>'+opt(hid)+'</select>':'')+'</div>';
  const ye=run.month===12&&run.q===2&&S().annualize;
+ if(!fin&&!autoOn(run))h+='<div class="hline"><span><b>Automatic SSS, PhilHealth and Pag-IBIG is off</b> for this payroll — type the amounts in their columns. Turn it back on from More ▾.</span></div>';
  if(hs.length||ye)h+='<div class="hline">'+(hs.length?'<span title="Daily-paid employees who worked in this cutoff are paid for regular holidays automatically. Use ⏱ or the time sheet to mark who worked on a holiday, or who is not entitled.">Holidays: '+hs.map(x=>'<b>'+esc(fdw(x.date).replace(/^\w+, /,''))+'</b> '+esc(x.name)+' ('+(x.type==='R'?'regular':'special')+')').join(' · ')+' ⓘ</span>':'')+(ye?'<span title="Tax in this payroll is the year’s tax due less tax already withheld. A negative amount is a refund.">'+(hs.length?' &nbsp;|&nbsp; ':'')+'<b>Year-end:</b> tax is annualized ⓘ</span>':'')+'</div>';
  h+='</div>';
  const TV=runUI.view==='time';
@@ -825,8 +834,14 @@ function drawRun(B,run){
  $('#rCopy').onclick=()=>copyModal(run,redraw);
  const mm=$('.mmenu',B);if(mm){$$('.mm button',mm).forEach(b=>b.addEventListener('click',()=>mm.open=false));document.addEventListener('mousedown',e=>{if(mm.open&&!mm.contains(e.target))mm.open=false})}
  $('#rFinal').onclick=()=>finalizeRun(run,redraw);
+ $('#rAuto').onclick=async()=>{const au=autoOn(run);
+  if(au){if(!(await confirmBox('Turn off automatic SSS, PhilHealth and Pag-IBIG for this payroll? Amounts already shown are kept so you can change them; new amounts are typed by hand.','Turn off')))return;
+   run.rows.forEach(r=>{r.man=r.man||{};['sss','ph','pg'].forEach(k=>{if(r[k])r.man[k]=true})});run.auto=false}
+  else{if(!(await confirmBox('Turn automatic SSS, PhilHealth and Pag-IBIG back on for this payroll? The amounts you typed (yellow) are kept; use Recompute deductions to replace them.','Turn on')))return;
+   run.auto=S().autoContrib===false?true:null;if(run.auto==null)delete run.auto}
+  recalcFrom(run);save();redraw();toast(au?'Automatic contributions are off for this payroll.':'Automatic contributions are on for this payroll.','ok')};
  $('#rDel').onclick=async()=>{if(!(await confirmBox('Delete the payroll for '+esc(perLabel(run.year,run.month,run.q))+'? Everything typed in it is removed.','Delete',1)))return;DB.runs=DB.runs.filter(x=>x!==run);recalcFrom(run);save();PAGES.run.render($('#view'),run.year+'-'+run.month+'-'+run.q)};
- $('#rRecalc').onclick=async()=>{if(!(await confirmBox('Recompute SSS, PhilHealth, Pag-IBIG and withholding tax for every employee? Amounts you typed over (yellow) are replaced by the automatic amounts.','Recompute')))return;run.rows.forEach(r=>['sss','ph','pg','tax'].forEach(k=>delete r.man[k]));recalcFrom(run);save();redraw();toast('Deductions recomputed.','ok')};
+ $('#rRecalc').onclick=async()=>{const au=autoOn(run);if(!(await confirmBox(au?'Recompute SSS, PhilHealth, Pag-IBIG and withholding tax for every employee? Amounts you typed over (yellow) are replaced by the automatic amounts.':'Recompute withholding tax for every employee? Automatic SSS, PhilHealth and Pag-IBIG is off, so the amounts you typed for them are kept.','Recompute')))return;run.rows.forEach(r=>(au?['sss','ph','pg','tax']:['tax']).forEach(k=>delete r.man[k]));recalcFrom(run);save();redraw();toast('Deductions recomputed.','ok')};
  $('#rRates').onclick=async()=>{const ch=rateDiff(run);
   if(!ch.length)return toast('All rates already match the employee records.');
   if(!(await confirmBox('Update the rates of '+ch.length+' employee'+(ch.length===1?'':'s')+' from their employee records?<br><small>'+ch.slice(0,8).map(r=>esc(r.name)).join(', ')+(ch.length>8?'…':'')+'</small>','Update')))return;
@@ -2099,7 +2114,8 @@ const SET={
    $('#bAdd').onclick=()=>bizForm(null,paint);$$('[data-b]',B).forEach(b=>b.onclick=()=>bizForm(b.dataset.b,paint))};paint()},
  rules(B){const s=S();
   B.innerHTML='<div class="card"><h2>Payroll rules</h2><div class="grid2">'
-   +fg('When to deduct SSS, PhilHealth and Pag-IBIG','<select id="sSch">'+opt([['split','Half on each cutoff'],['second','Whole month on the 2nd cutoff']],s.sched)+'</select>','Contributions are always based on the month’s total pay.')
+   +fg('When to deduct SSS, PhilHealth and Pag-IBIG','<select id="sSch">'+opt([['split','Half on each cutoff'],['second','Whole month on the 2nd cutoff'],['sss1','SSS on the 1st cutoff; PhilHealth and Pag-IBIG on the 2nd']],s.sched)+'</select>','Contributions are based on the month’s total pay. With “SSS on the 1st cutoff”, SSS uses the 1st-cutoff pay × 2.')
+   +fg('Compute SSS, PhilHealth and Pag-IBIG automatically','<select id="sAuto">'+opt([['1','Yes'],['0','No, I type the amounts in the payroll']],s.autoContrib===false?'0':'1')+'</select>','Each payroll can also be switched on or off from More ▾ in the payroll run. Typed amounts are always kept.')
    +fg('Who has SSS, PhilHealth and Pag-IBIG deducted','<select id="sCF">'+opt([['reg','Regular employees only'],['all','All employees']],s.contribFor||'reg')+'</select>','Employees can also be marked “not registered yet” per agency in their record.')
    +fg('Meal allowance','<select id="sMeal">'+opt([['1','Not taxable, not in the SSS base'],['0','Taxable and part of the SSS base']],s.mealNT?'1':'0')+'</select>')
    +fg('Year-end tax','<select id="sAnn">'+opt([['1','Annualize in the December 16–31 payroll'],['0','Do not annualize (semi-monthly table only)']],s.annualize?'1':'0')+'</select>','Annualizing adjusts the last payroll of the year so total tax withheld equals the tax due for the year.')
@@ -2107,7 +2123,7 @@ const SET={
    +fg('Service incentive leave (days a year)','<input type="number" step="0.5" min="0" id="sSil" value="'+s.silDays+'">')
    +fg('Tax-free ceiling for 13th month and other benefits (₱)','<input type="number" step="0.01" min="0" id="sBen" value="'+pe(s.benCap)+'">')+'</div><p class="note">Changes apply to draft payrolls when you open them. Final payrolls keep their amounts.</p></div>';
   const bind=(id,f)=>$(id).onchange=e=>{f(e.target.value);save();toast('Saved.','ok')};
-  bind('#sSch',v=>s.sched=v);bind('#sCF',v=>s.contribFor=v);bind('#sMeal',v=>s.mealNT=v==='1');bind('#sAnn',v=>s.annualize=v==='1');bind('#sMwe',v=>s.mweRate=c100(v));bind('#sSil',v=>s.silDays=Math.max(0,+v||0));bind('#sBen',v=>s.benCap=c100(v))},
+  const reDraft=()=>{const L=DB.runs.filter(x=>x.status!=='final');L.forEach(calcRun);if(L.length)setTimeout(()=>toast('Draft payrolls updated.','ok'),50)};bind('#sSch',v=>{s.sched=v;reDraft()});bind('#sAuto',v=>{s.autoContrib=v==='1';reDraft()});bind('#sCF',v=>s.contribFor=v);bind('#sMeal',v=>s.mealNT=v==='1');bind('#sAnn',v=>s.annualize=v==='1');bind('#sMwe',v=>s.mweRate=c100(v));bind('#sSil',v=>s.silDays=Math.max(0,+v||0));bind('#sBen',v=>s.benCap=c100(v))},
  rates(B){const R=S().rates,P=S().prem;
   B.innerHTML='<div class="card"><h2>Government contributions ('+esc(R.asOf||'')+')</h2><div class="grid3">'
    +fg('SSS employee %',num('r_sss_ee',R.sss.ee))+fg('SSS employer %',num('r_sss_er',R.sss.er))+fg('SSS minimum salary credit',num('r_sss_min',R.sss.min))+fg('SSS maximum salary credit',num('r_sss_max',R.sss.max))+fg('SSS salary credit step',num('r_sss_step',R.sss.step))
